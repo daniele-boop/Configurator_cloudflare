@@ -17,6 +17,25 @@
     --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
     --disp:"Space Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
   }
+  /* ===== Tema chiaro (default) — vedi <html data-theme> impostato via JS ===== */
+  html[data-theme="light"]{
+    --bg:#eef1f5; --panel:#ffffff; --panel-2:#f6f8fb;
+    --line:#d5dce4; --line-soft:#e4e9ef;
+    --ink:#1a2330; --muted:#5b6675; --muted-2:#8793a1;
+    --signal:#d99413; --ok:#2f9e6a; --danger:#d8564c; --ruler:#9aa7b6;
+  }
+  html[data-theme="light"] body{
+    background:
+      radial-gradient(1100px 600px at 82% -8%, rgba(107,74,160,.07), transparent 60%),
+      radial-gradient(900px 520px at 8% 108%, rgba(55,195,209,.07), transparent 60%),
+      var(--bg);
+  }
+  /* su tema chiaro, il testo bianco dentro i cabinet resta bianco (celle colorate) */
+  .themebtn{padding:9px 11px}
+  .themebtn svg{width:15px;height:15px}
+  .themebtn .ic-moon{display:none}
+  html[data-theme="light"] .themebtn .ic-sun{display:none}
+  html[data-theme="light"] .themebtn .ic-moon{display:inline}
   *{box-sizing:border-box}
   html,body{margin:0}
   body{
@@ -156,7 +175,7 @@
   .altwall .meta{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:5px}
   .altwall .meta .off{color:var(--signal)} .altwall .meta .ok{color:var(--ok)}
   .altwall .meta .altprice{font-size:19px;font-weight:600;color:#8fe0b8;letter-spacing:.3px}
-  .altwall .mix .altsize{color:#fff;font-weight:700;font-size:17px;letter-spacing:.02em}
+  .altwall .mix .altsize{color:var(--ink);font-weight:700;font-size:17px;letter-spacing:.02em}
   .altwall .mix .altpct{color:#ffd23f;font-weight:700;font-size:14px;letter-spacing:.02em}
   .altwall .meta .altmix{color:var(--ink);font-weight:600}
   .altwall .meta .w2{color:var(--signal)}
@@ -213,8 +232,8 @@
 
   .prod{border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:14px;background:var(--panel-2)}
   .prod .phead{display:flex;gap:10px;align-items:center;margin-bottom:12px}
-  .prod .phead > input{flex:1;font-family:var(--disp);font-size:16px;font-weight:700;color:#fff;
-    background:var(--panel);border:2.5px solid #ffffff}
+  .prod .phead > input{flex:1;font-family:var(--disp);font-size:16px;font-weight:700;color:var(--ink);
+    background:var(--panel);border:2.5px solid var(--ink)}
   .prod .phead > input:focus{border-color:#37c3d1;box-shadow:0 0 0 3px rgba(55,195,209,.30)}
   /* selezione campo ben visibile e coerente in tutto il pannello */
   .modal input:focus,.modal textarea:focus,.modal select:focus{
@@ -366,6 +385,10 @@
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  // Applica il tema il prima possibile (default: chiaro) per evitare lampeggi.
+  (function(){ try{ var t=localStorage.getItem("nseled-theme")||"light"; document.documentElement.setAttribute("data-theme", t==="dark"?"dark":"light"); }catch(e){ document.documentElement.setAttribute("data-theme","light"); } })();
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -375,6 +398,10 @@
       <div><b>NSELED</b> <span>Europe</span><h1>Configuratore parete LED</h1></div>
     </div>
     <span class="spacer"></span>
+    <button class="adminbtn themebtn" id="themeToggle" title="Cambia tema chiaro/scuro" aria-label="Cambia tema">
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
     <button class="adminbtn" id="openAdmin">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
       Amministrazione
@@ -384,15 +411,6 @@
   <div class="grid">
     <!-- CONTROLLI -->
     <div>
-      <section class="card recall">
-        <p class="eyebrow">Richiama configurazione</p>
-        <div class="recallrow">
-          <input id="cfgLoad" type="text" placeholder="es. CFG-0002" spellcheck="false" autocomplete="off">
-          <button class="btn ghost sm" id="cfgLoadBtn">Carica</button>
-        </div>
-        <div class="odoostatus" id="cfgLoadMsg"></div>
-      </section>
-
       <section class="card">
         <p class="eyebrow">Prodotto e misura</p>
         <label class="fld">
@@ -424,6 +442,15 @@
         <div class="altblock"><h4>Alternative altezza</h4><div class="chips" id="altHeight"></div></div>
         <div class="note" id="minNote" hidden></div>
       </section>
+
+      <section class="card recall">
+        <p class="eyebrow">Richiama configurazione</p>
+        <div class="recallrow">
+          <input id="cfgLoad" type="text" placeholder="es. CFG-0002" spellcheck="false" autocomplete="off">
+          <button class="btn ghost sm" id="cfgLoadBtn">Carica</button>
+        </div>
+        <div class="odoostatus" id="cfgLoadMsg"></div>
+      </section>
     </div>
 
     <!-- PREVIEW -->
@@ -432,7 +459,7 @@
         <div class="previewhead">
           <p class="eyebrow" style="margin:0">Anteprima in scala</p>
           <div class="headbtns">
-            <button class="modtoggle" id="rotToggle" hidden aria-pressed="false" title="Ruota tutti i cabinet di 90°">⟳ Ruota 90°</button>
+            <button class="modtoggle" id="rotToggle" hidden aria-pressed="false" title="Ruota tutti i cabinet di 90°">⟳ Ruota i cabinet di 90°</button>
             <button class="modtoggle" id="modToggle" hidden aria-pressed="true">Moduli: on</button>
           </div>
         </div>
@@ -1252,7 +1279,7 @@
     // la rotazione ha senso solo se esiste almeno un cabinet non quadrato
     const canRot = p && (p.cabinets||[]).some(c=>c.w!==c.h);
     $("rotToggle").hidden = !(has && canRot);
-    if(has && canRot){ $("rotToggle").setAttribute("aria-pressed", S.rot?"true":"false"); $("rotToggle").textContent = S.rot ? "⟳ Ruotati 90°" : "⟳ Ruota 90°"; }
+    if(has && canRot){ $("rotToggle").setAttribute("aria-pressed", S.rot?"true":"false"); $("rotToggle").textContent = S.rot ? "⟳ Cabinet ruotati 90°" : "⟳ Ruota i cabinet di 90°"; }
     if(!has){ $("stage").innerHTML='<div class="empty"><b>Nessuna configurazione</b>Scegli un prodotto con cabinet e inserisci base e altezza</div>'; $("warnBox").hidden=true; $("ratioSuggest").hidden=true; return; }
 
     const eW=engine(p.cabinets.map(c=>c.w)), eH=engine(p.cabinets.map(c=>c.h));
@@ -2104,7 +2131,12 @@
   ["inBase","inHeight"].forEach(id=>$(id).addEventListener("input",()=>{ clearTimeout(deb); deb=setTimeout(()=>{ S.selWc=S.selHc=null; render(); },120); }));
   $("inPitch").addEventListener("change",render);
   ["enHours","enRate"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("input",render); });
-  $("modToggle").addEventListener("click",()=>{ S.showModules=!S.showModules; render(); });
+  $("themeToggle").addEventListener("click",()=>{
+    const cur=document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light";
+    const next=cur==="dark"?"light":"dark";
+    document.documentElement.setAttribute("data-theme",next);
+    try{ localStorage.setItem("nseled-theme",next); }catch(e){}
+  });
   $("rotToggle").addEventListener("click",()=>{
     S.rot=!S.rot;
     // il set di cabinet cambia: ricomponi da zero la griglia valida
