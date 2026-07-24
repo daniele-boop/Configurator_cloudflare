@@ -1,0 +1,562 @@
+{
+  "password": "nseled2026",
+  "products": [
+    {
+      "id": "p_std",
+      "name": "OSO Outdoor Sign ",
+      "modW": 320,
+      "modH": 160,
+      "resolutions": [
+        {
+          "id": "r_jhpf0wq",
+          "label": "P4",
+          "pitch": 4
+        },
+        {
+          "id": "r_tm48pzp",
+          "label": "P3",
+          "pitch": 3
+        },
+        {
+          "id": "r_tsay504",
+          "label": "P2.5",
+          "pitch": 2.5
+        }
+      ],
+      "cabinets": [
+        {
+          "w": 640,
+          "h": 320,
+          "weight": 5,
+          "power": 50,
+          "price": 591,
+          "prices": {
+            "r_jhpf0wq": 591,
+            "r_tm48pzp": 742,
+            "r_tsay504": 980
+          },
+          "codes": {
+            "r_jhpf0wq": "OSO406432",
+            "r_tm48pzp": "OSO306432",
+            "r_tsay504": "OSO256432"
+          },
+          "modQty": 4
+        },
+        {
+          "w": 640,
+          "h": 480,
+          "weight": 7,
+          "power": 75,
+          "price": 727,
+          "prices": {
+            "r_tm48pzp": 955,
+            "r_tsay504": 1312,
+            "r_jhpf0wq": 727
+          },
+          "codes": {
+            "r_jhpf0wq": "OSO406448",
+            "r_tm48pzp": "OSO306448",
+            "r_tsay504": "OSO256448"
+          },
+          "modQty": 6
+        },
+        {
+          "w": 640,
+          "h": 640,
+          "weight": 9,
+          "power": 100,
+          "price": 969,
+          "prices": {
+            "r_jhpf0wq": 969,
+            "r_tm48pzp": 1274,
+            "r_tsay504": 1750
+          },
+          "codes": {
+            "r_jhpf0wq": "OSO406464",
+            "r_tm48pzp": "OSO306464",
+            "r_tsay504": "OSO256464"
+          },
+          "modQty": 8
+        },
+        {
+          "w": 960,
+          "h": 320,
+          "weight": 7,
+          "power": 75,
+          "price": 886,
+          "prices": {
+            "r_tsay504": 1470,
+            "r_tm48pzp": 1242,
+            "r_jhpf0wq": 866
+          },
+          "codes": {
+            "r_jhpf0wq": "OSO409632",
+            "r_tm48pzp": "OSO309632",
+            "r_tsay504": "OSO259632"
+          },
+          "modQty": 6
+        },
+        {
+          "w": 960,
+          "h": 480,
+          "weight": 10,
+          "power": 110,
+          "price": 1071,
+          "prices": {
+            "r_jhpf0wq": 1071,
+            "r_tm48pzp": 1584,
+            "r_tsay504": 1946
+          },
+          "codes": {
+            "r_jhpf0wq": "OSO409648",
+            "r_tm48pzp": "OSO309648",
+            "r_tsay504": "OSO259648"
+          },
+          "modQty": 9
+        },
+        {
+          "w": 960,
+          "h": 640,
+          "weight": 14,
+          "power": 150,
+          "price": 1541,
+          "prices": {
+            "r_jhpf0wq": 1421,
+            "r_tm48pzp": 1967,
+            "r_tsay504": 2674
+          },
+          "codes": {
+            "r_jhpf0wq": "OSO409664",
+            "r_tm48pzp": "OSO309664",
+            "r_tsay504": "OSO259664"
+          },
+          "modQty": 12
+        },
+        {
+          "w": 960,
+          "h": 960,
+          "weight": 17,
+          "power": 210,
+          "prices": {
+            "r_jhpf0wq": 2119,
+            "r_tm48pzp": 2950,
+            "r_tsay504": 4011
+          },
+          "codes": {
+            "r_jhpf0wq": "OSO409696",
+            "r_tm48pzp": "OSO309696",
+            "r_tsay504": "OSO259696"
+          },
+          "modQty": 18
+        }
+      ]
+    },
+    {
+      "id": "p_500",
+      "name": "Indoor Serie 500",
+      "resolutions": [
+        {
+          "id": "r_weehtbf",
+          "label": "P2,6",
+          "pitch": 2.6
+        },
+        {
+          "id": "r_579rxvn",
+          "label": "P2.976",
+          "pitch": 2.976
+        },
+        {
+          "id": "r_zn84hfl",
+          "label": "P3.91",
+          "pitch": 3.91
+        },
+        {
+          "id": "r_xzw727d",
+          "label": "P1,953",
+          "pitch": 1.953
+        },
+        {
+          "id": "r_4zo00d3",
+          "label": "GOB P1,953",
+          "pitch": 1.953
+        }
+      ],
+      "cabinets": [
+        {
+          "w": 500,
+          "h": 500,
+          "weight": 5,
+          "power": 35,
+          "prices": {
+            "r_weehtbf": 500,
+            "r_579rxvn": 473,
+            "r_zn84hfl": 394,
+            "r_xzw727d": 667,
+            "r_4zo00d3": 768
+          },
+          "codes": {
+            "r_weehtbf": "LWI265050",
+            "r_579rxvn": "LWI295050",
+            "r_zn84hfl": "LWI395050",
+            "r_xzw727d": "LWI195050",
+            "r_4zo00d3": "LWI195050-GOB"
+          },
+          "modQty": 4
+        },
+        {
+          "w": 1000,
+          "h": 250,
+          "weight": 5,
+          "power": 35,
+          "prices": {
+            "r_weehtbf": 500,
+            "r_579rxvn": 473,
+            "r_zn84hfl": 394,
+            "r_xzw727d": 667,
+            "r_4zo00d3": 768
+          },
+          "codes": {
+            "r_weehtbf": "LWI261025",
+            "r_579rxvn": "LWI291025",
+            "r_zn84hfl": "LWI391025",
+            "r_xzw727d": "LWI191025",
+            "r_4zo00d3": "LWI191025-GOB"
+          },
+          "modQty": 4
+        },
+        {
+          "w": 1000,
+          "h": 500,
+          "weight": 7,
+          "power": 70,
+          "prices": {
+            "r_weehtbf": 894,
+            "r_579rxvn": 840,
+            "r_zn84hfl": 683,
+            "r_xzw727d": 1229,
+            "r_4zo00d3": 1431
+          },
+          "codes": {
+            "r_weehtbf": "LWI261050",
+            "r_579rxvn": "LWI291050",
+            "r_zn84hfl": "LWI391050",
+            "r_xzw727d": "LWI191050",
+            "r_4zo00d3": "LWI191050-GOB"
+          },
+          "modQty": 8
+        }
+      ]
+    },
+    {
+      "id": "p_mr1y5wd7",
+      "name": "Indoor Serie 640",
+      "resolutions": [
+        {
+          "id": "r_t9zhng9",
+          "label": "P4",
+          "pitch": 4
+        },
+        {
+          "id": "r_xhw9o67",
+          "label": "P3,076",
+          "pitch": 3.076
+        },
+        {
+          "id": "r_ggz0ui8",
+          "label": "P2,5",
+          "pitch": 2.5
+        },
+        {
+          "id": "r_qf9l9cm",
+          "label": "P2",
+          "pitch": 2
+        }
+      ],
+      "cabinets": [
+        {
+          "w": 640,
+          "h": 480,
+          "weight": 7,
+          "power": 60,
+          "prices": {
+            "r_t9zhng9": 389,
+            "r_xhw9o67": 483,
+            "r_ggz0ui8": 497,
+            "r_qf9l9cm": 643
+          },
+          "codes": {
+            "r_t9zhng9": "LWI406448",
+            "r_xhw9o67": "LWI306448",
+            "r_ggz0ui8": "LWI256448",
+            "r_qf9l9cm": "LWI26448"
+          },
+          "modQty": 6
+        },
+        {
+          "w": 640,
+          "h": 640,
+          "weight": 8,
+          "power": 80,
+          "prices": {
+            "r_t9zhng9": 470,
+            "r_xhw9o67": 594,
+            "r_ggz0ui8": 616,
+            "r_qf9l9cm": 810
+          },
+          "codes": {
+            "r_t9zhng9": "LWI406464",
+            "r_xhw9o67": "LWI306464",
+            "r_ggz0ui8": "LWI256464",
+            "r_qf9l9cm": "LWI206464"
+          },
+          "modQty": 8
+        },
+        {
+          "w": 960,
+          "h": 480,
+          "weight": 9,
+          "power": 92,
+          "prices": {
+            "r_t9zhng9": 656,
+            "r_xhw9o67": 797,
+            "r_ggz0ui8": 818,
+            "r_qf9l9cm": 1037
+          },
+          "codes": {
+            "r_t9zhng9": "LWI409648",
+            "r_xhw9o67": "LWI309648",
+            "r_ggz0ui8": "LWI259648",
+            "r_qf9l9cm": "LWI29648"
+          },
+          "modQty": 9
+        },
+        {
+          "w": 320,
+          "h": 640,
+          "weight": 5,
+          "power": 40,
+          "prices": {
+            "r_t9zhng9": 329,
+            "r_xhw9o67": 392,
+            "r_ggz0ui8": 402,
+            "r_qf9l9cm": 500
+          },
+          "codes": {
+            "r_t9zhng9": "LWI403264",
+            "r_xhw9o67": "LWI303264",
+            "r_ggz0ui8": "LWI253264",
+            "r_qf9l9cm": "LWI203264"
+          },
+          "modQty": 4
+        }
+      ]
+    },
+    {
+      "id": "p_mr1y7062",
+      "name": "OTV. serie  960 6.67",
+      "modW": 480,
+      "modH": 320,
+      "resolutions": [
+        {
+          "id": "r_euqx2oy",
+          "label": "P6,67",
+          "pitch": 6.67
+        }
+      ],
+      "cabinets": [
+        {
+          "w": 960,
+          "h": 960,
+          "weight": 24,
+          "power": 180,
+          "price": 1237,
+          "code": "OTO669696",
+          "modQty": 6
+        }
+      ]
+    },
+    {
+      "id": "p_mr3kpe61",
+      "name": "OTV. serie 1000 3.9",
+      "modW": 500,
+      "modH": 250,
+      "resolutions": [
+        {
+          "id": "r_jqxd8j7",
+          "label": "P3,9",
+          "pitch": 3.9
+        }
+      ],
+      "cabinets": [
+        {
+          "w": 1000,
+          "h": 1000,
+          "weight": 24,
+          "power": 180,
+          "price": 1873,
+          "code": "OTO391010",
+          "modQty": 8
+        }
+      ]
+    },
+    {
+      "id": "p_mr3lp0aw",
+      "name": "Retail ShopWindow",
+      "modW": 320,
+      "modH": 160,
+      "resolutions": [
+        {
+          "id": "r_8iat6oo",
+          "label": "P4",
+          "pitch": 4
+        },
+        {
+          "id": "r_7dbiicy",
+          "label": "P3",
+          "pitch": 3
+        },
+        {
+          "id": "r_4nt0v94",
+          "label": "P2,5",
+          "pitch": 2.5
+        }
+      ],
+      "cabinets": [
+        {
+          "w": 640,
+          "h": 480,
+          "prices": {
+            "r_8iat6oo": 613,
+            "r_7dbiicy": 781,
+            "r_4nt0v94": 1053
+          },
+          "codes": {
+            "r_8iat6oo": "RSW406448",
+            "r_7dbiicy": "RSW306448",
+            "r_4nt0v94": "RSW256448"
+          },
+          "modQty": 6
+        },
+        {
+          "w": 640,
+          "h": 640,
+          "prices": {
+            "r_8iat6oo": 783,
+            "r_7dbiicy": 1016,
+            "r_4nt0v94": 1378
+          },
+          "codes": {
+            "r_8iat6oo": "RSW406464",
+            "r_7dbiicy": "RSW306464",
+            "r_4nt0v94": "RSW256464"
+          },
+          "modQty": 8
+        },
+        {
+          "w": 960,
+          "h": 480,
+          "prices": {
+            "r_8iat6oo": 849,
+            "r_7dbiicy": 1128,
+            "r_4nt0v94": 1535
+          },
+          "codes": {
+            "r_8iat6oo": "RSW409648",
+            "r_7dbiicy": "RSW309648",
+            "r_4nt0v94": "RSW259648"
+          },
+          "modQty": 9
+        },
+        {
+          "w": 960,
+          "h": 640,
+          "prices": {
+            "r_8iat6oo": 1135,
+            "r_7dbiicy": 1563,
+            "r_4nt0v94": 2016
+          },
+          "codes": {
+            "r_8iat6oo": "RSW409664",
+            "r_7dbiicy": "RSW309664",
+            "r_4nt0v94": "RSW259664"
+          },
+          "modQty": 12
+        }
+      ]
+    }
+  ],
+  "controllers": [
+    {
+      "id": "hd_a3l",
+      "model": "HD-A3L",
+      "maxTotal": 655350,
+      "maxBase": 8192,
+      "maxHeight": 2560,
+      "ports": 1,
+      "maxResPort": 655350,
+      "k4": "SI",
+      "price": 335,
+      "code": "CNTA3L"
+    },
+    {
+      "id": "hd_a4l",
+      "model": "HD-A4L",
+      "maxTotal": 655350,
+      "maxBase": 16384,
+      "maxHeight": 4096,
+      "ports": 2,
+      "maxResPort": 655350,
+      "k4": "SI",
+      "price": 600,
+      "code": "CNTA4L"
+    },
+    {
+      "id": "hd_a5l",
+      "model": "HD-A5L",
+      "maxTotal": 1300000,
+      "maxBase": 16384,
+      "maxHeight": 4096,
+      "ports": 2,
+      "maxResPort": 655350,
+      "k4": "SI",
+      "price": 800,
+      "code": "CNTA5L"
+    },
+    {
+      "id": "hd_a6l",
+      "model": "HD-A6L",
+      "maxTotal": 2600000,
+      "maxBase": 16384,
+      "maxHeight": 4096,
+      "ports": 4,
+      "maxResPort": 576000,
+      "k4": "SI",
+      "price": 950,
+      "code": "CNTA6L"
+    },
+    {
+      "id": "hd_a7",
+      "model": "HD-A7",
+      "maxTotal": 5160000,
+      "maxBase": 15360,
+      "maxHeight": 4096,
+      "ports": 8,
+      "maxResPort": 655350,
+      "k4": "-",
+      "price": 2550,
+      "code": "CNTA7L"
+    },
+    {
+      "id": "hd_a8",
+      "model": "HD-A8",
+      "maxTotal": 8294400,
+      "maxBase": 16384,
+      "maxHeight": 4096,
+      "ports": 8,
+      "maxResPort": 655350,
+      "k4": "-",
+      "price": 3275,
+      "code": "CNTA8L"
+    }
+  ]
+}
