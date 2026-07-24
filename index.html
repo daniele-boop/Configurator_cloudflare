@@ -2077,14 +2077,24 @@
     const f=e.target.files&&e.target.files[0];
     if(!f){ return; }
     const rd=new FileReader();
-    rd.onload=()=>{ try{ const obj=JSON.parse(rd.result);
-      if(obj&&Array.isArray(obj.products)){
-        const norm=normalizeDB(obj);
-        draft=norm.products;
-        draftControllers=norm.controllers;
-        if(typeof obj.password==="string"&&obj.password){ DB.password=obj.password; }
+    rd.onload=()=>{
+      let obj;
+      try{ obj=JSON.parse(rd.result); }
+      catch(err){ alert("Il file non è un JSON valido."); console.error("Import: JSON non valido:",err); return; }
+      if(!obj || !Array.isArray(obj.products)){ alert("File non valido: manca l'elenco prodotti."); return; }
+      const norm=normalizeDB(obj);
+      draft=norm.products;
+      draftControllers=norm.controllers;
+      if(typeof obj.password==="string"&&obj.password){ DB.password=obj.password; }
+      try{
         renderProdList(); renderCtrlAdmin();
-      } else alert("File non valido."); }catch(err){ alert("Impossibile leggere il file."); } };
+      }catch(err){
+        console.error("Import: errore nel ridisegno della lista:",err);
+        alert("Prodotti importati ("+draft.length+") ma la lista non si è aggiornata: "+(err&&err.message?err.message:err));
+      }
+      console.log("Import riuscito:",draft.length,"prodotti,",draftControllers.length,"controller");
+    };
+    rd.onerror=()=>{ alert("Impossibile leggere il file."); console.error("Import: FileReader error",rd.error); };
     rd.readAsText(f); e.target.value="";
   });
 
