@@ -2137,6 +2137,7 @@
     document.documentElement.setAttribute("data-theme",next);
     try{ localStorage.setItem("nseled-theme",next); }catch(e){}
   });
+  $("modToggle").addEventListener("click",()=>{ S.showModules=!S.showModules; render(); });
   $("rotToggle").addEventListener("click",()=>{
     S.rot=!S.rot;
     // il set di cabinet cambia: ricomponi da zero la griglia valida
