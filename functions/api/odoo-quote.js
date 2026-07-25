@@ -92,6 +92,9 @@ export async function onRequestPost({ request, env }) {
     if (typeof offer.wall3dPng === "string" && offer.wall3dPng.startsWith("data:image")) {
       note += `<p><b>Vista 3D</b><br/><img src="${offer.wall3dPng}" alt="Vista 3D parete LED" style="max-width:100%;height:auto;"/></p>`;
     }
+    if (typeof offer.mockupPng === "string" && offer.mockupPng.startsWith("data:image")) {
+      note += `<p><b>Mockup ambientato</b><br/><img src="${offer.mockupPng}" alt="Mockup parete LED" style="max-width:100%;height:auto;"/></p>`;
+    }
 
     const orderVals = {
       partner_id: partnerId,
@@ -136,6 +139,7 @@ export async function onRequestPost({ request, env }) {
     await attach(offer.sheetEngPng, "ENG");
     // istantanea 3D: allegata solo se presente (la vista 3D è opzionale)
     await attach(offer.wall3dPng, "3D", { prefix: "Parete", body: "Vista 3D della parete", optional: true });
+    await attach(offer.mockupPng, "MOCKUP", { prefix: "Mockup", body: "Mockup ambientato", optional: true });
 
     return json({ ok: true, order_id: orderId, name, url, attached, attachErrors }, 200, headers);
   } catch (err) {
