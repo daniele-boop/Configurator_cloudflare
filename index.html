@@ -75,9 +75,9 @@
   .adminbtn svg{width:13px;height:13px}
 
   .grid{display:grid;grid-template-columns:400px 1fr;gap:26px;align-items:start}
-  /* Mockup a tutta larghezza: la card anteprima sfonda la griglia e scende sotto le colonne */
-  .previewcard.mockwide{grid-column:1 / -1;order:99}
-  .previewcard.mockwide .stagemock{height:auto;max-height:none;aspect-ratio:16/9;min-height:0}
+  /* Mockup a tutta larghezza: il wrapper di destra sfonda la griglia e scende sotto le colonne */
+  .grid > .mockwide{grid-column:1 / -1;order:99}
+  .mockwide .stagemock{height:auto;max-height:none;aspect-ratio:16/9;min-height:0}
   @media(max-width:880px){.grid{grid-template-columns:1fr}}
 
   .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));
@@ -293,7 +293,9 @@
   .stagemock #cmock.moving{cursor:move}
   .mockdepth{position:absolute;left:12px;top:52px;background:rgba(255,255,255,.94);border-radius:10px;padding:10px 12px;z-index:16;font-family:var(--mono);font-size:11px;width:210px;color:#0f1622}
   .mockdepth[hidden]{display:none}
-  .mockdepth .mdlabel{font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#68738a;font-size:10px}
+  .mockdepth .mdlabel{font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#68738a;font-size:10px;display:flex;justify-content:space-between;align-items:center}
+  .mdclose{border:0;background:transparent;color:#68738a;font-family:var(--mono);font-size:13px;cursor:pointer;padding:0 2px;line-height:1}
+  .mdclose:hover{color:var(--ink)}
   .mockdepth label{display:block;margin:6px 0 2px;color:#68738a}
   .mockdepth input[type=range]{width:100%}
   .mdpad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
@@ -553,7 +555,7 @@
           <div class="mockhandle" data-i="0"></div><div class="mockhandle" data-i="1"></div>
           <div class="mockhandle" data-i="2"></div><div class="mockhandle" data-i="3"></div>
           <div class="mockdepth" id="mockdepth" hidden>
-            <span class="mdlabel">Spessore</span>
+            <span class="mdlabel">Spessore <button class="mdclose" id="mDepthClose" title="Chiudi">✕</button></span>
             <label>Profondità <span id="mvd">90 mm</span></label>
             <input type="range" id="mDepthRange" min="0" max="260" value="90">
             <label>Direzione fianchi</label>
@@ -2774,15 +2776,10 @@
       if(vidReady){
         // il video riempie l'intera faccia, deformato coi 4 angoli
         warpFill(vid, vid.videoWidth, vid.videoHeight);
-        // sopra il video: sole linee dei moduli + bordi cabinet (effetto schermo LED), senza coprire il video
-        CELLS.forEach(function(cl){
-          var p0=map(cl.x0,cl.y0),p1=map(cl.x1,cl.y0),p2=map(cl.x1,cl.y1),p3=map(cl.x0,cl.y1);
-          ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.lineTo(p3[0],p3[1]);ctx.closePath();
-          ctx.strokeStyle="rgba(15,22,34,.55)";ctx.lineWidth=1.2;ctx.stroke();
-          ctx.strokeStyle="rgba(255,255,255,.14)";ctx.lineWidth=1;var i;
-          for(i=1;i<cl.nx;i++){var t=i/cl.nx;var a=map(cl.x0+(cl.x1-cl.x0)*t,cl.y0),b=map(cl.x0+(cl.x1-cl.x0)*t,cl.y1);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
-          for(i=1;i<cl.ny;i++){var t2=i/cl.ny;var c=map(cl.x0,cl.y0+(cl.y1-cl.y0)*t2),d=map(cl.x1,cl.y0+(cl.y1-cl.y0)*t2);ctx.beginPath();ctx.moveTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.stroke();}
-        });
+        // solo il bordo esterno dello schermo (niente reticolo moduli: il video resta pulito)
+        var e0=map(0,0),e1=map(1,0),e2=map(1,1),e3=map(0,1);
+        ctx.strokeStyle="rgba(15,22,34,.75)";ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(e0[0],e0[1]);ctx.lineTo(e1[0],e1[1]);ctx.lineTo(e2[0],e2[1]);ctx.lineTo(e3[0],e3[1]);ctx.closePath();ctx.stroke();
       } else {
         CELLS.forEach(function(cl){
           var p0=map(cl.x0,cl.y0),p1=map(cl.x1,cl.y0),p2=map(cl.x1,cl.y1),p3=map(cl.x0,cl.y1);
@@ -2843,9 +2840,16 @@
 
       // modalità warp / spessore
       $("mModeWarp").addEventListener("click",function(){showDepth=false;this.classList.add("on");$("mModeDepth").classList.remove("on");stage.classList.add("warpon");$("mockdepth").hidden=true;draw();});
-      $("mModeDepth").addEventListener("click",function(){showDepth=true;this.classList.add("on");$("mModeWarp").classList.remove("on");stage.classList.remove("warpon");$("mockdepth").hidden=false;draw();});
+      $("mModeDepth").addEventListener("click",function(){
+        if(showDepth){ // già in spessore: ripremendo torno ad Adatta angoli e chiudo il pannello
+          showDepth=false;this.classList.remove("on");$("mModeWarp").classList.add("on");stage.classList.add("warpon");$("mockdepth").hidden=true;draw();
+        } else {
+          showDepth=true;this.classList.add("on");$("mModeWarp").classList.remove("on");stage.classList.remove("warpon");$("mockdepth").hidden=false;draw();
+        }
+      });
       $("mDepthRange").addEventListener("input",function(){depth=+this.value;$("mvd").textContent=depth+" mm";draw();});
       document.querySelectorAll(".mdpad button[data-d]").forEach(function(b){b.addEventListener("click",function(){document.querySelectorAll(".mdpad button").forEach(function(x){x.classList.remove("on");});this.classList.add("on");dirMode=this.dataset.d;draw();});});
+      $("mDepthClose")&&$("mDepthClose").addEventListener("click",function(){ showDepth=false;$("mModeDepth").classList.remove("on");$("mModeWarp").classList.add("on");stage.classList.add("warpon");$("mockdepth").hidden=true;draw(); });
 
       // lock, upload, scarica
       $("mLockbtn").addEventListener("click",function(){locked=!locked;this.setAttribute("aria-pressed",locked?"true":"false");this.textContent=locked?"🔒 Sblocca":"🔓 Blocca";$("mocklock").classList.toggle("on",locked);cv.classList.toggle("locked",locked);});
@@ -2890,7 +2894,7 @@
       if(!bgs.length){ var e=document.createElement("span");e.style.cssText="font-family:var(--mono);font-size:10.5px;color:#8793a1;padding:3px 6px";e.textContent="Nessuno sfondo salvato — usa ⬆ Foto cliente"; host.insertBefore(e,host.firstChild); }
     }
 
-    function previewCard(){ var s=$("stagemock"); return s?s.closest(".previewcard"):null; }
+    function previewCard(){ var s=$("stagemock"); if(!s) return null; var pc=s.closest(".previewcard"); return (pc&&pc.parentElement)?pc.parentElement:pc; }
     function show(){
       $("viewMock").classList.add("on"); $("viewFlat").classList.remove("on"); $("view3d").classList.remove("on");
       $("stage").hidden=true; $("stage3d").hidden=true; $("stagemock").hidden=false; visible=true;
