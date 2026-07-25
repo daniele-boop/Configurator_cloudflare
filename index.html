@@ -269,6 +269,8 @@
   .viewseg button.on{background:var(--signal-bg,rgba(55,195,209,.14));color:#0d7c88;font-weight:700}
   html[data-theme="light"] .viewseg button.on{background:rgba(55,195,209,.16);color:#0d7c88}
   .stage3d{position:relative;padding:0;overflow:hidden}
+  /* il mockup ha bisogno di più spazio verticale per lavorare sulla foto ambientata */
+  .stagemock{min-height:720px;height:82vh;max-height:1000px}
   .stage3d #c3d{width:100%;height:100%;display:block;cursor:grab}
   .stage3d #c3d.locked{cursor:default}.stage3d #c3d.panning{cursor:move}
   .stage3d #c3d:active{cursor:grabbing}.stage3d #c3d.locked:active{cursor:default}
@@ -296,6 +298,15 @@
   .mdpad button.on{border-color:var(--teal,#37c3d1);background:rgba(55,195,209,.16);color:#0d7c88}
   .mdpad .sp{visibility:hidden}
   .mockseg{margin-right:2px}
+  .mockcontent{position:absolute;left:12px;bottom:56px;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:10px;padding:10px 12px;z-index:16;display:flex;gap:14px;max-width:80%;flex-wrap:wrap}
+  .mockcontent[hidden]{display:none}
+  .mockcontent .mclabel{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);display:block;margin-bottom:6px}
+  .mcscenes{display:flex;gap:6px;flex-wrap:wrap;max-width:520px}
+  .mcscenes button{font-family:var(--mono);font-size:11px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);cursor:pointer}
+  .mcscenes button.on{border-color:var(--teal,#37c3d1);background:rgba(55,195,209,.15);color:#0d7c88;font-weight:700}
+  .mccol{display:flex;flex-direction:column;gap:6px}
+  .mcrow{display:flex;gap:6px;flex-wrap:wrap}
+  .mchint{font-family:var(--mono);font-size:10px;color:var(--muted-2);max-width:300px;line-height:1.4}
   .stagemock #mockbg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;transform-origin:center center}
   .stagemock #cmock{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
   .stagemock #cmock.locked{cursor:default}.stagemock #cmock.panning{cursor:move}
@@ -563,10 +574,22 @@
           </div>
           <div class="d3bar">
             <span class="viewseg mockseg"><button id="mModeWarp" class="on">Adatta angoli</button><button id="mModeDepth">Applica spessore</button></span>
-            <button class="modtoggle" id="mUpload">⬆ Foto cliente</button>
+            <button class="modtoggle" id="mContent">🎬 Contenuto schermo</button>
+            <button class="modtoggle" id="mUpload">⬆ Foto ambiente</button>
             <button class="modtoggle" id="mLockbtn" aria-pressed="false">🔓 Blocca</button>
             <button class="modtoggle" id="mShot">📷 Scarica</button>
             <input type="file" id="mockFile" accept="image/*" hidden>
+            <input type="file" id="mockVidFile" accept="video/*" hidden>
+          </div>
+          <div class="mockcontent" id="mockContentPanel" hidden>
+            <div class="mccol">
+              <span class="mclabel">Contenuto nello schermo</span>
+              <div class="mcrow">
+                <button class="modtoggle" id="mVidUpload">⬆ Carica video del cliente</button>
+                <button class="modtoggle" id="mVidClear">✕ Togli contenuto</button>
+              </div>
+              <span class="mchint">Il video si vede nello schermo durante la presentazione. Nell'istantanea per l'offerta appare un fotogramma.</span>
+            </div>
           </div>
           <div class="d3err" id="mockerr" hidden>Motore non caricato. Torna a “Piatto”.</div>
         </div>
@@ -2686,6 +2709,53 @@
       return [m[0]*f, m[1]*f];
     }
 
+    // ---- VIDEO nello schermo: warp del frame su triangoli, riproduzione fluida ----
+    var vid=null, hasVideo=false, VGRID=5, rvfcOn=false;
+    function ensureVideoEl(){
+      if(vid) return vid;
+      vid=document.createElement("video");
+      vid.playsInline=true; vid.loop=true; vid.muted=true; vid.setAttribute("playsinline",""); vid.crossOrigin="anonymous";
+      vid.style.display="none"; document.body.appendChild(vid);
+      return vid;
+    }
+    function setVideoSrc(src){
+      ensureVideoEl();
+      try{ vid.src=src; var p=vid.play(); if(p&&p.then){p.then(function(){hasVideo=true;startVideoLoop();}).catch(function(){hasVideo=true;startVideoLoop();});} else {hasVideo=true;startVideoLoop();} }
+      catch(e){ hasVideo=false; }
+    }
+    function clearVideo(){ hasVideo=false; if(vid){ try{vid.pause();}catch(e){} vid.removeAttribute("src"); try{vid.load();}catch(e){} } draw(); }
+    function startVideoLoop(){
+      if(!hasVideo) return;
+      if(("requestVideoFrameCallback" in HTMLVideoElement.prototype) && !rvfcOn){
+        rvfcOn=true;
+        var step=function(){ if(hasVideo && visible){ draw(); } if(hasVideo){ vid.requestVideoFrameCallback(step); } else { rvfcOn=false; } };
+        vid.requestVideoFrameCallback(step);
+      } else if(!("requestVideoFrameCallback" in HTMLVideoElement.prototype)) {
+        var raf=function(){ if(hasVideo){ if(visible) draw(); requestAnimationFrame(raf);} };
+        requestAnimationFrame(raf);
+      }
+    }
+    function drawTri(img,sx0,sy0,sx1,sy1,sx2,sy2,dx0,dy0,dx1,dy1,dx2,dy2){
+      ctx.save();
+      ctx.beginPath();ctx.moveTo(dx0,dy0);ctx.lineTo(dx1,dy1);ctx.lineTo(dx2,dy2);ctx.closePath();ctx.clip();
+      var den=sx0*(sy2-sy1)-sx1*sy2+sx2*sy1+(sx1-sx2)*sy0; if(den===0){ctx.restore();return;}
+      var a=-(sy0*(dx2-dx1)-sy1*dx2+sy2*dx1+(sy1-sy2)*dx0)/den;
+      var b=(sy1*dy2+sy0*(dy1-dy2)-sy2*dy1+(sy2-sy1)*dy0)/den;
+      var c=(sx0*(dx2-dx1)-sx1*dx2+sx2*dx1+(sx1-sx2)*dx0)/den;
+      var d=-(sx1*dy2+sx0*(dy1-dy2)-sx2*dy1+(sx2-sx1)*dy0)/den;
+      var e=(sx0*(sy2*dx1-sy1*dx2)+sy0*(sx1*dx2-sx2*dx1)+(sx2*sy1-sx1*sy2)*dx0)/den;
+      var f=(sx0*(sy2*dy1-sy1*dy2)+sy0*(sx1*dy2-sx2*dy1)+(sx2*sy1-sx1*sy2)*dy0)/den;
+      ctx.transform(a,b,c,d,e,f); ctx.drawImage(img,0,0); ctx.restore();
+    }
+    function warpFill(img,iw,ih){
+      for(var i=0;i<VGRID;i++)for(var j=0;j<VGRID;j++){
+        var u0=i/VGRID,u1=(i+1)/VGRID,v0=j/VGRID,v1=(j+1)/VGRID;
+        var d00=map(u0,v0),d10=map(u1,v0),d11=map(u1,v1),d01=map(u0,v1);
+        drawTri(img,u0*iw,v0*ih,u1*iw,v0*ih,u1*iw,v1*ih, d00[0],d00[1],d10[0],d10[1],d11[0],d11[1]);
+        drawTri(img,u0*iw,v0*ih,u1*iw,v1*ih,u0*iw,v1*ih, d00[0],d00[1],d11[0],d11[1],d01[0],d01[1]);
+      }
+    }
+
     function draw(){
       if(!ready||!dst)return;
       computeH();
@@ -2697,14 +2767,29 @@
         ctx.fillStyle="#5f6b78";ctx.strokeStyle="#2a3340";ctx.lineWidth=1;
         [[0,1],[1,2],[2,3],[3,0]].forEach(function(q){var a=fc[q[0]],b=fc[q[1]],c=bc[q[1]],d=bc[q[0]];ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.closePath();ctx.fill();ctx.stroke();});
       }
-      CELLS.forEach(function(cl){
-        var p0=map(cl.x0,cl.y0),p1=map(cl.x1,cl.y0),p2=map(cl.x1,cl.y1),p3=map(cl.x0,cl.y1);
-        ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.lineTo(p3[0],p3[1]);ctx.closePath();
-        ctx.fillStyle="#8a97a5";ctx.fill();ctx.strokeStyle="#2a3340";ctx.lineWidth=1.4;ctx.stroke();
-        ctx.strokeStyle="rgba(255,255,255,.30)";ctx.lineWidth=1;var i;
-        for(i=1;i<cl.nx;i++){var t=i/cl.nx;var a=map(cl.x0+(cl.x1-cl.x0)*t,cl.y0),b=map(cl.x0+(cl.x1-cl.x0)*t,cl.y1);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
-        for(i=1;i<cl.ny;i++){var t2=i/cl.ny;var c=map(cl.x0,cl.y0+(cl.y1-cl.y0)*t2),d=map(cl.x1,cl.y0+(cl.y1-cl.y0)*t2);ctx.beginPath();ctx.moveTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.stroke();}
-      });
+      var vidReady = hasVideo && vid && vid.readyState>=2 && vid.videoWidth>0;
+      if(vidReady){
+        // il video riempie l'intera faccia, deformato coi 4 angoli
+        warpFill(vid, vid.videoWidth, vid.videoHeight);
+        // sopra il video: sole linee dei moduli + bordi cabinet (effetto schermo LED), senza coprire il video
+        CELLS.forEach(function(cl){
+          var p0=map(cl.x0,cl.y0),p1=map(cl.x1,cl.y0),p2=map(cl.x1,cl.y1),p3=map(cl.x0,cl.y1);
+          ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.lineTo(p3[0],p3[1]);ctx.closePath();
+          ctx.strokeStyle="rgba(15,22,34,.55)";ctx.lineWidth=1.2;ctx.stroke();
+          ctx.strokeStyle="rgba(255,255,255,.14)";ctx.lineWidth=1;var i;
+          for(i=1;i<cl.nx;i++){var t=i/cl.nx;var a=map(cl.x0+(cl.x1-cl.x0)*t,cl.y0),b=map(cl.x0+(cl.x1-cl.x0)*t,cl.y1);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+          for(i=1;i<cl.ny;i++){var t2=i/cl.ny;var c=map(cl.x0,cl.y0+(cl.y1-cl.y0)*t2),d=map(cl.x1,cl.y0+(cl.y1-cl.y0)*t2);ctx.beginPath();ctx.moveTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.stroke();}
+        });
+      } else {
+        CELLS.forEach(function(cl){
+          var p0=map(cl.x0,cl.y0),p1=map(cl.x1,cl.y0),p2=map(cl.x1,cl.y1),p3=map(cl.x0,cl.y1);
+          ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.lineTo(p3[0],p3[1]);ctx.closePath();
+          ctx.fillStyle="#8a97a5";ctx.fill();ctx.strokeStyle="#2a3340";ctx.lineWidth=1.4;ctx.stroke();
+          ctx.strokeStyle="rgba(255,255,255,.30)";ctx.lineWidth=1;var i;
+          for(i=1;i<cl.nx;i++){var t=i/cl.nx;var a=map(cl.x0+(cl.x1-cl.x0)*t,cl.y0),b=map(cl.x0+(cl.x1-cl.x0)*t,cl.y1);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+          for(i=1;i<cl.ny;i++){var t2=i/cl.ny;var c=map(cl.x0,cl.y0+(cl.y1-cl.y0)*t2),d=map(cl.x1,cl.y0+(cl.y1-cl.y0)*t2);ctx.beginPath();ctx.moveTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.stroke();}
+        });
+      }
       var hs=document.querySelectorAll(".mockhandle");
       [0,1,2,3].forEach(function(i){if(hs[i]){hs[i].style.left=dst[i][0]+"px";hs[i].style.top=dst[i][1]+"px";}});
     }
@@ -2764,6 +2849,13 @@
       $("mUpload").addEventListener("click",function(){$("mockFile").click();});
       $("mockFile").addEventListener("change",function(e){var f=e.target.files&&e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){bgimg.src=rd.result;bgimg.style.display="block";resetPhoto();document.querySelectorAll("#mockscenes button").forEach(function(x){x.classList.remove("on");});};rd.readAsDataURL(f);e.target.value="";});
       $("mShot").addEventListener("click",snapshotDownload);
+
+      // --- contenuti video nello schermo ---
+      function closeContentPanel(){ $("mockContentPanel").hidden=true; $("mContent").classList.remove("on"); }
+      $("mContent").addEventListener("click",function(){ var p=$("mockContentPanel"); p.hidden=!p.hidden; this.classList.toggle("on",!p.hidden); });
+      $("mVidUpload").addEventListener("click",function(){ $("mockVidFile").click(); });
+      $("mockVidFile").addEventListener("change",function(e){ var f=e.target.files&&e.target.files[0]; if(!f) return; setVideoSrc(URL.createObjectURL(f)); closeContentPanel(); e.target.value=""; });
+      $("mVidClear").addEventListener("click",function(){ clearVideo(); closeContentPanel(); });
       ready=true;
     }
 
