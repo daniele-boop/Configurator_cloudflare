@@ -282,6 +282,15 @@
   .d3bar{position:absolute;left:12px;bottom:12px;display:flex;gap:7px}
   .d3err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:var(--mono);font-size:12px;color:var(--muted-2);background:var(--panel-2)}
   .d3err[hidden]{display:none}
+  .stagemock #mockbg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;transform-origin:center center}
+  .stagemock #cmock{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+  .stagemock #cmock.locked{cursor:default}.stagemock #cmock.panning{cursor:move}
+  .mockphototools{left:12px !important;right:auto !important;bottom:12px}
+  .mockscenes{position:absolute;left:12px;top:10px;display:flex;gap:6px;flex-wrap:wrap;max-width:64%;background:rgba(255,255,255,.86);padding:6px;border-radius:9px}
+  .mockscenes button{font-family:var(--mono);font-size:11px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;background:#fff;color:#0f1622;cursor:pointer}
+  .mockscenes button.on{border-color:var(--teal);background:rgba(55,195,209,.15);color:#0d7c88;font-weight:700}
+  .mocklock{position:absolute;right:12px;top:10px;font-family:var(--mono);font-size:10.5px;color:#0d7c88;background:rgba(55,195,209,.16);padding:4px 9px;border-radius:6px;display:none}
+  .mocklock.on{display:block}
   .headbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .modtoggle{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);background:var(--panel-2);
     color:var(--muted);border-radius:8px;padding:6px 11px;cursor:pointer;transition:.13s}
@@ -484,7 +493,7 @@
         <div class="previewhead">
           <p class="eyebrow" style="margin:0">Anteprima in scala</p>
           <div class="headbtns">
-            <span class="viewseg" id="viewSeg" hidden><button id="viewFlat" class="on">Piatto</button><button id="view3d">3D</button></span>
+            <span class="viewseg" id="viewSeg" hidden><button id="viewFlat" class="on">Piatto</button><button id="view3d">3D</button><button id="viewMock">Mockup</button></span>
             <button class="modtoggle" id="rotToggle" hidden aria-pressed="false" title="Ruota tutti i cabinet di 90°">⟳ Ruota i cabinet di 90°</button>
             <button class="modtoggle" id="modToggle" hidden aria-pressed="true">Moduli: on</button>
           </div>
@@ -507,6 +516,31 @@
             <button class="modtoggle" id="d3lockbtn" aria-pressed="false">🔓 Blocca vista</button>
           </div>
           <div class="d3err" id="d3err" hidden>Motore 3D non caricato (rete assente). Torna a “Piatto”.</div>
+        </div>
+        <div class="stage stage3d stagemock" id="stagemock" hidden>
+          <img id="mockbg" alt="sfondo mockup">
+          <canvas id="cmock"></canvas>
+          <div class="mockscenes" id="mockscenes"></div>
+          <div class="mocklock" id="mocklock">● bloccato</div>
+          <div class="d3tools mockphototools">
+            <button id="mpZin" title="Ingrandisci foto">🖼+</button>
+            <button id="mpZout" title="Riduci foto">🖼−</button>
+            <button id="mpMove" title="Sposta foto">✥</button>
+            <button id="mpReset" title="Reset foto">⤢</button>
+          </div>
+          <div class="d3tools">
+            <button id="mLed" class="on" title="Sposta LED">✋</button>
+            <button id="mZin" title="Ingrandisci LED">+</button>
+            <button id="mZout" title="Riduci LED">−</button>
+            <button id="mReset" title="Centra LED">⤢</button>
+          </div>
+          <div class="d3bar">
+            <button class="modtoggle" id="mUpload">⬆ Foto cliente</button>
+            <button class="modtoggle" id="mLockbtn" aria-pressed="false">🔓 Blocca</button>
+            <button class="modtoggle" id="mShot">📷 Scarica</button>
+            <input type="file" id="mockFile" accept="image/*" hidden>
+          </div>
+          <div class="d3err" id="mockerr" hidden>Motore 3D non caricato. Torna a “Piatto”.</div>
         </div>
         <div class="metrics" id="metrics" hidden>
           <div class="metric"><div class="k">Dimensione</div><div class="v" id="mSize">—</div></div>
@@ -630,6 +664,20 @@
           <div class="rowbtns" style="margin-top:10px">
             <button class="btn ghost sm" id="addCtrl">Aggiungi controller</button>
             <button class="btn ghost sm" id="seedHuidu">Aggiungi modelli Huidu</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="adminsec">
+        <h3>Sfondi mockup</h3>
+        <p class="sub" style="margin:0 0 12px">Foto di ambienti usate nella vista <b>Mockup</b> per posizionare la parete LED. I commerciali le scelgono come sfondo (oltre a poter caricare una foto del cliente al volo). Le immagini vengono compresse automaticamente.</p>
+        <div id="bgAdminList"></div>
+        <div class="ctrladd">
+          <div class="add-title">+ Aggiungi sfondo</div>
+          <div class="rowbtns" style="margin-top:6px">
+            <input id="bg-name" placeholder="Nome sfondo (es. Hall uffici)" style="flex:1;min-width:180px">
+            <button class="btn ghost sm" id="bgAddBtn">Carica foto…</button>
+            <input type="file" id="bgFile" accept="image/*" hidden>
           </div>
         </div>
       </div>
@@ -786,7 +834,12 @@
           }))
         };
       }),
-      controllers: normControllers(j.controllers)
+      controllers: normControllers(j.controllers),
+      backgrounds: (Array.isArray(j.backgrounds)?j.backgrounds:[]).filter(b=>b&&typeof b.img==="string"&&b.img.slice(0,11)==="data:image/").map(b=>({
+        id:b.id||("bg_"+Math.random().toString(36).slice(2,9)),
+        name:(typeof b.name==="string"&&b.name.trim())?b.name.trim():"Sfondo",
+        img:b.img
+      }))
     };
   }
 
@@ -1324,7 +1377,7 @@
     const canRot = p && (p.cabinets||[]).some(c=>c.w!==c.h);
     $("rotToggle").hidden = !(has && canRot);
     if(has && canRot){ $("rotToggle").setAttribute("aria-pressed", S.rot?"true":"false"); $("rotToggle").textContent = S.rot ? "⟳ Cabinet ruotati 90°" : "⟳ Ruota i cabinet di 90°"; }
-    if(!has){ $("stage").innerHTML='<div class="empty"><b>Nessuna configurazione</b>Scegli un prodotto con cabinet e inserisci base e altezza</div>'; $("warnBox").hidden=true; $("ratioSuggest").hidden=true; $("viewSeg").hidden=true; if(window.__wall3d) window.__wall3d.forceFlat(); return; }
+    if(!has){ $("stage").innerHTML='<div class="empty"><b>Nessuna configurazione</b>Scegli un prodotto con cabinet e inserisci base e altezza</div>'; $("warnBox").hidden=true; $("ratioSuggest").hidden=true; $("viewSeg").hidden=true; if(window.__wall3d) window.__wall3d.forceFlat(); if(window.__mockup) window.__mockup.forceFlat(); return; }
 
     const eW=engine(p.cabinets.map(c=>c.w)), eH=engine(p.cabinets.map(c=>c.h));
     const solW0=eW.solve(S.reqW), solH0=eH.solve(S.reqH);
@@ -1592,6 +1645,7 @@
     $("stage").innerHTML="";$("stage").appendChild(svg);
     $("viewSeg").hidden=false;
     if(window.__wall3d) window.__wall3d.onConfigChange(cols.slice(), rows.slice(), currentProduct());
+    if(window.__mockup) window.__mockup.onConfigChange(cols.slice(), rows.slice(), currentProduct());
 
     if(missing.size){
       $("warnBox").hidden=false;
@@ -1792,9 +1846,9 @@
   $("closeAdmin").addEventListener("click",closeAdmin);
   overlay.addEventListener("click",e=>{ if(e.target===overlay) closeAdmin(); });
 
-  let draft=null; let draftControllers=null;
+  let draft=null; let draftControllers=null; let draftBackgrounds=null;
   function tryEnter(){
-    if($("pwInput").value===DB.password){ draft=JSON.parse(JSON.stringify(DB.products)); draftControllers=JSON.parse(JSON.stringify(DB.controllers||[])); $("lockView").classList.add("hidden"); $("panelView").classList.remove("hidden"); renderProdList(); renderCtrlAdmin(); }
+    if($("pwInput").value===DB.password){ draft=JSON.parse(JSON.stringify(DB.products)); draftControllers=JSON.parse(JSON.stringify(DB.controllers||[])); draftBackgrounds=JSON.parse(JSON.stringify(DB.backgrounds||[])); $("lockView").classList.add("hidden"); $("panelView").classList.remove("hidden"); renderProdList(); renderCtrlAdmin(); renderBgAdmin(); }
     else { $("pwErr").textContent="Password errata."; }
   }
   $("pwEnter").addEventListener("click",tryEnter);
@@ -2046,18 +2100,49 @@
     HUIDU_SEED.forEach(h=>{ if(!draftControllers.some(c=>(c.model||"").toUpperCase()===h.model.toUpperCase())){ draftControllers.push(Object.assign({},h,{id:"c_"+Math.random().toString(36).slice(2,9)})); } });
     renderCtrlAdmin();
   });
+
+  // ---- admin sfondi mockup ----
+  function renderBgAdmin(){
+    const host=$("bgAdminList"); if(!host) return; host.innerHTML="";
+    (draftBackgrounds||[]).forEach((b,bi)=>{
+      const row=document.createElement("div"); row.className="ctrlrow";
+      const thumb=document.createElement("img"); thumb.src=b.img; thumb.style.cssText="width:64px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--line)";
+      const nm=document.createElement("input"); nm.type="text"; nm.value=b.name; nm.style.cssText="flex:1;min-width:140px"; nm.addEventListener("input",()=>b.name=nm.value);
+      const up=document.createElement("button"); up.className="btn ghost sm"; up.textContent="▲"; up.title="Su";
+      up.addEventListener("click",()=>{ if(bi>0){ const t=draftBackgrounds[bi-1]; draftBackgrounds[bi-1]=draftBackgrounds[bi]; draftBackgrounds[bi]=t; renderBgAdmin(); } });
+      const dn=document.createElement("button"); dn.className="btn ghost sm"; dn.textContent="▼"; dn.title="Giù";
+      dn.addEventListener("click",()=>{ if(bi<draftBackgrounds.length-1){ const t=draftBackgrounds[bi+1]; draftBackgrounds[bi+1]=draftBackgrounds[bi]; draftBackgrounds[bi]=t; renderBgAdmin(); } });
+      const rm=document.createElement("button"); rm.className="btn ghost sm"; rm.textContent="Elimina";
+      rm.addEventListener("click",()=>{ draftBackgrounds.splice(bi,1); renderBgAdmin(); });
+      row.append(thumb,nm,up,dn,rm);
+      host.appendChild(row);
+    });
+    if(!(draftBackgrounds||[]).length){ const e=document.createElement("div"); e.className="sub"; e.style.opacity=".7"; e.textContent="Nessuno sfondo. Aggiungine uno per abilitarlo nella vista Mockup."; host.appendChild(e); }
+  }
+  $("bgAddBtn") && $("bgAddBtn").addEventListener("click",()=>$("bgFile").click());
+  $("bgFile") && $("bgFile").addEventListener("change",e=>{
+    const f=e.target.files&&e.target.files[0]; if(!f) return;
+    downscaleImage(f,1600,dataUrl=>{
+      const name=($("bg-name").value.trim())||("Sfondo "+((draftBackgrounds||[]).length+1));
+      if(!draftBackgrounds) draftBackgrounds=[];
+      draftBackgrounds.push({id:"bg_"+Date.now().toString(36),name,img:dataUrl});
+      $("bg-name").value=""; renderBgAdmin();
+    });
+    e.target.value="";
+  });
   $("panelSave").addEventListener("click",()=>{
     DB.products=draft.filter(p=>p.name.trim());
     if(!DB.products.length) DB.products=JSON.parse(JSON.stringify(DEFAULTS.products));
     DB.controllers=normControllers(draftControllers||[]);
+    DB.backgrounds=(draftBackgrounds||[]).filter(b=>b&&b.img);
     save();
     if(!DB.products.find(p=>p.id===S.productId)){ S.productId=DB.products[0].id; }
-    S.selWc=S.selHc=null; fillProductSelect(); render(); closeAdmin();
+    S.selWc=S.selHc=null; fillProductSelect(); render(); if(window.__mockup)window.__mockup.refreshScenes(); closeAdmin();
   });
   $("panelClose").addEventListener("click",closeAdmin);
 
   $("exportBtn").addEventListener("click",()=>{
-    const data=JSON.stringify({password:DB.password, products:draft||DB.products, controllers:draftControllers||DB.controllers||[]},null,2);
+    const data=JSON.stringify({password:DB.password, products:draft||DB.products, controllers:draftControllers||DB.controllers||[], backgrounds:draftBackgrounds||DB.backgrounds||[]},null,2);
     const blob=new Blob([data],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="catalog.json";a.click();URL.revokeObjectURL(a.href);
   });
@@ -2069,7 +2154,8 @@
     if(!token.trim()){ msg.className="odoostatus err"; msg.textContent="Token mancante."; return; }
     const products=(draft||DB.products).filter(p=>p.name.trim());
     const controllers=normControllers(draftControllers||DB.controllers||[]);
-    const catalog={ password:DB.password, products, controllers };
+    const backgrounds=(draftBackgrounds||DB.backgrounds||[]).filter(b=>b&&b.img);
+    const catalog={ password:DB.password, products, controllers, backgrounds };
     msg.className="odoostatus wait"; msg.textContent="Salvataggio sul sito in corso…";
     try{
       const r=await fetch("/api/save-catalog",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:token.trim(),catalog})});
@@ -2078,6 +2164,8 @@
         // applica subito anche in locale, così pannello e pagina restano allineati
         if(products.length) DB.products=JSON.parse(JSON.stringify(products));
         DB.controllers=JSON.parse(JSON.stringify(controllers));
+        DB.backgrounds=JSON.parse(JSON.stringify(backgrounds));
+        if(window.__mockup) window.__mockup.refreshScenes();
         catalogSource="cloud"; save();
         if(!DB.products.find(p=>p.id===S.productId)){ S.productId=DB.products[0].id; }
         draft=JSON.parse(JSON.stringify(DB.products));
@@ -2158,9 +2246,10 @@
       const norm=normalizeDB(obj);
       draft=norm.products;
       draftControllers=norm.controllers;
+      draftBackgrounds=norm.backgrounds||[];
       if(typeof obj.password==="string"&&obj.password){ DB.password=obj.password; }
       try{
-        renderProdList(); renderCtrlAdmin();
+        renderProdList(); renderCtrlAdmin(); renderBgAdmin();
       }catch(err){
         console.error("Import: errore nel ridisegno della lista:",err);
         alert("Prodotti importati ("+draft.length+") ma la lista non si è aggiornata: "+(err&&err.message?err.message:err));
@@ -2242,6 +2331,8 @@
       off.previewPng = wallPreviewPng();  // disegno tecnico piatto per il campo note
       // istantanea 3D dell'inquadratura corrente, se la vista 3D è stata usata
       off.wall3dPng = (window.__wall3d && window.__wall3d.snapshot) ? window.__wall3d.snapshot() : null;
+      // mockup ambientato (se la vista Mockup è attiva): composizione foto + LED
+      off.mockupPng = await new Promise(res=>{ if(window.__mockup && window.__mockup.isVisible()){ window.__mockup.composeTo(res); } else res(null); });
       // schede tecniche complete (ITA + ENG) come PNG da allegare
       try{ off.sheetItaPng = await sheetToPng("it"); }catch(e){ off.sheetItaPng=null; }
       try{ off.sheetEngPng = await sheetToPng("en"); }catch(e){ off.sheetEngPng=null; }
@@ -2505,6 +2596,161 @@
       },
       isReady:function(){ return ready; },
       wasUsed:function(){ return ready; }
+    };
+  })();
+
+  /* ================= VISTA MOCKUP (LED 3D sopra una foto) =================
+     Riusa un motore 3D con canvas trasparente e la foto dietro. Foto e LED hanno
+     controlli indipendenti (due barre). Three.js già caricato dal modulo 3D o qui. */
+  (function(){
+    var THREE_URL="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+    var loaded=false, loading=false, ready=false, visible=false, dirty=true;
+    var sc,camera,renderer,pivot,group,cv,stage,bgimg;
+    var cols=[], rows=[], DEPTH=90, totalW=0, totalH=0, maxDim=1;
+    var rot={x:0,y:0}, dist=1000, pan={x:0,y:0}, ph={scale:1,x:0,y:0};
+    var mode="led", locked=false, drag=false, px=0,py=0, photoMove=false, pdrag=false;
+    var mats={};
+    function $(id){return document.getElementById(id);}
+
+    function loadThree(cb){
+      if(window.THREE){cb(true);return;}
+      if(loaded){cb(!!window.THREE);return;}
+      if(loading){var t=setInterval(function(){if(!loading){clearInterval(t);cb(!!window.THREE);}},80);return;}
+      loading=true;var s=document.createElement("script");s.src=THREE_URL;
+      s.onload=function(){loaded=true;loading=false;cb(!!window.THREE);};
+      s.onerror=function(){loaded=true;loading=false;cb(false);};
+      document.head.appendChild(s);
+    }
+    function initScene(){
+      var THREE=window.THREE; cv=$("cmock"); stage=$("stagemock"); bgimg=$("mockbg");
+      sc=new THREE.Scene();
+      camera=new THREE.PerspectiveCamera(38,1,1,600000);
+      renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});
+      renderer.setClearColor(0x000000,0); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+      sc.add(new THREE.AmbientLight(0xffffff,0.82));
+      var k=new THREE.DirectionalLight(0xffffff,0.5);k.position.set(1,1.4,1.2);sc.add(k);
+      pivot=new THREE.Group();group=new THREE.Group();pivot.add(group);sc.add(pivot);
+      mats.std=new THREE.MeshLambertMaterial({color:0x8a97a5});
+      mats.side=new THREE.MeshLambertMaterial({color:0x5f6b78});
+      mats.edge=new THREE.LineBasicMaterial({color:0x2a3340});
+      mats.mod=new THREE.LineBasicMaterial({color:0xffffff,opacity:0.35,transparent:true});
+      bindEvents();
+      (function loop(){requestAnimationFrame(loop);if(renderer&&visible)renderer.render(sc,camera);})();
+      ready=true;
+    }
+    function clearGroup(){ if(!group)return; for(var i=group.children.length-1;i>=0;i--){var o=group.children[i];group.remove(o);if(o.geometry)o.geometry.dispose();} }
+    function build(){
+      var THREE=window.THREE; clearGroup();
+      totalW=cols.reduce(function(a,b){return a+b;},0); totalH=rows.reduce(function(a,b){return a+b;},0); maxDim=Math.max(totalW,totalH,1);
+      var y0=0;
+      for(var r=0;r<rows.length;r++){var x0=0,hmm=rows[r];
+        for(var c=0;c<cols.length;c++){var wmm=cols[c];
+          var geo=new THREE.BoxGeometry(wmm,hmm,DEPTH);
+          var mesh=new THREE.Mesh(geo,[mats.side,mats.side,mats.side,mats.side,mats.std,mats.side]);
+          mesh.position.set(x0+wmm/2-totalW/2,(totalH-(y0+hmm/2))-totalH/2,0);group.add(mesh);
+          var eg=new THREE.LineSegments(new THREE.EdgesGeometry(geo),mats.edge);eg.position.copy(mesh.position);group.add(eg);
+          var nx=Math.max(1,Math.round(wmm/320)),ny=Math.max(1,Math.round(hmm/160)),z=DEPTH/2+0.6,pts=[],bx=x0-totalW/2,by=(totalH-(y0+hmm))-totalH/2;
+          for(var i=1;i<nx;i++){var mx=bx+wmm*i/nx;pts.push(new THREE.Vector3(mx,by,z),new THREE.Vector3(mx,by+hmm,z));}
+          for(var j=1;j<ny;j++){var my=by+hmm*j/ny;pts.push(new THREE.Vector3(bx,my,z),new THREE.Vector3(bx+wmm,my,z));}
+          if(pts.length)group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),mats.mod));
+          x0+=wmm;
+        } y0+=hmm; }
+      dist=maxDim*1.7; reset();
+    }
+    function apply(){ if(!ready)return; group.rotation.x=rot.x;group.rotation.y=rot.y;pivot.position.set(pan.x,pan.y,0);camera.position.set(0,0,dist);camera.lookAt(0,0,0); }
+    function reset(){ rot.x=0;rot.y=0;pan.x=0;pan.y=0;dist=maxDim*1.7;apply(); }
+    function resize(){ if(!ready||!visible)return; var w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();apply(); }
+    function applyPhoto(){ if(bgimg) bgimg.style.transform="translate("+ph.x+"px,"+ph.y+"px) scale("+ph.scale+")"; }
+    function resetPhoto(){ ph.scale=1;ph.x=0;ph.y=0;applyPhoto(); }
+
+    function bindEvents(){
+      cv.addEventListener("mousedown",function(e){if(locked)return; if(photoMove){pdrag=true;px=e.clientX;py=e.clientY;return;} drag=true;px=e.clientX;py=e.clientY;});
+      window.addEventListener("mouseup",function(){drag=false;pdrag=false;});
+      window.addEventListener("mousemove",function(e){
+        if(locked)return;
+        if(pdrag){ph.x+=(e.clientX-px);ph.y+=(e.clientY-py);px=e.clientX;py=e.clientY;applyPhoto();return;}
+        if(!drag)return; var dx=e.clientX-px,dy=e.clientY-py;
+        if(mode==="ledmove"){var s=dist/stage.clientHeight*0.9;pan.x+=dx*s;pan.y-=dy*s;}
+        else{rot.y+=dx*0.006;rot.x+=dy*0.006;rot.x=Math.max(-0.9,Math.min(0.9,rot.x));}
+        px=e.clientX;py=e.clientY;apply();
+      });
+      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();dist*=(e.deltaY>0?1.07:0.94);dist=Math.max(maxDim*0.3,Math.min(maxDim*8,dist));apply();},{passive:false});
+      // touch base (1 dito = azione corrente)
+      cv.addEventListener("touchstart",function(e){if(locked||e.touches.length!==1)return;var t=e.touches[0];if(photoMove){pdrag=true;}else{drag=true;}px=t.clientX;py=t.clientY;},{passive:true});
+      cv.addEventListener("touchmove",function(e){if(locked||e.touches.length!==1)return;var t=e.touches[0];if(pdrag){ph.x+=(t.clientX-px);ph.y+=(t.clientY-py);px=t.clientX;py=t.clientY;applyPhoto();return;}if(!drag)return;var dx=t.clientX-px,dy=t.clientY-py;if(mode==="ledmove"){var s=dist/stage.clientHeight*0.9;pan.x+=dx*s;pan.y-=dy*s;}else{rot.y+=dx*0.006;rot.x+=dy*0.006;rot.x=Math.max(-0.9,Math.min(0.9,rot.x));}px=t.clientX;py=t.clientY;apply();},{passive:true});
+      cv.addEventListener("touchend",function(){drag=false;pdrag=false;});
+
+      var mLed=$("mLed"); mLed.classList.add("on");
+      mLed.addEventListener("click",function(){if(locked)return;mode=(mode==="ledmove")?"led":"ledmove";this.classList.toggle("on",mode==="ledmove");cv.classList.toggle("panning",mode==="ledmove");});
+      $("mZin").addEventListener("click",function(){if(locked)return;dist=Math.max(maxDim*0.3,dist*0.9);apply();});
+      $("mZout").addEventListener("click",function(){if(locked)return;dist=Math.min(maxDim*8,dist*1.11);apply();});
+      $("mReset").addEventListener("click",function(){if(locked)return;reset();});
+      $("mpZin").addEventListener("click",function(){ph.scale=Math.min(6,ph.scale*1.12);applyPhoto();});
+      $("mpZout").addEventListener("click",function(){ph.scale=Math.max(0.3,ph.scale/1.12);applyPhoto();});
+      $("mpReset").addEventListener("click",resetPhoto);
+      $("mpMove").addEventListener("click",function(){photoMove=!photoMove;this.classList.toggle("on",photoMove);});
+      $("mLockbtn").addEventListener("click",function(){locked=!locked;drag=false;pdrag=false;this.setAttribute("aria-pressed",locked?"true":"false");this.textContent=locked?"🔒 Sblocca":"🔓 Blocca";$("mocklock").classList.toggle("on",locked);cv.classList.toggle("locked",locked);});
+      $("mUpload").addEventListener("click",function(){$("mockFile").click();});
+      $("mockFile").addEventListener("change",function(e){var f=e.target.files&&e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){bgimg.src=rd.result;bgimg.style.display="block";resetPhoto();document.querySelectorAll("#mockscenes button").forEach(function(x){x.classList.remove("on");});};rd.readAsDataURL(f);e.target.value="";});
+      $("mShot").addEventListener("click",snapshotDownload);
+    }
+
+    function compose(cb){
+      // unisce foto (con object-fit contain + transform) e canvas 3D in un unico PNG
+      var out=document.createElement("canvas"); out.width=stage.clientWidth*2; out.height=stage.clientHeight*2;
+      var ctx=out.getContext("2d");
+      function draw3d(){ renderer.render(sc,camera); ctx.drawImage(cv,0,0,out.width,out.height); cb(out.toDataURL("image/png")); }
+      if(bgimg && bgimg.style.display!=="none" && bgimg.src){
+        var im=new Image();
+        im.onload=function(){ var iw=im.width,ih=im.height,cw=out.width,ch=out.height,base=Math.min(cw/iw,ch/ih),dw=iw*base*ph.scale,dh=ih*base*ph.scale,dx=(cw-dw)/2+ph.x*2,dy=(ch-dh)/2+ph.y*2;
+          ctx.fillStyle="#eef1f5";ctx.fillRect(0,0,cw,ch);ctx.drawImage(im,dx,dy,dw,dh);draw3d(); };
+        im.onerror=function(){ctx.fillStyle="#eef1f5";ctx.fillRect(0,0,out.width,out.height);draw3d();};
+        im.src=bgimg.src;
+      } else { ctx.fillStyle="#eef1f5";ctx.fillRect(0,0,out.width,out.height);draw3d(); }
+    }
+    function snapshotDownload(){ compose(function(url){var a=document.createElement("a");a.download="mockup.png";a.href=url;a.click();}); }
+
+    function refreshScenes(){
+      var host=$("mockscenes"); if(!host) return; host.innerHTML="";
+      var bgs=(window.DB&&Array.isArray(DB.backgrounds))?DB.backgrounds:[];
+      bgs.forEach(function(b){
+        var btn=document.createElement("button"); btn.textContent=b.name; btn.title=b.name;
+        btn.addEventListener("click",function(){host.querySelectorAll("button").forEach(function(x){x.classList.remove("on");});this.classList.add("on");bgimg.src=b.img;bgimg.style.display="block";resetPhoto();});
+        host.appendChild(btn);
+      });
+      var none=document.createElement("button"); none.textContent="Nessuno";
+      none.addEventListener("click",function(){host.querySelectorAll("button").forEach(function(x){x.classList.remove("on");});this.classList.add("on");if(bgimg){bgimg.style.display="none";bgimg.removeAttribute("src");}});
+      host.appendChild(none);
+      if(!bgs.length){ var e=document.createElement("span");e.style.cssText="font-family:var(--mono);font-size:10.5px;color:#8793a1;padding:3px 6px";e.textContent="Nessuno sfondo salvato — usa ⬆ Foto cliente"; host.insertBefore(e,host.firstChild); }
+    }
+
+    function show(){
+      $("viewMock").classList.add("on"); $("viewFlat").classList.remove("on"); $("view3d").classList.remove("on");
+      $("stage").hidden=true; $("stage3d").hidden=true; $("stagemock").hidden=false; visible=true;
+      loadThree(function(ok){
+        if(!ok){$("mockerr").hidden=false;$("cmock").style.display="none";return;}
+        $("mockerr").hidden=true; $("cmock").style.display="block";
+        if(!ready)initScene();
+        if(dirty){build();dirty=false;}
+        refreshScenes(); resize();
+      });
+    }
+    function hide(){ $("stagemock").hidden=true; visible=false; }
+
+    $("viewMock").addEventListener("click",show);
+    // Piatto e 3D nascondono il mockup
+    var vf=$("viewFlat"), v3=$("view3d");
+    vf&&vf.addEventListener("click",function(){$("viewMock").classList.remove("on");hide();});
+    v3&&v3.addEventListener("click",function(){$("viewMock").classList.remove("on");hide();});
+    window.addEventListener("resize",resize);
+
+    window.__mockup={
+      onConfigChange:function(newCols,newRows,prod){ cols=newCols;rows=newRows;DEPTH=(prod&&(prod.modDepth||prod.depth))?(+prod.modDepth||+prod.depth):90; if(ready&&visible){build();}else{dirty=true;} },
+      forceFlat:function(){ if(visible){hide();$("viewMock").classList.remove("on");} },
+      refreshScenes:function(){ if(ready)refreshScenes(); },
+      snapshot:function(){ return null; }, // il mockup si esporta con compose(); Odoo usa la composizione al volo
+      composeTo:function(cb){ if(ready&&visible){compose(cb);}else{cb(null);} },
+      isVisible:function(){ return visible; }
     };
   })();
 })();
