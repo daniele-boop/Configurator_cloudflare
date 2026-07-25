@@ -87,7 +87,10 @@ export async function onRequestPost({ request, env }) {
 
     let note = "";
     if (typeof offer.previewPng === "string" && offer.previewPng.startsWith("data:image")) {
-      note += `<p><img src="${offer.previewPng}" alt="Schema parete LED" style="max-width:100%;height:auto;"/></p>`;
+      note += `<p><b>Schema tecnico (vista piatta)</b><br/><img src="${offer.previewPng}" alt="Schema parete LED" style="max-width:100%;height:auto;"/></p>`;
+    }
+    if (typeof offer.wall3dPng === "string" && offer.wall3dPng.startsWith("data:image")) {
+      note += `<p><b>Vista 3D</b><br/><img src="${offer.wall3dPng}" alt="Vista 3D parete LED" style="max-width:100%;height:auto;"/></p>`;
     }
 
     const orderVals = {
@@ -110,12 +113,13 @@ export async function onRequestPost({ request, env }) {
     const serial = (offer.serial && String(offer.serial).trim()) ? String(offer.serial).trim() : String(orderId);
     let attached = 0; const attachErrors = [];
 
-    const attach = async (dataUrl, label) => {
-      if (typeof dataUrl !== "string" || dataUrl.indexOf("base64,") < 0) { attachErrors.push(label + ":assente"); return; }
+    const attach = async (dataUrl, label, opts) => {
+      opts = opts || {};
+      if (typeof dataUrl !== "string" || dataUrl.indexOf("base64,") < 0) { if(!opts.optional) attachErrors.push(label + ":assente"); return; }
       const b64 = dataUrl.substring(dataUrl.indexOf("base64,") + 7);
       try {
         const aid = await kw("ir.attachment", "create", [{
-          name: `Scheda_${label}_${serial}.png`,
+          name: (opts.prefix || "Scheda") + `_${label}_${serial}.png`,
           type: "binary",
           datas: b64,
           res_model: "sale.order",
@@ -123,13 +127,15 @@ export async function onRequestPost({ request, env }) {
           mimetype: "image/png"
         }]);
         if (aid) attached++;
-        try { await kw("sale.order", "message_post", [orderId], { body: `Scheda tecnica ${label}`, attachment_ids: [aid] }); } catch (e) {}
+        try { await kw("sale.order", "message_post", [orderId], { body: (opts.body || `Scheda tecnica ${label}`), attachment_ids: [aid] }); } catch (e) {}
       } catch (e) {
         attachErrors.push(label + ":" + String(e.message || e).slice(0, 160));
       }
     };
     await attach(offer.sheetItaPng, "ITA");
     await attach(offer.sheetEngPng, "ENG");
+    // istantanea 3D: allegata solo se presente (la vista 3D è opzionale)
+    await attach(offer.wall3dPng, "3D", { prefix: "Parete", body: "Vista 3D della parete", optional: true });
 
     return json({ ok: true, order_id: orderId, name, url, attached, attachErrors }, 200, headers);
   } catch (err) {
