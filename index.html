@@ -264,6 +264,23 @@
   .cabcard-foot{margin-top:11px;display:flex;justify-content:flex-end}
 
   .previewhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+  .viewseg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .viewseg button{font-family:var(--mono);font-size:12px;padding:6px 13px;border:0;background:var(--panel);color:var(--muted-2);cursor:pointer}
+  .viewseg button.on{background:var(--signal-bg,rgba(55,195,209,.14));color:#0d7c88;font-weight:700}
+  html[data-theme="light"] .viewseg button.on{background:rgba(55,195,209,.16);color:#0d7c88}
+  .stage3d{position:relative;padding:0;overflow:hidden}
+  .stage3d #c3d{width:100%;height:100%;display:block;cursor:grab}
+  .stage3d #c3d.locked{cursor:default}.stage3d #c3d.panning{cursor:move}
+  .stage3d #c3d:active{cursor:grabbing}.stage3d #c3d.locked:active{cursor:default}
+  .d3dims{position:absolute;left:12px;top:10px;font-family:var(--mono);font-size:11px;color:var(--ink);background:rgba(255,255,255,.82);padding:6px 10px;border-radius:7px;line-height:1.5}
+  html[data-theme="light"] .d3dims{background:rgba(255,255,255,.9)}
+  .d3lock{position:absolute;left:12px;top:56px;font-family:var(--mono);font-size:10.5px;color:#0d7c88;background:rgba(55,195,209,.16);padding:4px 9px;border-radius:6px;display:none}
+  .d3lock.on{display:block}
+  .d3tools{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px}
+  .d3tools button{width:36px;height:36px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.92);color:#0f1622;font-size:17px;font-weight:700;cursor:pointer;font-family:var(--mono)}
+  .d3tools button.on{border-color:var(--teal,#37c3d1);background:rgba(55,195,209,.18);color:#0d7c88}
+  .d3bar{position:absolute;left:12px;bottom:12px;display:flex;gap:7px}
+  .d3err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:var(--mono);font-size:12px;color:var(--muted-2)}
   .headbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .modtoggle{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);background:var(--panel-2);
     color:var(--muted);border-radius:8px;padding:6px 11px;cursor:pointer;transition:.13s}
@@ -466,12 +483,29 @@
         <div class="previewhead">
           <p class="eyebrow" style="margin:0">Anteprima in scala</p>
           <div class="headbtns">
+            <span class="viewseg" id="viewSeg" hidden><button id="viewFlat" class="on">Piatto</button><button id="view3d">3D</button></span>
             <button class="modtoggle" id="rotToggle" hidden aria-pressed="false" title="Ruota tutti i cabinet di 90°">⟳ Ruota i cabinet di 90°</button>
             <button class="modtoggle" id="modToggle" hidden aria-pressed="true">Moduli: on</button>
           </div>
         </div>
         <div class="stage" id="stage">
           <div class="empty"><b>Nessuna configurazione</b>Scegli un prodotto e inserisci base e altezza</div>
+        </div>
+        <div class="stage stage3d" id="stage3d" hidden>
+          <canvas id="c3d"></canvas>
+          <div class="d3dims" id="d3dims"></div>
+          <div class="d3lock" id="d3lock">● vista bloccata</div>
+          <div class="d3tools">
+            <button id="d3pan" title="Sposta (manina)">✋</button>
+            <button id="d3zin" title="Ingrandisci">+</button>
+            <button id="d3zout" title="Riduci">−</button>
+            <button id="d3reset" title="Centra e adatta">⤢</button>
+          </div>
+          <div class="d3bar">
+            <button class="modtoggle" id="d3quote" aria-pressed="true">Quote: on</button>
+            <button class="modtoggle" id="d3lockbtn" aria-pressed="false">🔓 Blocca vista</button>
+          </div>
+          <div class="d3err" id="d3err" hidden>Motore 3D non caricato (rete assente). Torna a “Piatto”.</div>
         </div>
         <div class="metrics" id="metrics" hidden>
           <div class="metric"><div class="k">Dimensione</div><div class="v" id="mSize">—</div></div>
@@ -1002,6 +1036,7 @@
     const px=pitch>0?Math.round(totalW/pitch):0, py=pitch>0?Math.round(totalH/pitch):0;
     const totPx=px*py;
     const img=wallPreviewPng();
+    const img3d=(window.__wall3d && window.__wall3d.snapshot) ? window.__wall3d.snapshot() : null;
     const obj=($("odooObject")&&$("odooObject").value.trim())||"";
     const baseDesc=(p.desc&&p.desc.trim())||p.name;
     const t=p.tech||{};
@@ -1074,6 +1109,7 @@
           '<div class="ref">'+esc(NSE_INFO.name)+' · '+dateStr+(S.serial?" · "+esc(S.serial):"")+' · '+fmt(totalW)+"×"+fmt(totalH)+' mm'+(pitch>0?" · "+(S.res.label||""):"")+'</div>'+
           '<div class="icons">'+icons.join("")+'</div>'+
           (img?'<div class="img"><img src="'+img+'" alt="Schema parete"></div>':'')+
+          (img3d?'<div class="img"><img src="'+img3d+'" alt="Vista 3D"></div>':'')+
           (p.photo?'<div class="photo"><img src="'+p.photo+'" alt="'+esc(baseDesc)+'"></div>':'')+
         '</div>'+
         '<div class="cr">'+
@@ -1287,7 +1323,7 @@
     const canRot = p && (p.cabinets||[]).some(c=>c.w!==c.h);
     $("rotToggle").hidden = !(has && canRot);
     if(has && canRot){ $("rotToggle").setAttribute("aria-pressed", S.rot?"true":"false"); $("rotToggle").textContent = S.rot ? "⟳ Cabinet ruotati 90°" : "⟳ Ruota i cabinet di 90°"; }
-    if(!has){ $("stage").innerHTML='<div class="empty"><b>Nessuna configurazione</b>Scegli un prodotto con cabinet e inserisci base e altezza</div>'; $("warnBox").hidden=true; $("ratioSuggest").hidden=true; return; }
+    if(!has){ $("stage").innerHTML='<div class="empty"><b>Nessuna configurazione</b>Scegli un prodotto con cabinet e inserisci base e altezza</div>'; $("warnBox").hidden=true; $("ratioSuggest").hidden=true; $("viewSeg").hidden=true; if(window.__wall3d) window.__wall3d.forceFlat(); return; }
 
     const eW=engine(p.cabinets.map(c=>c.w)), eH=engine(p.cabinets.map(c=>c.h));
     const solW0=eW.solve(S.reqW), solH0=eH.solve(S.reqH);
@@ -1553,6 +1589,8 @@
     if(S.reqH>=Math.min(...rows)&&S.reqH<=totalH){ const gy=padT+S.reqH*scale; L(leftX,gy,padL+wpx,gy,"reqguide"); }
 
     $("stage").innerHTML="";$("stage").appendChild(svg);
+    $("viewSeg").hidden=false;
+    if(window.__wall3d) window.__wall3d.onConfigChange(cols.slice(), rows.slice(), currentProduct());
 
     if(missing.size){
       $("warnBox").hidden=false;
@@ -2200,7 +2238,9 @@
     if(!off.complete.code){ setOdoo("err","Mancano dei codici Odoo su alcuni cabinet: compilali nel pannello Amministrazione prima di inviare."); return; }
     setOdoo("wait","Preparazione schede e invio a Odoo…");
     try{
-      off.previewPng = wallPreviewPng();  // disegno tecnico per il campo note
+      off.previewPng = wallPreviewPng();  // disegno tecnico piatto per il campo note
+      // istantanea 3D dell'inquadratura corrente, se la vista 3D è stata usata
+      off.wall3dPng = (window.__wall3d && window.__wall3d.snapshot) ? window.__wall3d.snapshot() : null;
       // schede tecniche complete (ITA + ENG) come PNG da allegare
       try{ off.sheetItaPng = await sheetToPng("it"); }catch(e){ off.sheetItaPng=null; }
       try{ off.sheetEngPng = await sheetToPng("en"); }catch(e){ off.sheetEngPng=null; }
@@ -2281,6 +2321,190 @@
   fillProductSelect();
   render();
   boot();
+
+  /* ================= VISTA 3D (assonometrica ruotabile) =================
+     Modulo autonomo. Three.js si carica da CDN SOLO alla prima attivazione di "3D",
+     così l'uso normale (vista piatta) resta leggero. Non tocca il disegno piatto. */
+  (function(){
+    var THREE_URL="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+    var loaded=false, loading=false, ready=false;
+    var scene,camera,renderer,pivot,group,dimGroup,cv,stage3d;
+    var cols=[], rows=[], DEPTH=90, totalW=0, totalH=0, maxDim=1;
+    var rot={x:-0.18,y:0.5}, dist=1000, pan={x:0,y:0};
+    var DEF={rx:-0.18,ry:0.5};
+    var mode="rotate", locked=false, drag=false, px=0,py=0, dirty=false, visible=false;
+    var mats={};
+
+    function $(id){return document.getElementById(id);}
+
+    function loadThree(cb){
+      if(loaded){cb(!!window.THREE);return;}
+      if(loading){var t=setInterval(function(){if(!loading){clearInterval(t);cb(!!window.THREE);}},80);return;}
+      loading=true;
+      var s=document.createElement("script"); s.src=THREE_URL;
+      s.onload=function(){loaded=true;loading=false;cb(!!window.THREE);};
+      s.onerror=function(){loaded=true;loading=false;cb(false);};
+      document.head.appendChild(s);
+    }
+
+    function initScene(){
+      var THREE=window.THREE;
+      cv=$("c3d"); stage3d=$("stage3d");
+      scene=new THREE.Scene(); scene.background=new THREE.Color(0xeef1f5);
+      camera=new THREE.PerspectiveCamera(38,1,1,600000);
+      renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,preserveDrawingBuffer:true});
+      renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+      scene.add(new THREE.AmbientLight(0xffffff,0.72));
+      var k=new THREE.DirectionalLight(0xffffff,0.55);k.position.set(1,1.4,1.2);scene.add(k);
+      var f=new THREE.DirectionalLight(0xffffff,0.28);f.position.set(-1,0.4,0.6);scene.add(f);
+      pivot=new THREE.Group(); group=new THREE.Group(); pivot.add(group); scene.add(pivot);
+      mats.std=new THREE.MeshLambertMaterial({color:0x8a97a5});
+      mats.side=new THREE.MeshLambertMaterial({color:0x5f6b78});
+      mats.edge=new THREE.LineBasicMaterial({color:0x2a3340});
+      mats.mod=new THREE.LineBasicMaterial({color:0xffffff,opacity:0.35,transparent:true});
+      mats.dim=new THREE.LineBasicMaterial({color:0x5b6675});
+      bindEvents();
+      (function loop(){requestAnimationFrame(loop);if(renderer&&visible)renderer.render(scene,camera);})();
+      ready=true;
+    }
+
+    function clearGroup(){
+      if(!group)return;
+      for(var i=group.children.length-1;i>=0;i--){var o=group.children[i];group.remove(o);
+        if(o.geometry)o.geometry.dispose();}
+    }
+
+    function label(text,x,y){
+      var THREE=window.THREE, c=document.createElement("canvas");c.width=256;c.height=64;
+      var g=c.getContext("2d");g.fillStyle="#0f1622";g.font="bold 34px monospace";g.textAlign="center";g.textBaseline="middle";g.fillText(text,128,32);
+      var s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));
+      s.position.set(x,y,DEPTH/2+40);s.scale.set(560,140,1);return s;
+    }
+
+    function build(){
+      var THREE=window.THREE;
+      clearGroup();
+      totalW=cols.reduce(function(a,b){return a+b;},0);
+      totalH=rows.reduce(function(a,b){return a+b;},0);
+      maxDim=Math.max(totalW,totalH,1);
+      var y0=0;
+      for(var r=0;r<rows.length;r++){
+        var x0=0, hmm=rows[r];
+        for(var c=0;c<cols.length;c++){
+          var wmm=cols[c];
+          var geo=new THREE.BoxGeometry(wmm,hmm,DEPTH);
+          var mm=[mats.side,mats.side,mats.side,mats.side,mats.std,mats.side];
+          var mesh=new THREE.Mesh(geo,mm);
+          mesh.position.set(x0+wmm/2-totalW/2, (totalH-(y0+hmm/2))-totalH/2, 0);
+          group.add(mesh);
+          var eg=new THREE.LineSegments(new THREE.EdgesGeometry(geo),mats.edge);eg.position.copy(mesh.position);group.add(eg);
+          var nx=Math.max(1,Math.round(wmm/320)), ny=Math.max(1,Math.round(hmm/160)), z=DEPTH/2+0.6, pts=[];
+          var bx=x0-totalW/2, by=(totalH-(y0+hmm))-totalH/2;
+          for(var i=1;i<nx;i++){var mx=bx+wmm*i/nx;pts.push(new THREE.Vector3(mx,by,z),new THREE.Vector3(mx,by+hmm,z));}
+          for(var j=1;j<ny;j++){var my=by+hmm*j/ny;pts.push(new THREE.Vector3(bx,my,z),new THREE.Vector3(bx+wmm,my,z));}
+          if(pts.length)group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),mats.mod));
+          x0+=wmm;
+        }
+        y0+=hmm;
+      }
+      // quote
+      dimGroup=new THREE.Group();
+      var off=180,z=DEPTH/2,by=-totalH/2-off;
+      dimGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-totalW/2,by,z),new THREE.Vector3(totalW/2,by,z),
+        new THREE.Vector3(-totalW/2,by+40,z),new THREE.Vector3(-totalW/2,by-40,z),
+        new THREE.Vector3(totalW/2,by+40,z),new THREE.Vector3(totalW/2,by-40,z)]),mats.dim));
+      dimGroup.add(label(totalW+" mm",0,by-150));
+      var lx=-totalW/2-off;
+      dimGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(lx,-totalH/2,z),new THREE.Vector3(lx,totalH/2,z),
+        new THREE.Vector3(lx-40,-totalH/2,z),new THREE.Vector3(lx+40,-totalH/2,z),
+        new THREE.Vector3(lx-40,totalH/2,z),new THREE.Vector3(lx+40,totalH/2,z)]),mats.dim));
+      dimGroup.add(label(totalH+" mm",lx-150,0));
+      var qb=$("d3quote"); dimGroup.visible = qb ? qb.getAttribute("aria-pressed")==="true" : true;
+      group.add(dimGroup);
+      $("d3dims").innerHTML=totalW+" × "+totalH+" mm · prof. "+DEPTH+" mm";
+      dist=maxDim*1.6; reset();
+    }
+
+    function apply(){
+      if(!ready)return;
+      group.rotation.x=rot.x; group.rotation.y=rot.y;
+      pivot.position.set(pan.x,pan.y,0);
+      camera.position.set(0,0,dist); camera.lookAt(0,0,0);
+    }
+    function reset(){rot.x=DEF.rx;rot.y=DEF.ry;pan.x=0;pan.y=0;dist=maxDim*1.6;apply();}
+    function resize(){
+      if(!ready||!visible)return;
+      var w=stage3d.clientWidth,h=stage3d.clientHeight;
+      renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();apply();
+    }
+
+    function bindEvents(){
+      cv.addEventListener("mousedown",function(e){if(locked)return;drag=true;px=e.clientX;py=e.clientY;});
+      window.addEventListener("mouseup",function(){drag=false;});
+      window.addEventListener("mousemove",function(e){
+        if(!drag||locked)return;var dx=e.clientX-px,dy=e.clientY-py;
+        if(mode==="pan"){var k=dist/stage3d.clientHeight*0.9;pan.x+=dx*k;pan.y-=dy*k;}
+        else{rot.y+=dx*0.008;rot.x+=dy*0.008;rot.x=Math.max(-1.3,Math.min(1.3,rot.x));}
+        px=e.clientX;py=e.clientY;apply();
+      });
+      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();dist*=(e.deltaY>0?1.08:0.93);dist=Math.max(maxDim*0.3,Math.min(maxDim*6,dist));apply();},{passive:false});
+      cv.addEventListener("touchstart",function(e){if(locked)return;if(e.touches.length===1){drag=true;px=e.touches[0].clientX;py=e.touches[0].clientY;}},{passive:true});
+      cv.addEventListener("touchmove",function(e){if(locked||!drag||e.touches.length!==1)return;var t=e.touches[0],dx=t.clientX-px,dy=t.clientY-py;if(mode==="pan"){var k=dist/stage3d.clientHeight*0.9;pan.x+=dx*k;pan.y-=dy*k;}else{rot.y+=dx*0.008;rot.x+=dy*0.008;rot.x=Math.max(-1.3,Math.min(1.3,rot.x));}px=t.clientX;py=t.clientY;apply();},{passive:true});
+      cv.addEventListener("touchend",function(){drag=false;});
+      var pan_b=$("d3pan");
+      pan_b.addEventListener("click",function(){if(locked)return;mode=(mode==="pan")?"rotate":"pan";this.classList.toggle("on",mode==="pan");cv.classList.toggle("panning",mode==="pan");});
+      $("d3zin").addEventListener("click",function(){if(locked)return;dist=Math.max(maxDim*0.3,dist*0.92);apply();});
+      $("d3zout").addEventListener("click",function(){if(locked)return;dist=Math.min(maxDim*6,dist*1.09);apply();});
+      $("d3reset").addEventListener("click",function(){if(locked)return;mode="rotate";pan_b.classList.remove("on");cv.classList.remove("panning");reset();});
+      $("d3quote").addEventListener("click",function(){if(!dimGroup)return;dimGroup.visible=!dimGroup.visible;this.setAttribute("aria-pressed",dimGroup.visible?"true":"false");this.textContent="Quote: "+(dimGroup.visible?"on":"off");});
+      $("d3lockbtn").addEventListener("click",function(){
+        locked=!locked;drag=false;
+        this.setAttribute("aria-pressed",locked?"true":"false");
+        this.textContent=locked?"🔒 Sblocca vista":"🔓 Blocca vista";
+        $("d3lock").classList.toggle("on",locked);
+        cv.classList.toggle("locked",locked);
+        if(locked){mode="rotate";pan_b.classList.remove("on");cv.classList.remove("panning");}
+      });
+    }
+
+    function show(){
+      $("view3d").classList.add("on");$("viewFlat").classList.remove("on");
+      $("stage").hidden=true; $("stage3d").hidden=false; visible=true;
+      loadThree(function(ok){
+        if(!ok){$("d3err").hidden=false;$("c3d").style.display="none";return;}
+        if(!ready)initScene();
+        if(dirty){build();dirty=false;}
+        resize();
+      });
+    }
+    function flat(){
+      $("viewFlat").classList.add("on");$("view3d").classList.remove("on");
+      $("stage3d").hidden=true; $("stage").hidden=false; visible=false;
+    }
+
+    $("view3d").addEventListener("click",show);
+    $("viewFlat").addEventListener("click",flat);
+    window.addEventListener("resize",resize);
+
+    // API usata da render()
+    window.__wall3d={
+      onConfigChange:function(newCols,newRows,prod){
+        cols=newCols; rows=newRows;
+        DEPTH = (prod && (prod.modDepth||prod.depth)) ? (+prod.modDepth||+prod.depth) : 90;
+        if(ready && visible){ build(); } else { dirty=true; }
+      },
+      forceFlat:function(){ if(visible)flat(); },
+      // istantanea PNG dell'inquadratura corrente (o null se 3D mai aperto)
+      snapshot:function(){
+        if(!ready||!renderer)return null;
+        try{ renderer.render(scene,camera); return $("c3d").toDataURL("image/png"); }catch(e){ return null; }
+      },
+      isReady:function(){ return ready; },
+      wasUsed:function(){ return ready; }
+    };
+  })();
 })();
 </script>
 </body>
