@@ -282,6 +282,20 @@
   .d3bar{position:absolute;left:12px;bottom:12px;display:flex;gap:7px}
   .d3err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:var(--mono);font-size:12px;color:var(--muted-2);background:var(--panel-2)}
   .d3err[hidden]{display:none}
+  /* mockup warp: pallini angolo + pannello spessore */
+  .mockhandle{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--teal,#37c3d1);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:grab;z-index:20;display:none}
+  .stagemock.warpon .mockhandle{display:block}
+  .stagemock #cmock.moving{cursor:move}
+  .mockdepth{position:absolute;left:12px;top:52px;background:rgba(255,255,255,.94);border-radius:10px;padding:10px 12px;z-index:16;font-family:var(--mono);font-size:11px;width:210px;color:#0f1622}
+  .mockdepth[hidden]{display:none}
+  .mockdepth .mdlabel{font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#68738a;font-size:10px}
+  .mockdepth label{display:block;margin:6px 0 2px;color:#68738a}
+  .mockdepth input[type=range]{width:100%}
+  .mdpad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
+  .mdpad button{font-family:var(--mono);font-size:13px;padding:5px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;color:#0f1622}
+  .mdpad button.on{border-color:var(--teal,#37c3d1);background:rgba(55,195,209,.16);color:#0d7c88}
+  .mdpad .sp{visibility:hidden}
+  .mockseg{margin-right:2px}
   .stagemock #mockbg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;transform-origin:center center}
   .stagemock #cmock{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
   .stagemock #cmock.locked{cursor:default}.stagemock #cmock.panning{cursor:move}
@@ -517,11 +531,24 @@
           </div>
           <div class="d3err" id="d3err" hidden>Motore 3D non caricato (rete assente). Torna a “Piatto”.</div>
         </div>
-        <div class="stage stage3d stagemock" id="stagemock" hidden>
+        <div class="stage stage3d stagemock warpon" id="stagemock" hidden>
           <img id="mockbg" alt="sfondo mockup">
           <canvas id="cmock"></canvas>
           <div class="mockscenes" id="mockscenes"></div>
           <div class="mocklock" id="mocklock">● bloccato</div>
+          <div class="mockhandle" data-i="0"></div><div class="mockhandle" data-i="1"></div>
+          <div class="mockhandle" data-i="2"></div><div class="mockhandle" data-i="3"></div>
+          <div class="mockdepth" id="mockdepth" hidden>
+            <span class="mdlabel">Spessore</span>
+            <label>Profondità <span id="mvd">90 mm</span></label>
+            <input type="range" id="mDepthRange" min="0" max="260" value="90">
+            <label>Direzione fianchi</label>
+            <div class="mdpad">
+              <button class="sp"></button><button data-d="up">↑</button><button class="sp"></button>
+              <button data-d="left">←</button><button data-d="auto" class="on">auto</button><button data-d="right">→</button>
+              <button data-d="dl">↙</button><button data-d="down">↓</button><button data-d="dr">↘</button>
+            </div>
+          </div>
           <div class="d3tools mockphototools">
             <button id="mpZin" title="Ingrandisci foto">🖼+</button>
             <button id="mpZout" title="Riduci foto">🖼−</button>
@@ -529,18 +556,19 @@
             <button id="mpReset" title="Reset foto">⤢</button>
           </div>
           <div class="d3tools">
-            <button id="mLed" class="on" title="Sposta LED">✋</button>
-            <button id="mZin" title="Ingrandisci LED">+</button>
-            <button id="mZout" title="Riduci LED">−</button>
-            <button id="mReset" title="Centra LED">⤢</button>
+            <button id="mLed" class="on" title="Sposta lo schermo">✋</button>
+            <button id="mZin" title="Ingrandisci schermo">+</button>
+            <button id="mZout" title="Riduci schermo">−</button>
+            <button id="mReset" title="Reset schermo">⤢</button>
           </div>
           <div class="d3bar">
+            <span class="viewseg mockseg"><button id="mModeWarp" class="on">Adatta angoli</button><button id="mModeDepth">Applica spessore</button></span>
             <button class="modtoggle" id="mUpload">⬆ Foto cliente</button>
             <button class="modtoggle" id="mLockbtn" aria-pressed="false">🔓 Blocca</button>
             <button class="modtoggle" id="mShot">📷 Scarica</button>
             <input type="file" id="mockFile" accept="image/*" hidden>
           </div>
-          <div class="d3err" id="mockerr" hidden>Motore 3D non caricato. Torna a “Piatto”.</div>
+          <div class="d3err" id="mockerr" hidden>Motore non caricato. Torna a “Piatto”.</div>
         </div>
         <div class="metrics" id="metrics" hidden>
           <div class="metric"><div class="k">Dimensione</div><div class="v" id="mSize">—</div></div>
@@ -2599,114 +2627,157 @@
     };
   })();
 
-  /* ================= VISTA MOCKUP (LED 3D sopra una foto) =================
-     Riusa un motore 3D con canvas trasparente e la foto dietro. Foto e LED hanno
-     controlli indipendenti (due barre). Three.js già caricato dal modulo 3D o qui. */
+  /* ================= VISTA MOCKUP (warp 4 angoli + spessore finale) =================
+     La faccia del LED (cabinet+moduli reali) si deforma coi 4 angoli per aderire alla
+     prospettiva della foto; lo spessore si applica alla fine estrudendo i fianchi.
+     Canvas 2D con omografia — nessuna libreria esterna. Foto e schermo hanno controlli
+     indipendenti. compose() unisce foto + LED in un PNG per Odoo e la scheda. */
   (function(){
-    var THREE_URL="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
-    var loaded=false, loading=false, ready=false, visible=false, dirty=true;
-    var sc,camera,renderer,pivot,group,cv,stage,bgimg;
-    var cols=[], rows=[], DEPTH=90, totalW=0, totalH=0, maxDim=1;
-    var rot={x:0,y:0}, dist=1000, pan={x:0,y:0}, ph={scale:1,x:0,y:0};
-    var mode="led", locked=false, drag=false, px=0,py=0, photoMove=false, pdrag=false;
-    var mats={};
+    var ready=false, visible=false, dirty=true;
+    var cv, ctx, stage, bgimg;
+    var cols=[], rows=[], DEPTH=90, totalW=0, totalH=0;
+    var CELLS=[], dst=null, BW=440, BH=220;
+    var showDepth=false, depth=90, dirMode="auto", locked=false;
+    var ph={scale:1,x:0,y:0}, photoMove=false;
+    var ledMove=false;
     function $(id){return document.getElementById(id);}
 
-    function loadThree(cb){
-      if(window.THREE){cb(true);return;}
-      if(loaded){cb(!!window.THREE);return;}
-      if(loading){var t=setInterval(function(){if(!loading){clearInterval(t);cb(!!window.THREE);}},80);return;}
-      loading=true;var s=document.createElement("script");s.src=THREE_URL;
-      s.onload=function(){loaded=true;loading=false;cb(!!window.THREE);};
-      s.onerror=function(){loaded=true;loading=false;cb(false);};
-      document.head.appendChild(s);
+    function fit(){
+      if(!cv)return; var r=stage.getBoundingClientRect();
+      cv.width=r.width*2; cv.height=r.height*2; cv.style.width=r.width+"px"; cv.style.height=r.height+"px";
+      ctx.setTransform(2,0,0,2,0,0);
     }
-    function initScene(){
-      var THREE=window.THREE; cv=$("cmock"); stage=$("stagemock"); bgimg=$("mockbg");
-      sc=new THREE.Scene();
-      camera=new THREE.PerspectiveCamera(38,1,1,600000);
-      renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});
-      renderer.setClearColor(0x000000,0); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
-      sc.add(new THREE.AmbientLight(0xffffff,0.82));
-      var k=new THREE.DirectionalLight(0xffffff,0.5);k.position.set(1,1.4,1.2);sc.add(k);
-      pivot=new THREE.Group();group=new THREE.Group();pivot.add(group);sc.add(pivot);
-      mats.std=new THREE.MeshLambertMaterial({color:0x8a97a5});
-      mats.side=new THREE.MeshLambertMaterial({color:0x5f6b78});
-      mats.edge=new THREE.LineBasicMaterial({color:0x2a3340});
-      mats.mod=new THREE.LineBasicMaterial({color:0xffffff,opacity:0.35,transparent:true});
-      bindEvents();
-      (function loop(){requestAnimationFrame(loop);if(renderer&&visible)renderer.render(sc,camera);})();
-      ready=true;
+    function faceCells(){
+      var cells=[],xs=[0],ys=[0],c,r;
+      for(c=0;c<cols.length;c++)xs.push(xs[c]+cols[c]/totalW);
+      for(r=0;r<rows.length;r++)ys.push(ys[r]+rows[r]/totalH);
+      for(r=0;r<rows.length;r++)for(c=0;c<cols.length;c++){
+        cells.push({x0:xs[c],y0:ys[r],x1:xs[c+1],y1:ys[r+1],nx:Math.max(1,Math.round(cols[c]/320)),ny:Math.max(1,Math.round(rows[r]/160))});
+      }
+      return cells;
     }
-    function clearGroup(){ if(!group)return; for(var i=group.children.length-1;i>=0;i--){var o=group.children[i];group.remove(o);if(o.geometry)o.geometry.dispose();} }
+    // ---- omografia dal quadrato unitario al quad dst ----
+    function adj(m){return [m[4]*m[8]-m[5]*m[7],m[2]*m[7]-m[1]*m[8],m[1]*m[5]-m[2]*m[4],m[5]*m[6]-m[3]*m[8],m[0]*m[8]-m[2]*m[6],m[2]*m[3]-m[0]*m[5],m[3]*m[7]-m[4]*m[6],m[1]*m[6]-m[0]*m[7],m[0]*m[4]-m[1]*m[3]];}
+    function mmm(a,b){var o=[],i,j,k;for(i=0;i<3;i++)for(j=0;j<3;j++){var t=0;for(k=0;k<3;k++)t+=a[3*i+k]*b[3*k+j];o[3*i+j]=t;}return o;}
+    function mmv(m,v){return [m[0]*v[0]+m[1]*v[1]+m[2]*v[2],m[3]*v[0]+m[4]*v[1]+m[5]*v[2],m[6]*v[0]+m[7]*v[1]+m[8]*v[2]];}
+    function b2p(x1,y1,x2,y2,x3,y3,x4,y4){var m=[x1,x2,x3,y1,y2,y3,1,1,1];var v=mmv(adj(m),[x4,y4,1]);return mmm(m,[v[0],0,0,0,v[1],0,0,0,v[2]]);}
+    var H;
+    function computeH(){ var s=b2p(0,0,1,0,1,1,0,1); var d=b2p(dst[0][0],dst[0][1],dst[1][0],dst[1][1],dst[2][0],dst[2][1],dst[3][0],dst[3][1]); H=mmm(d,adj(s)); }
+    function map(u,v){var p=mmv(H,[u,v,1]);return [p[0]/p[2],p[1]/p[2]];}
+
+    function initDst(){
+      var r=stage.getBoundingClientRect();
+      BW=Math.min(440, r.width*0.5); BH=BW*totalH/totalW;
+      var ox=(r.width-BW)/2, oy=(r.height-BH)/2;
+      dst=[[ox,oy],[ox+BW,oy],[ox+BW,oy+BH],[ox,oy+BH]];
+    }
+    function centroid(){var cx=0,cy=0;for(var i=0;i<4;i++){cx+=dst[i][0];cy+=dst[i][1];}return [cx/4,cy/4];}
+    function translateAll(dx,dy){for(var i=0;i<4;i++){dst[i][0]+=dx;dst[i][1]+=dy;}draw();}
+    function scaleAll(f){var c=centroid();for(var i=0;i<4;i++){dst[i][0]=c[0]+(dst[i][0]-c[0])*f;dst[i][1]=c[1]+(dst[i][1]-c[1])*f;}draw();}
+
+    function depthVec(){
+      var f=depth/90*34;
+      if(dirMode==="auto"){
+        var a=map(1,0.5),b=map(0,0.5),d=map(0.5,1),c=map(0.5,0);
+        var vx=-(a[0]-b[0])*0.03, vy=-(d[1]-c[1])*0.03;
+        var L=Math.hypot(vx,vy)||1; return [vx/L*f, vy/L*f - f*0.5];
+      }
+      var m={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0],dl:[-0.7,0.7],dr:[0.7,0.7]}[dirMode]||[0.6,-0.8];
+      return [m[0]*f, m[1]*f];
+    }
+
+    function draw(){
+      if(!ready||!dst)return;
+      computeH();
+      var rr=stage.getBoundingClientRect(); ctx.clearRect(0,0,rr.width,rr.height);
+      var dv=showDepth?depthVec():[0,0];
+      if(showDepth){
+        var fc=[map(0,0),map(1,0),map(1,1),map(0,1)];
+        var bc=fc.map(function(p){return [p[0]+dv[0],p[1]+dv[1]];});
+        ctx.fillStyle="#5f6b78";ctx.strokeStyle="#2a3340";ctx.lineWidth=1;
+        [[0,1],[1,2],[2,3],[3,0]].forEach(function(q){var a=fc[q[0]],b=fc[q[1]],c=bc[q[1]],d=bc[q[0]];ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.closePath();ctx.fill();ctx.stroke();});
+      }
+      CELLS.forEach(function(cl){
+        var p0=map(cl.x0,cl.y0),p1=map(cl.x1,cl.y0),p2=map(cl.x1,cl.y1),p3=map(cl.x0,cl.y1);
+        ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.lineTo(p3[0],p3[1]);ctx.closePath();
+        ctx.fillStyle="#8a97a5";ctx.fill();ctx.strokeStyle="#2a3340";ctx.lineWidth=1.4;ctx.stroke();
+        ctx.strokeStyle="rgba(255,255,255,.30)";ctx.lineWidth=1;var i;
+        for(i=1;i<cl.nx;i++){var t=i/cl.nx;var a=map(cl.x0+(cl.x1-cl.x0)*t,cl.y0),b=map(cl.x0+(cl.x1-cl.x0)*t,cl.y1);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+        for(i=1;i<cl.ny;i++){var t2=i/cl.ny;var c=map(cl.x0,cl.y0+(cl.y1-cl.y0)*t2),d=map(cl.x1,cl.y0+(cl.y1-cl.y0)*t2);ctx.beginPath();ctx.moveTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.stroke();}
+      });
+      var hs=document.querySelectorAll(".mockhandle");
+      [0,1,2,3].forEach(function(i){if(hs[i]){hs[i].style.left=dst[i][0]+"px";hs[i].style.top=dst[i][1]+"px";}});
+    }
+
     function build(){
-      var THREE=window.THREE; clearGroup();
-      totalW=cols.reduce(function(a,b){return a+b;},0); totalH=rows.reduce(function(a,b){return a+b;},0); maxDim=Math.max(totalW,totalH,1);
-      var y0=0;
-      for(var r=0;r<rows.length;r++){var x0=0,hmm=rows[r];
-        for(var c=0;c<cols.length;c++){var wmm=cols[c];
-          var geo=new THREE.BoxGeometry(wmm,hmm,DEPTH);
-          var mesh=new THREE.Mesh(geo,[mats.side,mats.side,mats.side,mats.side,mats.std,mats.side]);
-          mesh.position.set(x0+wmm/2-totalW/2,(totalH-(y0+hmm/2))-totalH/2,0);group.add(mesh);
-          var eg=new THREE.LineSegments(new THREE.EdgesGeometry(geo),mats.edge);eg.position.copy(mesh.position);group.add(eg);
-          var nx=Math.max(1,Math.round(wmm/320)),ny=Math.max(1,Math.round(hmm/160)),z=DEPTH/2+0.6,pts=[],bx=x0-totalW/2,by=(totalH-(y0+hmm))-totalH/2;
-          for(var i=1;i<nx;i++){var mx=bx+wmm*i/nx;pts.push(new THREE.Vector3(mx,by,z),new THREE.Vector3(mx,by+hmm,z));}
-          for(var j=1;j<ny;j++){var my=by+hmm*j/ny;pts.push(new THREE.Vector3(bx,my,z),new THREE.Vector3(bx+wmm,my,z));}
-          if(pts.length)group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),mats.mod));
-          x0+=wmm;
-        } y0+=hmm; }
-      dist=maxDim*1.7; reset();
+      totalW=cols.reduce(function(a,b){return a+b;},0)||1;
+      totalH=rows.reduce(function(a,b){return a+b;},0)||1;
+      CELLS=faceCells(); initDst(); draw();
     }
-    function apply(){ if(!ready)return; group.rotation.x=rot.x;group.rotation.y=rot.y;pivot.position.set(pan.x,pan.y,0);camera.position.set(0,0,dist);camera.lookAt(0,0,0); }
-    function reset(){ rot.x=0;rot.y=0;pan.x=0;pan.y=0;dist=maxDim*1.7;apply(); }
-    function resize(){ if(!ready||!visible)return; var w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();apply(); }
     function applyPhoto(){ if(bgimg) bgimg.style.transform="translate("+ph.x+"px,"+ph.y+"px) scale("+ph.scale+")"; }
     function resetPhoto(){ ph.scale=1;ph.x=0;ph.y=0;applyPhoto(); }
 
-    function bindEvents(){
-      cv.addEventListener("mousedown",function(e){if(locked)return; if(photoMove){pdrag=true;px=e.clientX;py=e.clientY;return;} drag=true;px=e.clientX;py=e.clientY;});
-      window.addEventListener("mouseup",function(){drag=false;pdrag=false;});
-      window.addEventListener("mousemove",function(e){
-        if(locked)return;
-        if(pdrag){ph.x+=(e.clientX-px);ph.y+=(e.clientY-py);px=e.clientX;py=e.clientY;applyPhoto();return;}
-        if(!drag)return; var dx=e.clientX-px,dy=e.clientY-py;
-        if(mode==="ledmove"){var s=dist/stage.clientHeight*0.9;pan.x+=dx*s;pan.y-=dy*s;}
-        else{rot.y+=dx*0.006;rot.x+=dy*0.006;rot.x=Math.max(-0.9,Math.min(0.9,rot.x));}
-        px=e.clientX;py=e.clientY;apply();
-      });
-      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();dist*=(e.deltaY>0?1.07:0.94);dist=Math.max(maxDim*0.3,Math.min(maxDim*8,dist));apply();},{passive:false});
-      // touch base (1 dito = azione corrente)
-      cv.addEventListener("touchstart",function(e){if(locked||e.touches.length!==1)return;var t=e.touches[0];if(photoMove){pdrag=true;}else{drag=true;}px=t.clientX;py=t.clientY;},{passive:true});
-      cv.addEventListener("touchmove",function(e){if(locked||e.touches.length!==1)return;var t=e.touches[0];if(pdrag){ph.x+=(t.clientX-px);ph.y+=(t.clientY-py);px=t.clientX;py=t.clientY;applyPhoto();return;}if(!drag)return;var dx=t.clientX-px,dy=t.clientY-py;if(mode==="ledmove"){var s=dist/stage.clientHeight*0.9;pan.x+=dx*s;pan.y-=dy*s;}else{rot.y+=dx*0.006;rot.x+=dy*0.006;rot.x=Math.max(-0.9,Math.min(0.9,rot.x));}px=t.clientX;py=t.clientY;apply();},{passive:true});
-      cv.addEventListener("touchend",function(){drag=false;pdrag=false;});
+    function xy(e){var b=stage.getBoundingClientRect();var t=e.touches?e.touches[0]:e;return [t.clientX-b.left,t.clientY-b.top];}
 
-      var mLed=$("mLed"); mLed.classList.add("on");
-      mLed.addEventListener("click",function(){if(locked)return;mode=(mode==="ledmove")?"led":"ledmove";this.classList.toggle("on",mode==="ledmove");cv.classList.toggle("panning",mode==="ledmove");});
-      $("mZin").addEventListener("click",function(){if(locked)return;dist=Math.max(maxDim*0.3,dist*0.9);apply();});
-      $("mZout").addEventListener("click",function(){if(locked)return;dist=Math.min(maxDim*8,dist*1.11);apply();});
-      $("mReset").addEventListener("click",function(){if(locked)return;reset();});
+    function initEngine(){
+      cv=$("cmock"); stage=$("stagemock"); bgimg=$("mockbg"); ctx=cv.getContext("2d");
+      fit();
+      // drag angoli
+      var dragging=-1;
+      document.querySelectorAll(".mockhandle").forEach(function(h){
+        h.addEventListener("mousedown",function(e){if(locked||showDepth)return;dragging=+h.dataset.i;e.preventDefault();});
+        h.addEventListener("touchstart",function(e){if(locked||showDepth)return;dragging=+h.dataset.i;},{passive:true});
+      });
+      window.addEventListener("mousemove",function(e){if(dragging<0)return;var p=xy(e);dst[dragging]=[p[0],p[1]];draw();});
+      window.addEventListener("touchmove",function(e){if(dragging<0)return;var p=xy(e);dst[dragging]=[p[0],p[1]];draw();},{passive:true});
+      window.addEventListener("mouseup",function(){dragging=-1;});
+      window.addEventListener("touchend",function(){dragging=-1;});
+
+      // sposta schermo in blocco + zoom + rotellina
+      $("mZin").addEventListener("click",function(){if(locked)return;scaleAll(1.08);});
+      $("mZout").addEventListener("click",function(){if(locked)return;scaleAll(1/1.08);});
+      $("mReset").addEventListener("click",function(){if(locked)return;initDst();draw();});
+      var ld=false,lpx=0,lpy=0;
+      $("mLed").addEventListener("click",function(){if(locked)return;ledMove=!ledMove;this.classList.toggle("on",ledMove);cv.classList.toggle("moving",ledMove);if(ledMove){photoMove=false;$("mpMove").classList.remove("on");}});
+      cv.addEventListener("mousedown",function(e){if(locked)return;if(ledMove){ld=true;lpx=e.clientX;lpy=e.clientY;e.stopImmediatePropagation();return;}if(photoMove){ld="photo";lpx=e.clientX;lpy=e.clientY;e.stopImmediatePropagation();}},true);
+      window.addEventListener("mousemove",function(e){if(!ld)return;if(ld==="photo"){ph.x+=e.clientX-lpx;ph.y+=e.clientY-lpy;applyPhoto();}else{translateAll(e.clientX-lpx,e.clientY-lpy);}lpx=e.clientX;lpy=e.clientY;},true);
+      window.addEventListener("mouseup",function(){ld=false;},true);
+      cv.addEventListener("touchstart",function(e){if(locked||e.touches.length!==1)return;if(ledMove){ld=true;lpx=e.touches[0].clientX;lpy=e.touches[0].clientY;}else if(photoMove){ld="photo";lpx=e.touches[0].clientX;lpy=e.touches[0].clientY;}},{passive:true});
+      cv.addEventListener("touchmove",function(e){if(!ld||e.touches.length!==1)return;var t=e.touches[0];if(ld==="photo"){ph.x+=t.clientX-lpx;ph.y+=t.clientY-lpy;applyPhoto();}else{translateAll(t.clientX-lpx,t.clientY-lpy);}lpx=t.clientX;lpy=t.clientY;},{passive:true});
+      cv.addEventListener("touchend",function(){ld=false;});
+      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();scaleAll(e.deltaY>0?1/1.06:1.06);},{passive:false});
+
+      // foto
       $("mpZin").addEventListener("click",function(){ph.scale=Math.min(6,ph.scale*1.12);applyPhoto();});
       $("mpZout").addEventListener("click",function(){ph.scale=Math.max(0.3,ph.scale/1.12);applyPhoto();});
       $("mpReset").addEventListener("click",resetPhoto);
-      $("mpMove").addEventListener("click",function(){photoMove=!photoMove;this.classList.toggle("on",photoMove);});
-      $("mLockbtn").addEventListener("click",function(){locked=!locked;drag=false;pdrag=false;this.setAttribute("aria-pressed",locked?"true":"false");this.textContent=locked?"🔒 Sblocca":"🔓 Blocca";$("mocklock").classList.toggle("on",locked);cv.classList.toggle("locked",locked);});
+      $("mpMove").addEventListener("click",function(){photoMove=!photoMove;this.classList.toggle("on",photoMove);if(photoMove){ledMove=false;$("mLed").classList.remove("on");cv.classList.remove("moving");}});
+
+      // modalità warp / spessore
+      $("mModeWarp").addEventListener("click",function(){showDepth=false;this.classList.add("on");$("mModeDepth").classList.remove("on");stage.classList.add("warpon");$("mockdepth").hidden=true;draw();});
+      $("mModeDepth").addEventListener("click",function(){showDepth=true;this.classList.add("on");$("mModeWarp").classList.remove("on");stage.classList.remove("warpon");$("mockdepth").hidden=false;draw();});
+      $("mDepthRange").addEventListener("input",function(){depth=+this.value;$("mvd").textContent=depth+" mm";draw();});
+      document.querySelectorAll(".mdpad button[data-d]").forEach(function(b){b.addEventListener("click",function(){document.querySelectorAll(".mdpad button").forEach(function(x){x.classList.remove("on");});this.classList.add("on");dirMode=this.dataset.d;draw();});});
+
+      // lock, upload, scarica
+      $("mLockbtn").addEventListener("click",function(){locked=!locked;this.setAttribute("aria-pressed",locked?"true":"false");this.textContent=locked?"🔒 Sblocca":"🔓 Blocca";$("mocklock").classList.toggle("on",locked);cv.classList.toggle("locked",locked);});
       $("mUpload").addEventListener("click",function(){$("mockFile").click();});
       $("mockFile").addEventListener("change",function(e){var f=e.target.files&&e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){bgimg.src=rd.result;bgimg.style.display="block";resetPhoto();document.querySelectorAll("#mockscenes button").forEach(function(x){x.classList.remove("on");});};rd.readAsDataURL(f);e.target.value="";});
       $("mShot").addEventListener("click",snapshotDownload);
+      ready=true;
     }
 
     function compose(cb){
-      // unisce foto (con object-fit contain + transform) e canvas 3D in un unico PNG
       var out=document.createElement("canvas"); out.width=stage.clientWidth*2; out.height=stage.clientHeight*2;
-      var ctx=out.getContext("2d");
-      function draw3d(){ renderer.render(sc,camera); ctx.drawImage(cv,0,0,out.width,out.height); cb(out.toDataURL("image/png")); }
+      var c2=out.getContext("2d");
+      function drawLed(){ c2.drawImage(cv,0,0,out.width,out.height); cb(out.toDataURL("image/png")); }
       if(bgimg && bgimg.style.display!=="none" && bgimg.src){
         var im=new Image();
         im.onload=function(){ var iw=im.width,ih=im.height,cw=out.width,ch=out.height,base=Math.min(cw/iw,ch/ih),dw=iw*base*ph.scale,dh=ih*base*ph.scale,dx=(cw-dw)/2+ph.x*2,dy=(ch-dh)/2+ph.y*2;
-          ctx.fillStyle="#eef1f5";ctx.fillRect(0,0,cw,ch);ctx.drawImage(im,dx,dy,dw,dh);draw3d(); };
-        im.onerror=function(){ctx.fillStyle="#eef1f5";ctx.fillRect(0,0,out.width,out.height);draw3d();};
+          c2.fillStyle="#20242b";c2.fillRect(0,0,cw,ch);c2.drawImage(im,dx,dy,dw,dh);drawLed(); };
+        im.onerror=function(){c2.fillStyle="#20242b";c2.fillRect(0,0,out.width,out.height);drawLed();};
         im.src=bgimg.src;
-      } else { ctx.fillStyle="#eef1f5";ctx.fillRect(0,0,out.width,out.height);draw3d(); }
+      } else { c2.fillStyle="#20242b";c2.fillRect(0,0,out.width,out.height);drawLed(); }
     }
     function snapshotDownload(){ compose(function(url){var a=document.createElement("a");a.download="mockup.png";a.href=url;a.click();}); }
 
@@ -2727,28 +2798,23 @@
     function show(){
       $("viewMock").classList.add("on"); $("viewFlat").classList.remove("on"); $("view3d").classList.remove("on");
       $("stage").hidden=true; $("stage3d").hidden=true; $("stagemock").hidden=false; visible=true;
-      loadThree(function(ok){
-        if(!ok){$("mockerr").hidden=false;$("cmock").style.display="none";return;}
-        $("mockerr").hidden=true; $("cmock").style.display="block";
-        if(!ready)initScene();
-        if(dirty){build();dirty=false;}
-        refreshScenes(); resize();
-      });
+      if(!ready)initEngine();
+      if(dirty){build();dirty=false;}
+      refreshScenes(); fit(); draw();
     }
     function hide(){ $("stagemock").hidden=true; visible=false; }
 
     $("viewMock").addEventListener("click",show);
-    // Piatto e 3D nascondono il mockup
     var vf=$("viewFlat"), v3=$("view3d");
     vf&&vf.addEventListener("click",function(){$("viewMock").classList.remove("on");hide();});
     v3&&v3.addEventListener("click",function(){$("viewMock").classList.remove("on");hide();});
-    window.addEventListener("resize",resize);
+    window.addEventListener("resize",function(){ if(visible){fit();draw();} });
 
     window.__mockup={
-      onConfigChange:function(newCols,newRows,prod){ cols=newCols;rows=newRows;DEPTH=(prod&&(prod.modDepth||prod.depth))?(+prod.modDepth||+prod.depth):90; if(ready&&visible){build();}else{dirty=true;} },
+      onConfigChange:function(newCols,newRows,prod){ cols=newCols;rows=newRows;DEPTH=(prod&&(prod.modDepth||prod.depth))?(+prod.modDepth||+prod.depth):90; depth=DEPTH; var dr=$("mDepthRange"); if(dr){dr.value=Math.min(260,depth);$("mvd").textContent=dr.value+" mm";} if(ready&&visible){build();}else{dirty=true;} },
       forceFlat:function(){ if(visible){hide();$("viewMock").classList.remove("on");} },
       refreshScenes:function(){ if(ready)refreshScenes(); },
-      snapshot:function(){ return null; }, // il mockup si esporta con compose(); Odoo usa la composizione al volo
+      snapshot:function(){ return null; },
       composeTo:function(cb){ if(ready&&visible){compose(cb);}else{cb(null);} },
       isVisible:function(){ return visible; }
     };
