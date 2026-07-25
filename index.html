@@ -75,9 +75,11 @@
   .adminbtn svg{width:13px;height:13px}
 
   .grid{display:grid;grid-template-columns:400px 1fr;gap:26px;align-items:start}
-  /* Mockup a tutta larghezza: il wrapper di destra sfonda la griglia e scende sotto le colonne */
-  .grid > .mockwide{grid-column:1 / -1;order:99}
-  .mockwide .stagemock{height:auto;max-height:none;aspect-ratio:16/9;min-height:0}
+  /* Mockup a tutta larghezza: SOLO la card anteprima si estende oltre la sua colonna,
+     senza toccare le card sotto (metriche, alternative, distinta) né le altre viste. */
+  .previewcard.mockwide{width:calc(400px + 100% + 26px);margin-left:calc(-400px - 26px)}
+  @media(max-width:880px){ .previewcard.mockwide{width:100%;margin-left:0} }
+  .previewcard.mockwide .stagemock{height:auto;max-height:none;aspect-ratio:16/9;min-height:0}
   @media(max-width:880px){.grid{grid-template-columns:1fr}}
 
   .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));
@@ -2839,7 +2841,14 @@
       $("mpMove").addEventListener("click",function(){photoMove=!photoMove;this.classList.toggle("on",photoMove);if(photoMove){ledMove=false;$("mLed").classList.remove("on");cv.classList.remove("moving");}});
 
       // modalità warp / spessore
-      $("mModeWarp").addEventListener("click",function(){showDepth=false;this.classList.add("on");$("mModeDepth").classList.remove("on");stage.classList.add("warpon");$("mockdepth").hidden=true;draw();});
+      $("mModeWarp").addEventListener("click",function(){
+        if(!showDepth && stage.classList.contains("warpon")){
+          // già in adatta-angoli: ripremendo nascondo i pallini (posa bloccata)
+          stage.classList.remove("warpon"); this.classList.remove("on"); draw();
+        } else {
+          showDepth=false; this.classList.add("on"); $("mModeDepth").classList.remove("on"); stage.classList.add("warpon"); $("mockdepth").hidden=true; draw();
+        }
+      });
       $("mModeDepth").addEventListener("click",function(){
         if(showDepth){ // già in spessore: ripremendo torno ad Adatta angoli e chiudo il pannello
           showDepth=false;this.classList.remove("on");$("mModeWarp").classList.add("on");stage.classList.add("warpon");$("mockdepth").hidden=true;draw();
@@ -2894,7 +2903,7 @@
       if(!bgs.length){ var e=document.createElement("span");e.style.cssText="font-family:var(--mono);font-size:10.5px;color:#8793a1;padding:3px 6px";e.textContent="Nessuno sfondo salvato — usa ⬆ Foto cliente"; host.insertBefore(e,host.firstChild); }
     }
 
-    function previewCard(){ var s=$("stagemock"); if(!s) return null; var pc=s.closest(".previewcard"); return (pc&&pc.parentElement)?pc.parentElement:pc; }
+    function previewCard(){ var s=$("stagemock"); return s?s.closest(".previewcard"):null; }
     function show(){
       $("viewMock").classList.add("on"); $("viewFlat").classList.remove("on"); $("view3d").classList.remove("on");
       $("stage").hidden=true; $("stage3d").hidden=true; $("stagemock").hidden=false; visible=true;
