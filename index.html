@@ -75,6 +75,9 @@
   .adminbtn svg{width:13px;height:13px}
 
   .grid{display:grid;grid-template-columns:400px 1fr;gap:26px;align-items:start}
+  /* Mockup a tutta larghezza: la card anteprima sfonda la griglia e scende sotto le colonne */
+  .previewcard.mockwide{grid-column:1 / -1;order:99}
+  .previewcard.mockwide .stagemock{height:auto;max-height:none;aspect-ratio:16/9;min-height:0}
   @media(max-width:880px){.grid{grid-template-columns:1fr}}
 
   .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));
@@ -2887,14 +2890,18 @@
       if(!bgs.length){ var e=document.createElement("span");e.style.cssText="font-family:var(--mono);font-size:10.5px;color:#8793a1;padding:3px 6px";e.textContent="Nessuno sfondo salvato — usa ⬆ Foto cliente"; host.insertBefore(e,host.firstChild); }
     }
 
+    function previewCard(){ var s=$("stagemock"); return s?s.closest(".previewcard"):null; }
     function show(){
       $("viewMock").classList.add("on"); $("viewFlat").classList.remove("on"); $("view3d").classList.remove("on");
       $("stage").hidden=true; $("stage3d").hidden=true; $("stagemock").hidden=false; visible=true;
+      var pc=previewCard(); if(pc) pc.classList.add("mockwide");
       if(!ready)initEngine();
       if(dirty){build();dirty=false;}
-      refreshScenes(); fit(); draw();
+      refreshScenes();
+      // la larghezza è cambiata: ricalcola canvas e ricostruisci la posa
+      requestAnimationFrame(function(){ fit(); if(dst){initDst();} draw(); });
     }
-    function hide(){ $("stagemock").hidden=true; visible=false; }
+    function hide(){ $("stagemock").hidden=true; visible=false; var pc=previewCard(); if(pc) pc.classList.remove("mockwide"); }
 
     $("viewMock").addEventListener("click",show);
     var vf=$("viewFlat"), v3=$("view3d");
