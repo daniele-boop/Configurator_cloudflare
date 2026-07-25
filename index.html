@@ -280,7 +280,8 @@
   .d3tools button{width:36px;height:36px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.92);color:#0f1622;font-size:17px;font-weight:700;cursor:pointer;font-family:var(--mono)}
   .d3tools button.on{border-color:var(--teal,#37c3d1);background:rgba(55,195,209,.18);color:#0d7c88}
   .d3bar{position:absolute;left:12px;bottom:12px;display:flex;gap:7px}
-  .d3err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:var(--mono);font-size:12px;color:var(--muted-2)}
+  .d3err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:var(--mono);font-size:12px;color:var(--muted-2);background:var(--panel-2)}
+  .d3err[hidden]{display:none}
   .headbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .modtoggle{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);background:var(--panel-2);
     color:var(--muted);border-radius:8px;padding:6px 11px;cursor:pointer;transition:.13s}
@@ -2474,6 +2475,7 @@
       $("stage").hidden=true; $("stage3d").hidden=false; visible=true;
       loadThree(function(ok){
         if(!ok){$("d3err").hidden=false;$("c3d").style.display="none";return;}
+        $("d3err").hidden=true; $("c3d").style.display="block";
         if(!ready)initScene();
         if(dirty){build();dirty=false;}
         resize();
