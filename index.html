@@ -444,8 +444,8 @@
   .ctrlnone{font-family:var(--mono);font-size:12px;color:var(--muted);padding:6px 0}
 
   #ctrlAdminList{overflow-x:auto;padding-bottom:6px}
-  .cadmrow,.cadmhead{min-width:1140px}
-  .cadmrow{display:grid;grid-template-columns:1.1fr .8fr .85fr .75fr .75fr .55fr .85fr .5fr .75fr .95fr auto;gap:7px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:var(--panel-2)}
+  .cadmrow,.cadmhead{min-width:1220px}
+  .cadmrow{display:grid;grid-template-columns:28px 1.1fr .8fr .85fr .75fr .75fr .55fr .85fr .5fr .75fr 1.15fr auto;gap:7px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:var(--panel-2)}
   .movebtns{display:inline-flex;gap:3px;align-items:center}
   .movebtns .mv{width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;font-size:9px;line-height:1;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);color:var(--muted);cursor:pointer;transition:.12s}
   .movebtns .mv:hover:not(:disabled){border-color:#37c3d1;color:#37c3d1}
@@ -458,7 +458,7 @@
   .cadd-grid input{padding:8px;font-size:12.5px;width:100%}
   .ctrladd{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
   .add-title{font-family:var(--mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
-  .cadmhead{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);display:grid;grid-template-columns:1.1fr .8fr .85fr .75fr .75fr .55fr .85fr .5fr .75fr .95fr auto;gap:7px;padding:0 9px 4px}
+  .cadmhead{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);display:grid;grid-template-columns:28px 1.1fr .8fr .85fr .75fr .75fr .55fr .85fr .5fr .75fr 1.15fr auto;gap:7px;padding:0 9px 4px}
   @media(max-width:760px){ .cadmrow,.cadmhead{grid-template-columns:1fr 1fr 1fr;min-width:0}.cadmhead{display:none} }
 
   .adminsec{border-top:1px solid var(--line);margin-top:22px;padding-top:20px}
@@ -750,6 +750,10 @@
             <button class="btn ghost sm" id="odooFill">Riempi da Odoo</button>
             <button class="btn ghost sm" id="addCtrl">Aggiungi controller</button>
             <button class="btn ghost sm" id="seedHuidu">Aggiungi modelli Huidu</button>
+            <span style="display:inline-flex;gap:7px;align-items:center;margin-left:8px">
+              <input id="c-import" placeholder="cerca su Odoo (es. controller)" style="max-width:220px">
+              <button class="btn ghost sm" id="importCtrl">Importa da Odoo</button>
+            </span>
           </div>
         </div>
       </div>
@@ -967,6 +971,7 @@
       maxResPort: (+c.maxResPort>0?+c.maxResPort:(+c.resPort>0?+c.resPort:undefined)),
       k4: (typeof c.k4==="string"&&c.k4.trim()?c.k4.trim():undefined),
       brand: (typeof c.brand==="string"&&c.brand.trim()?c.brand.trim():undefined),
+      active: (c.active===false ? false : undefined),   // assente = attivo
       price: (+c.price>0?+c.price:undefined),
       code: (typeof c.code==="string"&&c.code.trim()?c.code.trim():undefined)
     }));
@@ -1407,6 +1412,9 @@
   }
   function ctrlFits(c,px){
     if(!px) return false;
+    // Senza nessun limite scritto non si può affermare che regga la parete:
+    // prima passava per compatibile con qualsiasi cosa.
+    if(!(c.maxTotal>0) && !(c.maxBase>0) && !(c.maxHeight>0)) return false;
     const tot=px.base*px.h;
     return (!c.maxTotal || tot<=c.maxTotal) && (!c.maxBase || px.base<=c.maxBase) && (!c.maxHeight || px.h<=c.maxHeight);
   }
@@ -1659,7 +1667,9 @@
     // solo le marche ammesse dal prodotto; nessuna scelta = tutte
     const prod0=currentProduct();
     const allow=(prod0&&Array.isArray(prod0.ctrlBrands)&&prod0.ctrlBrands.length)?prod0.ctrlBrands:null;
-    const ctrls=(DB.controllers||[]).filter(c=>!allow||allow.includes((c.brand||"").trim()));
+    const ctrls=(DB.controllers||[])
+      .filter(c=>c.active!==false)
+      .filter(c=>!allow||allow.includes((c.brand||"").trim()));
     if(!ctrls.length){ card.hidden=true; return; }
     card.hidden=false; host.innerHTML="";
     const px=currentPx();
@@ -2289,20 +2299,30 @@
     nota.className="sub"; nota.style.cssText="margin:0 0 10px;font-size:12px";
     nota.innerHTML='Il pulsante <b>Odoo</b> accanto al codice riempie modello, prezzo e marca. '+
       'I limiti tecnici — pixel massimi, base, altezza, porte, 4K — su Odoo non ci sono: '+
-      'stanno sulla scheda del produttore e vanno scritti a mano una volta.';
+      'stanno sulla scheda del produttore e vanno scritti a mano una volta. '+
+      'La casella a sinistra accende e spegne: uno spento resta in elenco ma non viene proposto, '+
+      'e finché non ha nessun limite scritto non risulta compatibile con niente.';
     host.appendChild(nota);
 
     if(!draftControllers.length){
       const e=document.createElement("div");e.className="resempty";e.textContent="Nessun controller — aggiungine uno qui sotto oppure carica i modelli Huidu.";host.appendChild(e);
     } else {
       const head=document.createElement("div");head.className="cadmhead";
-      head.innerHTML="<span>Modello</span><span>Marca</span><span>Max px tot.</span><span>Max base</span><span>Max alt.</span><span>Porte</span><span>Res/porta</span><span>4K</span><span>Prezzo</span><span>Cod. Odoo</span><span></span>";
+      head.innerHTML="<span></span><span>Modello</span><span>Marca</span><span>Max px tot.</span><span>Max base</span><span>Max alt.</span><span>Porte</span><span>Res/porta</span><span>4K</span><span>Prezzo</span><span>Cod. Odoo</span><span></span>";
       host.appendChild(head);
     }
     const num=(obj,key,ph)=>{ const i=document.createElement("input");i.type="number";i.min="0";i.step="any";i.placeholder=ph||"";if(obj[key]>0)i.value=obj[key];i.addEventListener("input",()=>obj[key]=numOrUndef(i.value));return i; };
     const txt=(obj,key,ph)=>{ const i=document.createElement("input");i.type="text";i.placeholder=ph||"";if(obj[key])i.value=obj[key];i.addEventListener("input",()=>obj[key]=(i.value.trim()||undefined));return i; };
     draftControllers.forEach((c,ci)=>{
       const row=document.createElement("div");row.className="cadmrow";
+      if(c.active===false) row.style.opacity=".5";
+      const att=document.createElement("label");
+      att.style.cssText="display:flex;align-items:center;justify-content:center;cursor:pointer";
+      att.title=c.active===false?"Spento: non viene proposto":"Acceso: viene proposto";
+      const cb=document.createElement("input");cb.type="checkbox";cb.style.width="auto";
+      cb.checked=c.active!==false;
+      cb.addEventListener("change",()=>{ c.active = cb.checked ? undefined : false; renderCtrlAdmin(); });
+      att.appendChild(cb); row.appendChild(att);
       row.appendChild(txt(c,"model","Modello"));
       const br=txt(c,"brand","Huidu"); br.setAttribute("list","brandList"); row.appendChild(br);
       row.appendChild(num(c,"maxTotal","px tot"));
@@ -2349,6 +2369,39 @@
   }
 
   $("addProd").addEventListener("click",()=>{ const name=$("newProdName").value.trim(); if(!name) return; draft.push({id:"p_"+Date.now().toString(36),name,resolutions:[],cabinets:[]}); $("newProdName").value=""; renderProdList(); });
+  /* Importazione in blocco: si porta dentro tutto quello che Odoo ha e che
+     qui manca, SPENTO. I limiti tecnici Odoo non li ha, quindi un modello
+     appena importato non è ancora proponibile: si accende dopo averli
+     scritti. Meglio così che vederselo comparire in offerta a vuoto. */
+  $("importCtrl") && $("importCtrl").addEventListener("click", async ()=>{
+    const q=($("c-import").value||"").trim() || "controller";
+    const b=$("importCtrl"); b.disabled=true; b.textContent="Cerco…";
+    const r=await window.odooLookup({q});
+    b.disabled=false; b.textContent="Importa da Odoo";
+    if(!r.ok){ ctrlMsg(r.error||"Ricerca non riuscita.","err"); return; }
+    const trovati=(r.items||[]).filter(x=>x.code);
+    if(!trovati.length){ ctrlMsg('Su Odoo non c\'è nulla che somigli a "'+q+'".',"err"); return; }
+    if(!Array.isArray(draftControllers)) draftControllers=[];
+    const gia=new Set(draftControllers.map(c=>(c.code||"").trim().toLowerCase()));
+    let nuovi=0;
+    trovati.forEach(it=>{
+      if(gia.has(it.code.toLowerCase())) return;
+      draftControllers.push({
+        id:"c_"+Math.random().toString(36).slice(2,9),
+        model:it.name||it.code, code:it.code,
+        brand:window.brandFromName(it.name)||undefined,
+        price:(it.price>0?it.price:undefined),
+        active:false
+      });
+      gia.add(it.code.toLowerCase()); nuovi++;
+    });
+    renderCtrlAdmin();
+    ctrlMsg(nuovi
+      ? "Importati "+nuovi+" controller, spenti. Scrivi i limiti tecnici e accendi quelli che ti servono. Poi Salva."
+      : "Su Odoo non c'era niente di nuovo: i "+trovati.length+" trovati ci sono già.",
+      nuovi?"ok":"wait");
+  });
+
   $("odooFill") && $("odooFill").addEventListener("click", async ()=>{
     const codice=$("c-code").value.trim();
     if(!codice){ ctrlMsg("Scrivi il codice dell'articolo nel campo Codice Odoo.","err"); return; }

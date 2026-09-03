@@ -155,6 +155,22 @@ lo ricorda invece di lasciarti credere che siano arrivati anche loro.
 Se il codice non esiste, escono i riferimenti che gli somigliano: un refuso si
 corregge sul posto.
 
+### Portarli dentro tutti
+
+**Importa da Odoo** con una parola di ricerca (per esempio *controller*) porta
+dentro tutti quelli che Odoo ha e che qui mancano. Arrivano **spenti**, con
+prezzo e marca ma senza limiti tecnici — che è esattamente quello che sono
+finché non li completi. Premendo di nuovo non si duplica niente: aggiunge solo
+i codici nuovi.
+
+La casella a sinistra di ogni riga accende e spegne. Uno spento resta in elenco
+ma non viene proposto, né qui né nella versione agenti: si tiene senza doverlo
+cancellare.
+
+E un controller senza nessun limite scritto non risulta compatibile con
+nessuna parete. Prima passava per compatibile con qualsiasi cosa, perché
+"nessun limite" veniva letto come "nessun vincolo".
+
 ## Quali controller proporre
 
 I rental — RX indoor, Outdoor RS, Trasparent rental — montano **solo Novastar**.
