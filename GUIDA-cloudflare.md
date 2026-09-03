@@ -209,6 +209,42 @@ Il filtro è sul prodotto, non sull'agente: è un fatto tecnico della parete, no
 una scelta commerciale. Sta nel catalogo, quindi vale anche per la versione
 agenti.
 
+## Flightcase e barre di sospensione
+
+I rental si vendono con le loro casse. Il configuratore le conta da solo: nella
+scheda prodotto, in Amministrazione, il blocco **Flightcase** elenca le casse
+disponibili — nome, posti, codice Odoo, prezzo di riserva — e per ognuna quali
+**misure di cabinet** accetta (nessuna spunta = tutte).
+
+La capienza è un taglio fisso, non un divisore: 26 cabinet non fanno tre casse
+da 10, fanno 10+8+8. Il conto cerca la combinazione con **meno casse** e, a
+parità di casse, **meno posti sprecati**; l'arrotondamento è sempre per
+eccesso, e quando restano posti liberi lo dice. Se una misura di cabinet non ha
+nessuna cassa che la accetta, avvisa invece di far finta di niente.
+
+La spunta **Obbligatorie** decide se le casse entrano nel preventivo senza
+chiedere. Sui rental va lasciata accesa: sono parte della fornitura.
+
+Il blocco **Accessori** serve alle barre di sospensione (flybar) e a tutto
+quello che si conta a regola. Ogni voce ha una regola e un passo: la barra RX è
+*una ogni 500 mm di base*, quella del Trasparent rental *una ogni 1000 mm* —
+una parete da 3000 mm chiede sei barre nel primo caso, tre nel secondo. Le
+altre regole disponibili contano per altezza, colonne, righe, cabinet, metri
+quadri, oppure fissano una quantità.
+
+Un accessorio senza la spunta **Obbligatorio** resta una scelta: appare in
+fondo alla scheda *Flightcase & accessori* come casella da spuntare, con la
+quantità già calcolata sulla parete e il prezzo totale. Le barre stanno lì:
+alcune installazioni le vogliono, altre no.
+
+Tutto quello che risulta — casse e accessori spuntati — finisce nelle righe
+inviate a Odoo insieme ai cabinet, quindi ogni voce vuole il suo **codice
+Odoo**. Il tasto **Odoo** accanto al codice legge nome e listino dall'anagrafica
+senza ridigitarli, e **Sincronizza prezzi da Odoo** aggiorna anche casse e
+accessori insieme al resto.
+
+Il tutto sta nel catalogo, quindi vale anche per la versione agenti.
+
 ## Le tre viste dell'anteprima
 
 **Piatto** sta nella pagina. **3D** e **Mockup** si aprono sopra la pagina, a

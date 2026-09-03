@@ -210,6 +210,41 @@
   .bomrow .ct{margin-left:auto;font-family:var(--mono);font-size:14px;font-weight:600;white-space:nowrap}
   .bomrow .ct small{color:var(--muted);font-weight:400}
   .bomrow .sub{font-family:var(--mono);font-size:12.5px;color:var(--muted);min-width:78px;text-align:right}
+  /* flightcase & accessori */
+  .fcrow2{display:flex;align-items:center;gap:11px;padding:9px 4px;border-top:1px solid var(--line-soft)}
+  .fcrow2:first-of-type{border-top:none}
+  .fcrow2 .nm{font-size:13px}
+  .fcrow2 .nm small{color:var(--muted);display:block;font-size:11.5px;font-family:var(--mono)}
+  .fcrow2 .ct{margin-left:auto;font-family:var(--mono);font-size:14px;font-weight:600;white-space:nowrap}
+  .fcrow2 .sub{font-family:var(--mono);font-size:12.5px;color:var(--muted);min-width:78px;text-align:right}
+  .fcnote{margin-top:10px;padding:9px 11px;border-radius:9px;background:var(--line-soft);font-size:12.5px;line-height:1.5}
+  .fcnote.bad{background:#3a2a2c;color:#f3c9cd}
+  .fcnote .w{margin-top:6px;color:var(--muted);font-size:12px}
+  .acchdr{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);margin:14px 0 8px}
+  .opt{display:flex;align-items:center;gap:11px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;cursor:pointer}
+  .opt.on{border-color:var(--accent)}
+  .opt input{width:auto;flex:0 0 auto}
+  .opt .tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .opt .tx b{font-size:13px;font-weight:600}
+  .opt .tx span{font-size:11.5px;color:var(--muted)}
+  .opt .pr{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:2px}
+  .opt .pr b{font-family:var(--mono);font-size:13.5px}
+  .opt .pr span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  /* admin: casse e accessori */
+  .fcarow{display:grid;grid-template-columns:1fr 74px 132px 92px 74px 26px;gap:8px;align-items:center;margin-bottom:7px}
+  .fcarow input{padding:8px;font-size:12.5px}
+  .fcarow select{padding:8px;font-size:12.5px}
+  .fcarow .rm{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:16px;line-height:1}
+  .fcarow .rm:hover{color:var(--danger)}
+  .acarow{display:grid;grid-template-columns:1fr 132px 168px 74px 92px 74px 26px;gap:8px;align-items:center;margin-bottom:7px}
+  .acarow input,.acarow select{padding:8px;font-size:12.5px}
+  .acarow .rm{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:16px;line-height:1}
+  .fitsrow{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0 0 11px 2px}
+  .fitsrow span.lb{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+  .fitsrow label{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer}
+  .fitsrow label input{width:auto}
+  .fcflag{display:flex;align-items:center;gap:7px;font-size:12.5px;margin-bottom:10px;cursor:pointer}
+  .fcflag input{width:auto}
   .bomtot{display:flex;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--mono);font-size:13px}
   .bomtot b{font-size:15px}
   .strategy{font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-top:10px;line-height:1.55}
@@ -669,6 +704,17 @@
         <div class="strategy">Composizione predefinita: cabinet più grandi e uniformi possibile, per ridurre pezzi e costo.</div>
       </section>
 
+      <section class="card" id="fcCard" hidden>
+        <p class="eyebrow">Flightcase &amp; accessori</p>
+        <div id="fcList"></div>
+        <div class="fcnote" id="fcNote" hidden></div>
+        <div id="accBox" hidden>
+          <div class="acchdr">Accessori opzionali</div>
+          <div id="accList"></div>
+        </div>
+        <div class="strategy">Le casse dei rental entrano da sole nel conteggio: si sceglie la combinazione con meno casse e meno posti sprecati, arrotondando per eccesso. Le barre di sospensione si aggiungono spuntandole.</div>
+      </section>
+
       <section class="card" id="specCard" hidden>
         <p class="eyebrow">Specifiche &amp; preventivo</p>
         <div class="spec">
@@ -979,6 +1025,40 @@
     {k:"material",label:"Materiale",ph:"Alluminio"},
     {k:"videoInput",label:"Video input",ph:"HDMI"}
   ];
+  /* Flightcase di un prodotto rental. `fits` elenca le misure cabinet che la
+     cassa accetta ("500x500"); vuoto = va bene per tutte. */
+  function normFlightcases(fc){
+    if(!fc||typeof fc!=="object") return undefined;
+    const cases=(Array.isArray(fc.cases)?fc.cases:[]).filter(c=>c&&+c.capacity>0).map(c=>({
+      id:c.id||("fc_"+Math.random().toString(36).slice(2,9)),
+      label:String(c.label||"Flightcase"),
+      capacity:Math.floor(+c.capacity),
+      code:(typeof c.code==="string"&&c.code.trim()?c.code.trim():undefined),
+      price:(+c.price>0?+c.price:undefined),
+      fits:(Array.isArray(c.fits)?[...new Set(c.fits.map(x=>String(x).trim()).filter(Boolean))]:[])
+    }));
+    if(!cases.length) return undefined;
+    return { required: fc.required!==false,
+             note:(typeof fc.note==="string"&&fc.note.trim()?fc.note.trim():undefined), cases };
+  }
+  const ACC_RULES=["perWidth","perHeight","perColumn","perRow","perCabinet","perSqm","fixed"];
+  /* Accessori a regola: le barre di sospensione sono "una ogni 500 mm di
+     base" (1000 sul Trasparent rental). Quantità sempre per eccesso. */
+  function normAccessories(ac){
+    if(!ac||typeof ac!=="object") return undefined;
+    const items=(Array.isArray(ac.items)?ac.items:[]).filter(i=>i&&String(i.label||"").trim()).map(i=>({
+      id:i.id||("ac_"+Math.random().toString(36).slice(2,9)),
+      label:String(i.label).trim(),
+      code:(typeof i.code==="string"&&i.code.trim()?i.code.trim():undefined),
+      rule:(ACC_RULES.indexOf(i.rule)>=0?i.rule:"perCabinet"),
+      unit:(+i.unit>0?+i.unit:1),
+      price:(+i.price>0?+i.price:undefined),
+      required:(i.required===true?true:undefined),
+      note:(typeof i.note==="string"&&i.note.trim()?i.note.trim():undefined)
+    }));
+    if(!items.length) return undefined;
+    return { items };
+  }
   function normControllers(arr){
     if(!Array.isArray(arr)) return [];
     return arr.filter(c=>c&&(c.model||c.name)).map(c=>({
@@ -1015,6 +1095,8 @@
           wPerSqm:(+p.wPerSqm>0?+p.wPerSqm:undefined),
           modD:(+p.modD>0?+p.modD:undefined),
           tech:normTech(p.tech),
+          flightcases:normFlightcases(p.flightcases),
+          accessories:normAccessories(p.accessories),
           photo:(typeof p.photo==="string"&&p.photo.slice(0,11)==="data:image/"?p.photo:undefined),
           modW, modH,
           resolutions:(Array.isArray(p.resolutions)?p.resolutions:[]).filter(r=>r&&r.pitch>0).map(r=>({id:r.id||rid(),label:(r.label||("P"+r.pitch)),pitch:r.pitch,pitchH:(+r.pitchH>0?+r.pitchH:undefined)})),
@@ -1037,7 +1119,7 @@
   }
 
   // stato: le selezioni sono COMPOSIZIONI {total, counts}
-  const S = { productId:null, reqW:null, reqH:null, selWc:null, selHc:null, pitch:0, pitchV:0, showModules:true, rot:false, selCtrls:{} };
+  const S = { productId:null, reqW:null, reqH:null, selWc:null, selHc:null, pitch:0, pitchV:0, showModules:true, rot:false, selCtrls:{}, accSel:[] };
   const R169 = 16/9;
 
   const HUES=[265,190,330,150,95,300,45,220];  // famiglia colore per larghezza
@@ -1190,6 +1272,99 @@
     r.cabinets=(p.cabinets||[]).map(c=>Object.assign({},c,{w:c.h,h:c.w}));
     if(p.modW>0&&p.modH>0){ r.modW=p.modH; r.modH=p.modW; }
     return r;
+  }
+  /* Riempimento delle casse. Con tagli fissi (10 posti, 8 posti) non si
+     divide il numero di cabinet: si cerca la combinazione con MENO CASSE e,
+     a parità, meno posti sprecati. 26 cabinet fanno 10+8+8, non tre da 10. */
+  function packCases(cases,n){
+    const usable=(cases||[]).filter(c=>c.capacity>0);
+    if(!usable.length||!(n>0)) return null;
+    const best=new Array(n+1).fill(null);
+    best[0]={count:0,slots:0,use:{}};
+    for(let i=1;i<=n;i++){
+      for(const c of usable){
+        const cap=Math.floor(c.capacity);
+        const prev=best[Math.max(0,i-cap)];
+        if(!prev) continue;
+        const cand={count:prev.count+1,slots:prev.slots+cap,use:Object.assign({},prev.use)};
+        cand.use[c.id]=(cand.use[c.id]||0)+1;
+        if(!best[i]||cand.count<best[i].count||(cand.count===best[i].count&&cand.slots<best[i].slots)) best[i]=cand;
+      }
+    }
+    return best[n];
+  }
+  const caseLabel=c=>new RegExp("(^|\\D)"+c.capacity+"(\\D|$)").test(c.label||"")?c.label:(c.label+" ("+c.capacity+" posti)");
+  /* Righe flightcase per la parete, raggruppate per misura cabinet. */
+  function flightcaseLines(product,cols,rows){
+    const cfg=product&&product.flightcases;
+    if(!cfg||!(cfg.cases||[]).length) return {lines:[],warnings:[],required:false,note:""};
+    const cw={};cols.forEach(w=>cw[w]=(cw[w]||0)+1);
+    const rh={};rows.forEach(h=>rh[h]=(rh[h]||0)+1);
+    const counts={};
+    Object.keys(cw).forEach(w=>Object.keys(rh).forEach(h=>{
+      const q=cw[w]*rh[h]; if(q) counts[w+"x"+h]=(counts[w+"x"+h]||0)+q;
+    }));
+    const byId={};cfg.cases.forEach(c=>byId[c.id]=c);
+    const lines=[],warnings=[];
+    Object.keys(counts).forEach(size=>{
+      const n=counts[size];
+      const fitting=cfg.cases.filter(c=>!(c.fits||[]).length||c.fits.indexOf(size)>=0);
+      if(!fitting.length){ warnings.push("Nessuna cassa per i cabinet "+size.replace("x","\u00d7")+" mm: va configurata in Amministrazione."); return; }
+      const packed=packCases(fitting,n); if(!packed) return;
+      Object.keys(packed.use).forEach(id=>{
+        const c=byId[id]; const ex=lines.find(l=>l.refId===id);
+        if(ex){ ex.qty+=packed.use[id]; return; }
+        lines.push({kind:"flightcase",refId:id,label:caseLabel(c),code:c.code||"",
+          capacity:c.capacity,qty:packed.use[id],price_unit:c.price||0});
+      });
+      if(packed.slots>n) warnings.push(n+" cabinet "+size.replace("x","\u00d7")+" mm entrano in "+packed.count+
+        (packed.count===1?" cassa da ":" casse da ")+packed.slots+" posti: restano "+(packed.slots-n)+" posti liberi.");
+    });
+    return {lines,warnings,required:cfg.required!==false,note:cfg.note||""};
+  }
+  function accessoryQty(item,ctx){
+    const u=Number(item.unit)||1;
+    switch(item.rule){
+      case "perWidth":   return Math.ceil((ctx.totalW||0)/u);
+      case "perHeight":  return Math.ceil((ctx.totalH||0)/u);
+      case "perColumn":  return Math.ceil((ctx.cols||0)/u);
+      case "perRow":     return Math.ceil((ctx.rows||0)/u);
+      case "perCabinet": return Math.ceil((ctx.cabinets||0)/u);
+      case "perSqm":     return Math.ceil((ctx.area||0)/u);
+      case "fixed":      return Math.max(1,Math.round(u));
+      default:           return 0;
+    }
+  }
+  const RULE_TEXT={
+    perWidth:u=>"una ogni "+u+" mm di base",
+    perHeight:u=>"uno ogni "+u+" mm di altezza",
+    perColumn:u=>"uno ogni "+u+" colonn"+(u===1?"a":"e"),
+    perRow:u=>"uno ogni "+u+" rig"+(u===1?"a":"he"),
+    perCabinet:u=>"uno ogni "+u+" cabinet",
+    perSqm:u=>"uno ogni "+u+" m\u00b2",
+    fixed:u=>"quantit\u00e0 fissa"
+  };
+  const ruleText=it=>(RULE_TEXT[it.rule]||(()=>""))(Number(it.unit)||1);
+  /* Gli accessori obbligatori entrano sempre, gli opzionali solo se spuntati. */
+  function accessoryLines(product,ctx,selectedOptional){
+    const cfg=product&&product.accessories;
+    if(!cfg||!(cfg.items||[]).length) return {lines:[],optional:[]};
+    const sel=selectedOptional||[];
+    const lines=[],optional=[];
+    cfg.items.forEach(it=>{
+      const qty=accessoryQty(it,ctx);
+      if(!it.required) optional.push(Object.assign({qty},it));
+      if(!it.required&&sel.indexOf(it.id)<0) return;
+      if(!(qty>0)) return;
+      lines.push({kind:"accessory",refId:it.id,label:it.label,code:it.code||"",qty,
+        price_unit:it.price||0,required:!!it.required,hint:ruleText(it)});
+    });
+    return {lines,optional};
+  }
+  /* Contesto della parete corrente per le regole accessorio. */
+  function wallCtx(cols,rows,totalW,totalH){
+    return {totalW,totalH,cols:cols.length,rows:rows.length,
+      cabinets:cols.length*rows.length,area:(totalW*totalH)/1e6};
   }
   function priceOf(cab){
     if(S.res && cab.prices && cab.prices[S.res.id]>0) return cab.prices[S.res.id];
@@ -1465,6 +1640,17 @@
       const line={code,label:"Controller "+ctrl.model,qty,price_unit:Number((price||0).toFixed(2)),kind:"controller"};
       lines.push(line); controllers.push(line);
     });
+    // casse e accessori: stessa distinta che si vede a schermo
+    const cols2=cols, rows2=rows;
+    const fcRes=flightcaseLines(p,cols2,rows2);
+    const accRes=accessoryLines(p,wallCtx(cols2,rows2,S.selWc.total,S.selHc.total),S.accSel);
+    fcRes.lines.concat(accRes.lines).forEach(l=>{
+      if(!l.code) codeOk=false;
+      const price=l.price_unit||0; if(price>0) totalPrice+=price*l.qty; else priceOk=false;
+      lines.push({code:l.code||"",label:l.label,qty:l.qty,
+        price_unit:Number(price.toFixed(2)),kind:l.kind});
+    });
+
     const p2=currentProduct();
     const objInput=$("odooObject"); const object=(objInput&&objInput.value.trim())||"";
     const sizeStr=S.selWc.total+"×"+S.selHc.total+" mm";
@@ -1570,7 +1756,7 @@
 
     const p=currentProduct();
     const has = p && p.cabinets.length && S.reqW!==null && S.reqH!==null;
-    ["resultCard","bomCard","metrics","specCard","altCard","ctrlCard","salesCard","offerCard"].forEach(id=>$(id).hidden=!has);
+    ["resultCard","bomCard","fcCard","metrics","specCard","altCard","ctrlCard","salesCard","offerCard"].forEach(id=>$(id).hidden=!has);
     const hasMod = p && p.modW>0 && p.modH>0;
     $("modToggle").hidden = !(has && hasMod);
     if(has && hasMod){ $("modToggle").setAttribute("aria-pressed", S.showModules?"true":"false"); $("modToggle").textContent = "Moduli: "+(S.showModules?"on":"off"); }
@@ -1620,12 +1806,13 @@
     renderRatioSuggest(eW,eH,totalW,totalH);
     renderAltWalls(p,eW,eH,S.reqW,S.reqH);
     renderControllers();
+    renderExtras(p,cols,rows,totalW,totalH);
     renderSales(p,cols,rows,totalW,totalH);
     // il numero di serie resta valido finché la configurazione non cambia
     const sig=cfgSignature();
     if(S.serial){ if(!S.serialSig){ S.serialSig=sig; } else if(S.serialSig!==sig){ S.serial=null; S.serialSig=null; if($("cfgStatus")){ $("cfgStatus").className="odoostatus"; $("cfgStatus").innerHTML=""; } } }
   }
-  function cfgSignature(){ return S.productId+"|"+S.reqW+"x"+S.reqH+"|"+(S.res?S.res.id:"")+"|"+(S.selWc?S.selWc.total:"")+"x"+(S.selHc?S.selHc.total:"")+"|"+Object.keys(S.selCtrls||{}).sort().map(k=>k+":"+S.selCtrls[k]).join(","); }
+  function cfgSignature(){ return S.productId+"|"+S.reqW+"x"+S.reqH+"|"+(S.res?S.res.id:"")+"|"+(S.selWc?S.selWc.total:"")+"x"+(S.selHc?S.selHc.total:"")+"|"+Object.keys(S.selCtrls||{}).sort().map(k=>k+":"+S.selCtrls[k]).join(",")+"|"+(S.accSel||[]).slice().sort().join(","); }
 
   function renderSales(product,cols,rows,totalW,totalH){
     const grid=$("salesGrid"); grid.innerHTML="";
@@ -1938,6 +2125,74 @@
     }
   }
 
+  /* Casse e accessori della parete corrente. Le casse sono obbligatorie sui
+     rental e si contano da sole; le barre restano una scelta. */
+  function renderExtras(product,cols,rows,totalW,totalH){
+    const fc=flightcaseLines(product,cols,rows);
+    const ctx=wallCtx(cols,rows,totalW,totalH);
+    const acc=accessoryLines(product,ctx,S.accSel);
+    S.fc=fc; S.acc=acc;
+
+    const nulla=!fc.lines.length&&!fc.warnings.length&&!acc.lines.length&&!acc.optional.length;
+    $("fcCard").hidden=nulla;
+    if(nulla) return;
+
+    const list=$("fcList"); list.innerHTML="";
+    let sub=0;
+    fc.lines.concat(acc.lines).forEach(l=>{
+      sub+=(l.price_unit||0)*l.qty;
+      const row=document.createElement("div"); row.className="fcrow2";
+      const extra=(l.kind==="flightcase")
+        ? (l.capacity+" posti"+(l.code?" \u00b7 "+l.code:""))
+        : ((l.hint||"")+(l.code?" \u00b7 "+l.code:""));
+      row.innerHTML='<span class="nm">'+escHtml(l.label)+'<small>'+escHtml(extra)+'</small></span>'+
+        '<span class="ct">'+l.qty+' <small>pz</small></span>'+
+        '<span class="sub">'+(l.price_unit>0?eur(l.price_unit*l.qty):"\u2014")+'</span>';
+      list.appendChild(row);
+    });
+    if(sub>0){
+      const tot=document.createElement("div"); tot.className="bomtot";
+      tot.innerHTML='<span>Totale casse e accessori</span><b>'+eur(sub)+'</b>';
+      list.appendChild(tot);
+    }
+
+    const nb=$("fcNote");
+    nb.hidden=!fc.lines.length&&!fc.warnings.length;
+    if(!nb.hidden){
+      const casse=fc.lines.reduce((a,l)=>a+l.qty,0);
+      const posti=fc.lines.reduce((a,l)=>a+l.qty*l.capacity,0);
+      nb.className="fcnote"+((fc.warnings.length&&!fc.lines.length)?" bad":"");
+      nb.innerHTML=(fc.lines.length
+          ? "<b>"+casse+" flightcase</b> per "+posti+" posti \u2014 "+
+            (fc.required?"obbligatori, gi\u00e0 inclusi nel preventivo":"inclusi nel preventivo")+
+            (fc.note?". "+escHtml(fc.note):".")
+          : "")+
+        (fc.warnings.length?'<div class="w">'+fc.warnings.map(escHtml).join("<br>")+"</div>":"");
+    }
+
+    $("accBox").hidden=!acc.optional.length;
+    if(acc.optional.length){
+      const host=$("accList"); host.innerHTML="";
+      acc.optional.forEach(it=>{
+        const on=S.accSel.indexOf(it.id)>=0;
+        const lab=document.createElement("label");
+        lab.className="opt"+(on?" on":"");
+        lab.innerHTML='<input type="checkbox"'+(on?" checked":"")+'>'+
+          '<div class="tx"><b>'+escHtml(it.label)+'</b><span>'+escHtml(ruleText(it))+
+          " \u00b7 "+it.qty+" pz su questa parete"+(it.note?" \u00b7 "+escHtml(it.note):"")+'</span></div>'+
+          '<div class="pr"><b>'+((it.price>0)?eur(it.price*it.qty):"\u2014")+'</b><span>'+
+          ((it.price>0)?eur(it.price)+" cad.":"prezzo mancante")+'</span></div>';
+        lab.querySelector("input").addEventListener("change",e=>{
+          S.accSel = e.target.checked
+            ? S.accSel.concat([it.id])
+            : S.accSel.filter(x=>x!==it.id);
+          render();
+        });
+        host.appendChild(lab);
+      });
+    }
+  }
+
   // -------- generatore alternative di composizione --------
   function axisCandidates(units, req, eng, currentComp){
     const set=new Map();
@@ -2134,6 +2389,162 @@
   const apertiProd = new Set(), apertiCab = new Set();
   let filtroProd = "";
 
+  /* Casse del prodotto. La capienza è un taglio fisso, non un divisore:
+     per questo si spunta a quali misure di cabinet una cassa serve. */
+  function flightcaseAdmin(p){
+    const sec=document.createElement("div"); sec.className="resblock";
+    const hd=document.createElement("div"); hd.className="reshdr";
+    hd.textContent="Flightcase \u2014 nome, posti, codice Odoo, prezzo, misure cabinet che accetta";
+    sec.appendChild(hd);
+
+    if(!p.flightcases) p.flightcases={required:true,cases:[]};
+    if(!Array.isArray(p.flightcases.cases)) p.flightcases.cases=[];
+    const cfg=p.flightcases;
+    const misure=[...new Set((p.cabinets||[]).map(c=>c.w+"x"+c.h))];
+
+    const flag=document.createElement("label"); flag.className="fcflag";
+    const fcb=document.createElement("input"); fcb.type="checkbox"; fcb.checked=cfg.required!==false;
+    fcb.addEventListener("change",()=>{ cfg.required=fcb.checked; });
+    flag.appendChild(fcb);
+    flag.appendChild(document.createTextNode("Obbligatorie: entrano nel preventivo senza chiedere (i rental si vendono con le loro casse)"));
+    sec.appendChild(flag);
+
+    if(!cfg.cases.length){ const e=document.createElement("div"); e.className="resempty";
+      e.textContent="Nessuna cassa \u2014 aggiungila qui sotto. Senza casse il prodotto non ne conta nessuna."; sec.appendChild(e); }
+
+    cfg.cases.forEach((c,ci)=>{
+      if(!c.id) c.id="fc_"+Math.random().toString(36).slice(2,9);
+      const row=document.createElement("div"); row.className="fcarow";
+      const nome=document.createElement("input"); nome.type="text"; nome.placeholder="es. Flightcase 8 posti"; nome.value=c.label||"";
+      nome.addEventListener("input",()=>c.label=nome.value);
+      const cap=document.createElement("input"); cap.type="number"; cap.min="1"; cap.step="1"; cap.placeholder="posti"; if(c.capacity>0)cap.value=c.capacity;
+      cap.addEventListener("input",()=>c.capacity=numOrUndef(cap.value));
+      const cod=document.createElement("input"); cod.type="text"; cod.placeholder="codice Odoo"; cod.value=c.code||"";
+      cod.addEventListener("input",()=>c.code=(cod.value.trim()||undefined));
+      const pr=document.createElement("input"); pr.type="number"; pr.min="0"; pr.step="any"; pr.placeholder="\u20ac"; if(c.price>0)pr.value=c.price;
+      pr.addEventListener("input",()=>c.price=numOrUndef(pr.value));
+      const od=document.createElement("button"); od.type="button"; od.className="btn ghost sm"; od.textContent="Odoo";
+      od.title="Legge nome e listino da Odoo usando il codice qui accanto";
+      od.addEventListener("click",async ()=>{
+        const codice=cod.value.trim();
+        if(!codice){ ctrlMsg("Scrivi prima il codice Odoo della cassa.","err"); return; }
+        od.disabled=true; od.textContent="\u2026";
+        const r=await window.odooLookup({code:codice});
+        od.disabled=false; od.textContent="Odoo";
+        if(!r.ok){ ctrlMsg(r.error||"Ricerca non riuscita.","err"); return; }
+        if(r.found&&r.item){
+          if(!nome.value.trim()){ nome.value=r.item.name||""; c.label=nome.value; }
+          if(r.item.price>0){ pr.value=r.item.price; c.price=r.item.price; }
+          ctrlMsg("Da Odoo: "+r.item.name+" \u2014 "+r.item.price+" \u20ac.","ok");
+        } else ctrlMsg(r.message||"Non trovato su Odoo.","err");
+      });
+      const rm=document.createElement("button"); rm.className="rm"; rm.textContent="\u00d7"; rm.title="Rimuovi";
+      rm.addEventListener("click",()=>{ cfg.cases.splice(ci,1); renderProdList(); });
+      row.append(nome,cap,cod,pr,od,rm);
+      sec.appendChild(row);
+
+      if(misure.length){
+        const fits=document.createElement("div"); fits.className="fitsrow";
+        const lb=document.createElement("span"); lb.className="lb"; lb.textContent="accetta:";
+        fits.appendChild(lb);
+        if(!Array.isArray(c.fits)) c.fits=[];
+        const nota=document.createElement("span"); nota.className="lb";
+        const agg=()=>{ nota.textContent=c.fits.length?"":"(nessuna spunta = tutte)"; };
+        misure.forEach(m=>{
+          const l=document.createElement("label");
+          const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=c.fits.indexOf(m)>=0;
+          cb.addEventListener("change",()=>{
+            c.fits = cb.checked ? [...new Set(c.fits.concat([m]))] : c.fits.filter(x=>x!==m);
+            agg();
+          });
+          l.appendChild(cb); l.appendChild(document.createTextNode(m.replace("x","\u00d7")));
+          fits.appendChild(l);
+        });
+        fits.appendChild(nota); agg();
+        sec.appendChild(fits);
+      }
+    });
+
+    const add=document.createElement("button"); add.type="button"; add.className="btn ghost sm"; add.textContent="+ Flightcase";
+    add.addEventListener("click",()=>{
+      cfg.cases.push({id:"fc_"+Math.random().toString(36).slice(2,9),label:"",capacity:undefined,fits:[]});
+      renderProdList();
+    });
+    sec.appendChild(add);
+    return sec;
+  }
+
+  /* Accessori a regola: la barra di sospensione è "una ogni 500 mm di base"
+     \u2014 1000 sul Trasparent rental. Lasciata non obbligatoria diventa una
+     spunta per il commerciale. */
+  function accessoryAdmin(p){
+    const sec=document.createElement("div"); sec.className="resblock";
+    const hd=document.createElement("div"); hd.className="reshdr";
+    hd.textContent="Accessori \u2014 barre di sospensione e simili: nome, codice, regola, passo, prezzo";
+    sec.appendChild(hd);
+
+    if(!p.accessories) p.accessories={items:[]};
+    if(!Array.isArray(p.accessories.items)) p.accessories.items=[];
+    const items=p.accessories.items;
+
+    if(!items.length){ const e=document.createElement("div"); e.className="resempty";
+      e.textContent="Nessun accessorio."; sec.appendChild(e); }
+
+    const REGOLE=[["perWidth","ogni N mm di base"],["perHeight","ogni N mm di altezza"],
+      ["perColumn","ogni N colonne"],["perRow","ogni N righe"],["perCabinet","ogni N cabinet"],
+      ["perSqm","ogni N m\u00b2"],["fixed","quantit\u00e0 fissa"]];
+
+    items.forEach((it,ii)=>{
+      if(!it.id) it.id="ac_"+Math.random().toString(36).slice(2,9);
+      const row=document.createElement("div"); row.className="acarow";
+      const nome=document.createElement("input"); nome.type="text"; nome.placeholder="es. Barra di sospensione 500 mm"; nome.value=it.label||"";
+      nome.addEventListener("input",()=>it.label=nome.value);
+      const cod=document.createElement("input"); cod.type="text"; cod.placeholder="codice Odoo"; cod.value=it.code||"";
+      cod.addEventListener("input",()=>it.code=(cod.value.trim()||undefined));
+      const reg=document.createElement("select");
+      REGOLE.forEach(([v,t])=>{ const o=document.createElement("option"); o.value=v; o.textContent=t; reg.appendChild(o); });
+      reg.value=it.rule||"perWidth";
+      reg.addEventListener("change",()=>it.rule=reg.value);
+      const un=document.createElement("input"); un.type="number"; un.min="0"; un.step="any"; un.placeholder="N"; if(it.unit>0)un.value=it.unit;
+      un.addEventListener("input",()=>it.unit=numOrUndef(un.value));
+      const pr=document.createElement("input"); pr.type="number"; pr.min="0"; pr.step="any"; pr.placeholder="\u20ac"; if(it.price>0)pr.value=it.price;
+      pr.addEventListener("input",()=>it.price=numOrUndef(pr.value));
+      const od=document.createElement("button"); od.type="button"; od.className="btn ghost sm"; od.textContent="Odoo";
+      od.addEventListener("click",async ()=>{
+        const codice=cod.value.trim();
+        if(!codice){ ctrlMsg("Scrivi prima il codice Odoo dell'accessorio.","err"); return; }
+        od.disabled=true; od.textContent="\u2026";
+        const r=await window.odooLookup({code:codice});
+        od.disabled=false; od.textContent="Odoo";
+        if(!r.ok){ ctrlMsg(r.error||"Ricerca non riuscita.","err"); return; }
+        if(r.found&&r.item){
+          if(!nome.value.trim()){ nome.value=r.item.name||""; it.label=nome.value; }
+          if(r.item.price>0){ pr.value=r.item.price; it.price=r.item.price; }
+          ctrlMsg("Da Odoo: "+r.item.name+" \u2014 "+r.item.price+" \u20ac.","ok");
+        } else ctrlMsg(r.message||"Non trovato su Odoo.","err");
+      });
+      const rm=document.createElement("button"); rm.className="rm"; rm.textContent="\u00d7"; rm.title="Rimuovi";
+      rm.addEventListener("click",()=>{ items.splice(ii,1); renderProdList(); });
+      row.append(nome,cod,reg,un,pr,od,rm);
+      sec.appendChild(row);
+
+      const obb=document.createElement("label"); obb.className="fcflag";
+      const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=it.required===true;
+      cb.addEventListener("change",()=>it.required=(cb.checked?true:undefined));
+      obb.appendChild(cb);
+      obb.appendChild(document.createTextNode("Obbligatorio (senza spunta resta una scelta del commerciale)"));
+      sec.appendChild(obb);
+    });
+
+    const add=document.createElement("button"); add.type="button"; add.className="btn ghost sm"; add.textContent="+ Accessorio";
+    add.addEventListener("click",()=>{
+      items.push({id:"ac_"+Math.random().toString(36).slice(2,9),label:"",rule:"perWidth",unit:500});
+      renderProdList();
+    });
+    sec.appendChild(add);
+    return sec;
+  }
+
   function renderProdList(){
     const host=$("prodList");host.innerHTML="";
     // barra di ricerca
@@ -2257,6 +2668,10 @@
         brow.appendChild(hint); refresh();
         bsec.appendChild(brow); box.appendChild(bsec);
       }
+
+      // --- flightcase e accessori (rental) ---
+      box.appendChild(flightcaseAdmin(p));
+      box.appendChild(accessoryAdmin(p));
 
       // --- scheda tecnica: campi tecnici + foto prodotto ---
       const tsec=document.createElement("div");tsec.className="techsec";
@@ -2635,6 +3050,16 @@
         }
       });
     });
+    (prods||[]).forEach(p=>{
+      ((p.flightcases&&p.flightcases.cases)||[]).forEach(c=>{
+        if((c.code||"").trim()) slots.push({ code:c.code.trim(), label:p.name+" \u00b7 "+(c.label||"flightcase"),
+          get:()=>c.price, set:v=>{c.price=v;} });
+      });
+      ((p.accessories&&p.accessories.items)||[]).forEach(it=>{
+        if((it.code||"").trim()) slots.push({ code:it.code.trim(), label:p.name+" \u00b7 "+(it.label||"accessorio"),
+          get:()=>it.price, set:v=>{it.price=v;} });
+      });
+    });
     const ctrls=draftControllers||DB.controllers||[];
     ctrls.forEach(c=>{ if((c.code||"").trim()) slots.push({ code:c.code.trim(), label:"Controller "+(c.model||""), get:()=>c.price, set:v=>{c.price=v;} }); });
     return slots;
@@ -2736,6 +3161,7 @@
       productId:S.productId, reqW:S.reqW, reqH:S.reqH,
       resId:S.res?S.res.id:null,
       selWc:S.selWc, selHc:S.selHc, selCtrls:S.selCtrls||{},
+      accSel:(S.accSel||[]).slice(),
       rot:!!S.rot,
       object:($("odooObject")&&$("odooObject").value.trim())||"",
       product:JSON.parse(JSON.stringify(rawProduct())),
@@ -2831,6 +3257,7 @@
       if(Array.isArray(snap.controllers)){ if(!Array.isArray(DB.controllers)) DB.controllers=[]; snap.controllers.forEach(sc=>{ const i=DB.controllers.findIndex(c=>c.id===sc.id); if(i>=0) DB.controllers[i]=sc; else DB.controllers.push(sc); }); }
       S.productId=snap.productId; S.reqW=snap.reqW; S.reqH=snap.reqH;
       S.selWc=snap.selWc; S.selHc=snap.selHc; S.selCtrls=snap.selCtrls||{};
+      S.accSel=Array.isArray(snap.accSel)?snap.accSel.slice():[];
       S.rot=!!snap.rot;
       S.serial=snap.serial||id; S.serialSig=null;
       S.selKey=S.productId+"|"+S.reqW+"x"+S.reqH; // preserva la composizione salvata
