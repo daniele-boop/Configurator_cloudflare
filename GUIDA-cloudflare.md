@@ -154,6 +154,23 @@ Il filtro è sul prodotto, non sull'agente: è un fatto tecnico della parete, no
 una scelta commerciale. Sta nel catalogo, quindi vale anche per la versione
 agenti.
 
+## Le tre viste dell'anteprima
+
+Piatto, 3D e Mockup si alternano nella stessa card. Due cose sono cambiate:
+
+- **Chi non le usa non le paga.** 3D e Mockup restavano nel flusso della pagina
+  anche da chiusi — milleduecento pixel di vuoto da scavalcare a ogni
+  configurazione, prima di arrivare a metriche, alternative e distinta. Ora
+  spariscono davvero: su un portatile la pagina è passata da 4.200 a 3.000
+  pixel, e le metriche si leggono senza scorrere.
+- **La vista sta dentro la finestra.** Il mockup era alto 82vh con un minimo di
+  720 px: su uno schermo da portatile la sua barra degli strumenti finiva sotto
+  il bordo. Ora si adatta all'altezza disponibile, e aprendo 3D o Mockup la
+  pagina si porta la vista sotto gli occhi invece di lasciarla a metà.
+
+In fondo alle due viste c'è **⤢ Schermo intero**: durante una presentazione al
+cliente la pagina intorno non serve, e il mockup si prende tutto lo spazio.
+
 ## Verifica finale
 
 Apri il sito e controlla, nell'ordine:

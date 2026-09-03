@@ -79,7 +79,9 @@
      senza toccare le card sotto (metriche, alternative, distinta) né le altre viste. */
   .previewcard.mockwide{width:calc(400px + 100% + 26px);margin-left:calc(-400px - 26px)}
   @media(max-width:880px){ .previewcard.mockwide{width:100%;margin-left:0} }
-  .previewcard.mockwide .stagemock{height:auto;max-height:none;aspect-ratio:16/9;min-height:0}
+  /* a tutta larghezza il 16:9 diventava più alto della finestra e la barra
+     degli strumenti finiva fuori campo: il tetto la riporta dentro. */
+  .previewcard.mockwide .stagemock{height:min(72vh,860px);min-height:380px;max-height:none}
   @media(max-width:880px){.grid{grid-template-columns:1fr}}
 
   .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));
@@ -142,6 +144,7 @@
       var(--panel-2);
     border:1px solid var(--line-soft);border-radius:12px;min-height:360px;
     display:flex;align-items:center;justify-content:center;padding:10px;overflow:hidden}
+  .stage[hidden]{display:none}
   .stage svg{max-width:100%;height:auto;display:block}
   @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .stage svg.anim{animation:fadein .28s ease}
@@ -226,6 +229,9 @@
   .overlay.show{display:flex}
   .modal{width:100%;max-width:700px;background:linear-gradient(180deg,var(--panel),var(--panel-2));
     border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
+  /* il pannello prodotti ha tabelle a dieci colonne: 700 px non bastano */
+  .modal.wide{max-width:min(1320px,calc(100vw - 48px))}
+  @media(max-width:900px){ .overlay{padding:20px 10px} }
   .modal h2{font-size:18px;margin:0 0 4px}
   .modal .sub{color:var(--muted);font-size:13px;margin:0 0 20px}
   .modal .x{float:right;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;margin:-6px -6px 0 0}
@@ -274,8 +280,11 @@
   .viewseg button.on{background:var(--signal-bg,rgba(55,195,209,.14));color:#0d7c88;font-weight:700}
   html[data-theme="light"] .viewseg button.on{background:rgba(55,195,209,.16);color:#0d7c88}
   .stage3d{position:relative;padding:0;overflow:hidden}
+  /* a schermo intero la vista prende tutto: niente pagina che si muove sotto */
+  .stage3d:fullscreen{height:100vh;max-height:none;border-radius:0;border:none}
+  .stage3d:fullscreen canvas{height:100%}
   /* il mockup ha bisogno di più spazio verticale per lavorare sulla foto ambientata */
-  .stagemock{min-height:720px;height:82vh;max-height:1000px}
+  .stagemock{min-height:380px;height:min(72vh,860px);max-height:none}
   .stage3d #c3d{width:100%;height:100%;display:block;cursor:grab}
   .stage3d #c3d.locked{cursor:default}.stage3d #c3d.panning{cursor:move}
   .stage3d #c3d:active{cursor:grabbing}.stage3d #c3d.locked:active{cursor:default}
@@ -317,7 +326,9 @@
   .stagemock #mockbg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;transform-origin:center center}
   .stagemock #cmock{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
   .stagemock #cmock.locked{cursor:default}.stagemock #cmock.panning{cursor:move}
-  .mockphototools{left:12px !important;right:auto !important;bottom:12px}
+  /* la barra in basso a sinistra è alta ~36px: gli strumenti le stanno sopra */
+  .stagemock .d3tools{bottom:58px}
+  .mockphototools{left:12px !important;right:auto !important;bottom:58px}
   .mockscenes{position:absolute;left:12px;top:10px;display:flex;gap:6px;flex-wrap:wrap;max-width:64%;background:rgba(255,255,255,.86);padding:6px;border-radius:9px}
   .mockscenes button{font-family:var(--mono);font-size:11px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;background:#fff;color:#0f1622;cursor:pointer}
   .mockscenes button.on{border-color:var(--teal);background:rgba(55,195,209,.15);color:#0d7c88;font-weight:700}
@@ -548,6 +559,7 @@
           <div class="d3bar">
             <button class="modtoggle" id="d3quote" aria-pressed="true">Quote: on</button>
             <button class="modtoggle" id="d3lockbtn" aria-pressed="false">🔓 Blocca vista</button>
+            <button class="modtoggle" id="d3full" aria-pressed="false">⤢ Schermo intero</button>
           </div>
           <div class="d3err" id="d3err" hidden>Motore 3D non caricato (rete assente). Torna a “Piatto”.</div>
         </div>
@@ -587,6 +599,7 @@
             <button class="modtoggle" id="mUpload">⬆ Foto ambiente</button>
             <button class="modtoggle" id="mLockbtn" aria-pressed="false">🔓 Blocca</button>
             <button class="modtoggle" id="mShot">📷 Scarica</button>
+            <button class="modtoggle" id="mFull" aria-pressed="false">⤢ Schermo intero</button>
             <input type="file" id="mockFile" accept="image/*" hidden>
             <input type="file" id="mockVidFile" accept="video/*" hidden>
           </div>
@@ -787,6 +800,37 @@
 (function(){
   "use strict";
   const $ = id => document.getElementById(id);
+
+  /* Aprendo 3D o Mockup la vista nasceva spesso sotto il bordo dello schermo,
+     con la sua barra degli strumenti fuori campo: sembrava che il
+     configuratore fosse scappato via. Qui la si porta sotto gli occhi, ma
+     solo quando serve davvero — se è già visibile non si muove niente. */
+  window.bringViewIntoSight = function(el){
+    if(!el) return;
+    requestAnimationFrame(function(){
+      var r = el.getBoundingClientRect();
+      var margine = 84;                       // spazio per l'intestazione della card
+      if(r.top >= margine && r.bottom <= window.innerHeight) return;
+      window.scrollTo({ top: window.scrollY + r.top - margine, behavior: "smooth" });
+    });
+  };
+
+  /* Schermo intero: durante una presentazione al cliente la pagina intorno
+     non serve, e il mockup vuole tutto lo spazio che c'è. */
+  window.toggleFullscreen = function(el, btn){
+    if(!el) return;
+    if(document.fullscreenElement){ document.exitFullscreen(); return; }
+    if(el.requestFullscreen) el.requestFullscreen().catch(function(){});
+  };
+  document.addEventListener("fullscreenchange", function(){
+    var dentro = !!document.fullscreenElement;
+    ["d3full","mFull"].forEach(function(id){
+      var b = document.getElementById(id); if(!b) return;
+      b.textContent = dentro ? "⤡ Esci" : "⤢ Schermo intero";
+      b.setAttribute("aria-pressed", dentro ? "true" : "false");
+    });
+    window.dispatchEvent(new Event("resize"));
+  });
   const STORE_KEY = "nseled_led_config_v2";
 
   const DEFAULTS = {
@@ -1918,7 +1962,7 @@
 
   // ================= AMMINISTRAZIONE =================
   const overlay=$("overlay");
-  function openAdmin(){ overlay.classList.add("show"); $("lockView").classList.remove("hidden"); $("panelView").classList.add("hidden"); $("pwInput").value=""; $("pwErr").textContent=""; setTimeout(()=>$("pwInput").focus(),50); }
+  function openAdmin(){ overlay.classList.add("show"); document.querySelector(".overlay .modal").classList.remove("wide"); $("lockView").classList.remove("hidden"); $("panelView").classList.add("hidden"); $("pwInput").value=""; $("pwErr").textContent=""; setTimeout(()=>$("pwInput").focus(),50); }
   function closeAdmin(){ overlay.classList.remove("show"); }
   $("openAdmin").addEventListener("click",openAdmin);
   $("closeAdmin").addEventListener("click",closeAdmin);
@@ -1926,7 +1970,7 @@
 
   let draft=null; let draftControllers=null; let draftBackgrounds=null;
   function tryEnter(){
-    if($("pwInput").value===DB.password){ draft=JSON.parse(JSON.stringify(DB.products)); draftControllers=JSON.parse(JSON.stringify(DB.controllers||[])); draftBackgrounds=JSON.parse(JSON.stringify(DB.backgrounds||[])); $("lockView").classList.add("hidden"); $("panelView").classList.remove("hidden"); renderProdList(); renderCtrlAdmin(); renderBgAdmin(); }
+    if($("pwInput").value===DB.password){ draft=JSON.parse(JSON.stringify(DB.products)); draftControllers=JSON.parse(JSON.stringify(DB.controllers||[])); draftBackgrounds=JSON.parse(JSON.stringify(DB.backgrounds||[])); $("lockView").classList.add("hidden"); $("panelView").classList.remove("hidden"); document.querySelector(".overlay .modal").classList.add("wide"); renderProdList(); renderCtrlAdmin(); renderBgAdmin(); }
     else { $("pwErr").textContent="Password errata."; }
   }
   $("pwEnter").addEventListener("click",tryEnter);
@@ -2684,6 +2728,7 @@
     function show(){
       $("view3d").classList.add("on");$("viewFlat").classList.remove("on");
       $("stage").hidden=true; $("stage3d").hidden=false; visible=true;
+      bringViewIntoSight($("stage3d"));
       loadThree(function(ok){
         if(!ok){$("d3err").hidden=false;$("c3d").style.display="none";return;}
         $("d3err").hidden=true; $("c3d").style.display="block";
@@ -2699,6 +2744,7 @@
 
     $("view3d").addEventListener("click",show);
     $("viewFlat").addEventListener("click",flat);
+    var bf=$("d3full"); bf&&bf.addEventListener("click",function(){ window.toggleFullscreen($("stage3d")); });
     window.addEventListener("resize",resize);
 
     // API usata da render()
@@ -2970,6 +3016,7 @@
       $("viewMock").classList.add("on"); $("viewFlat").classList.remove("on"); $("view3d").classList.remove("on");
       $("stage").hidden=true; $("stage3d").hidden=true; $("stagemock").hidden=false; visible=true;
       var pc=previewCard(); if(pc) pc.classList.add("mockwide");
+      bringViewIntoSight($("stagemock"));
       if(!ready)initEngine();
       if(dirty){build();dirty=false;}
       refreshScenes();
@@ -2979,6 +3026,7 @@
     function hide(){ $("stagemock").hidden=true; visible=false; var pc=previewCard(); if(pc) pc.classList.remove("mockwide"); }
 
     $("viewMock").addEventListener("click",show);
+    var mf=$("mFull"); mf&&mf.addEventListener("click",function(){ window.toggleFullscreen($("stagemock")); });
     var vf=$("viewFlat"), v3=$("view3d");
     vf&&vf.addEventListener("click",function(){$("viewMock").classList.remove("on");hide();});
     v3&&v3.addEventListener("click",function(){$("viewMock").classList.remove("on");hide();});
