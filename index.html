@@ -341,11 +341,11 @@
 
   .resblock{border:1px dashed var(--line);border-radius:10px;padding:12px;margin-bottom:11px}
   .resblock .reshdr{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);margin-bottom:10px}
-  .resrow{display:grid;grid-template-columns:1fr 96px 26px;gap:8px;align-items:center;margin-bottom:7px}
+  .resrow{display:grid;grid-template-columns:1fr 92px 92px auto 26px;gap:8px;align-items:center;margin-bottom:7px}
   .resrow input{padding:8px;font-size:12.5px}
   .resrow .rm{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:16px;line-height:1}
   .resrow .rm:hover{color:var(--danger)}
-  .resadd{display:grid;grid-template-columns:1fr 96px auto;gap:8px;margin-top:9px}
+  .resadd{display:grid;grid-template-columns:1fr 92px 92px auto;gap:8px;margin-top:9px}
   .resadd input{padding:8px;font-size:12.5px}
   .resempty{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin-bottom:8px}
   .pdesc{margin:2px 0 12px}
@@ -882,7 +882,7 @@
           tech:normTech(p.tech),
           photo:(typeof p.photo==="string"&&p.photo.slice(0,11)==="data:image/"?p.photo:undefined),
           modW, modH,
-          resolutions:(Array.isArray(p.resolutions)?p.resolutions:[]).filter(r=>r&&r.pitch>0).map(r=>({id:r.id||rid(),label:(r.label||("P"+r.pitch)),pitch:r.pitch})),
+          resolutions:(Array.isArray(p.resolutions)?p.resolutions:[]).filter(r=>r&&r.pitch>0).map(r=>({id:r.id||rid(),label:(r.label||("P"+r.pitch)),pitch:r.pitch,pitchH:(+r.pitchH>0?+r.pitchH:undefined)})),
           cabinets:cabs.map(c=>({
             w:c.w,h:c.h,
             weight:(c.weight>0?c.weight:undefined),
@@ -902,7 +902,7 @@
   }
 
   // stato: le selezioni sono COMPOSIZIONI {total, counts}
-  const S = { productId:null, reqW:null, reqH:null, selWc:null, selHc:null, pitch:0, showModules:true, rot:false, selCtrls:{} };
+  const S = { productId:null, reqW:null, reqH:null, selWc:null, selHc:null, pitch:0, pitchV:0, showModules:true, rot:false, selCtrls:{} };
   const R169 = 16/9;
 
   const HUES=[265,190,330,150,95,300,45,220];  // famiglia colore per larghezza
@@ -1145,7 +1145,10 @@
     const area=(totalW*totalH)/1e6;
     const anyP=p.wPerSqm>0; const pAvg=anyP?p.wPerSqm*area:0;
     const pitch=S.res?S.res.pitch:0;
-    const px=pitch>0?Math.round(totalW/pitch):0, py=pitch>0?Math.round(totalH/pitch):0;
+    // Il pixel non è sempre quadrato: sul Trasparent 3,91-7,82 il passo
+    // verticale è il doppio, e l'altezza va contata con quello.
+    const pitchV=(S.res&&S.res.pitchH>0)?S.res.pitchH:pitch;
+    const px=pitch>0?Math.round(totalW/pitch):0, py=pitchV>0?Math.round(totalH/pitchV):0;
     const totPx=px*py;
     const img=wallPreviewPng();
     const img3d=(window.__wall3d && window.__wall3d.snapshot) ? window.__wall3d.snapshot() : null;
@@ -1167,7 +1170,7 @@
     R(T.usage, TV(t.usage));
     R(T.size, fmt(totalW)+" × "+fmt(totalH));
     R(T.surface, num(area,2));
-    if(pitch>0) R(T.pitch, String(pitch).replace(".",",")+(S.res.label?" · "+S.res.label:""));
+    if(pitch>0) R(T.pitch, (pitchV!==pitch?(String(pitch).replace(".",",")+" × "+String(pitchV).replace(".",",")):String(pitch).replace(".",","))+(S.res.label?" · "+S.res.label:""));
     R(T.moduleSize+" B×H"+(p.modD>0?"×D":"")+" "+T.moduleU, (p.modW&&p.modH)?(p.modW+"×"+p.modH+(p.modD>0?"×"+p.modD:"")):undefined);
     R(T.modules, (nMx&&nMy)?(nMx+"×"+nMy+" ("+(nMx*nMy)+")"):undefined);
     R(T.cabinets, cnt+" ("+cols.length+"×"+rows.length+")");
@@ -1177,7 +1180,7 @@
     R(T.ledPix, TV(t.ledType));
     R(T.hz, TV(t.hz));
     R(T.angle, TV(t.angle));
-    if(pitch>0) R(T.distance, "~"+String(pitch).replace(".",","));
+    if(pitch>0) R(T.distance, "~"+String(Math.max(pitch,pitchV)).replace(".",","));
     R(T.nit, TV(t.nit));
     if(anyP) R(T.cons, p.wPerSqm+" · "+num(pAvg/1000,2)+" kW");
     if(anyW) R(T.weight, Math.round(kgSqm)+" · "+fmt(Math.round(wSum)));
@@ -1202,7 +1205,7 @@
     const icons=[];
     const IC=(svg,lab,val)=>{ if(val) icons.push('<div class="ic"><div class="icsvg">'+svg+'</div><div class="ict"><b>'+lab+'</b><span>'+val+'</span></div></div>'); };
     IC(ic.dim,T.icDim,fmt(totalW)+"×"+fmt(totalH)+" mm");
-    IC(ic.pitch,T.icPitch,pitch>0?(String(pitch).replace(".",",")+" mm"):"");
+    IC(ic.pitch,T.icPitch,pitch>0?((pitchV!==pitch?String(pitch).replace(".",",")+" × "+String(pitchV).replace(".",","):String(pitch).replace(".",","))+" mm"):"");
     IC(ic.lum,T.icLum,t.nit?(t.nit+" NIT"):"");
     IC(ic.cons,T.icCons,anyP?(num(pAvg/1000,2)+" kW"):"");
     IC(ic.peso,T.icWeight,anyW?(fmt(Math.round(wSum))+" Kg"):"");
@@ -1299,7 +1302,8 @@
   }
   function currentPx(){
     if(!(S.pitch>0)||!S.selWc||!S.selHc) return null;
-    return { base:Math.round(S.selWc.total/S.pitch), h:Math.round(S.selHc.total/S.pitch) };
+    const pv=S.pitchV>0?S.pitchV:S.pitch;
+    return { base:Math.round(S.selWc.total/S.pitch), h:Math.round(S.selHc.total/pv) };
   }
   function buildOffer(){
     const p=currentProduct(); if(!p||!S.selWc||!S.selHc) return null;
@@ -1331,7 +1335,7 @@
     // testo per la riga sezione in cima all'offerta
     const sectionText=[baseDesc||p.name, pitchStr, "dim. "+sizeStr].filter(Boolean).join(" · ");
     return { product:p.name, object, product_desc:baseDesc, section:sectionText,
-      resolution:S.res?{label:S.res.label,pitch:S.res.pitch}:null,
+      resolution:S.res?{label:S.res.label,pitch:S.res.pitch,pitchH:(S.res.pitchH>0?S.res.pitchH:S.res.pitch)}:null,
       size:{w:S.selWc.total,h:S.selHc.total},
       lines, controllers, totals:{cabinets:totalCab,price:Number(totalPrice.toFixed(2))},
       complete:{price:priceOk,code:codeOk}, generated_at:new Date().toISOString() };
@@ -1392,7 +1396,7 @@
     sel.innerHTML="";
     const none=document.createElement("option"); none.value=""; none.textContent="— nessuna"; sel.appendChild(none);
     const res=(p&&Array.isArray(p.resolutions))?p.resolutions:[];
-    res.forEach(r=>{ const o=document.createElement("option"); o.value=r.id; o.dataset.label=r.label||("P"+r.pitch); o.textContent=(r.label||("P"+r.pitch))+" · pitch "+String(r.pitch).replace(".",",")+" mm"; sel.appendChild(o); });
+    res.forEach(r=>{ const o=document.createElement("option"); o.value=r.id; o.dataset.label=r.label||("P"+r.pitch); o.textContent=(r.label||("P"+r.pitch))+" · pitch "+String(r.pitch).replace(".",",")+((r.pitchH>0&&r.pitchH!==r.pitch)?(" × "+String(r.pitchH).replace(".",",")):"")+" mm"; sel.appendChild(o); });
     if([...sel.options].some(o=>o.value===prev)) sel.value=prev;
     else sel.value = res.length ? res[0].id : "";   // predefinita: prima risoluzione del modello
   }
@@ -1423,6 +1427,7 @@
     const p0=currentProduct();
     S.res = (selVal && p0 && Array.isArray(p0.resolutions)) ? (p0.resolutions.find(r=>r.id===selVal)||null) : null;
     S.pitch = S.res ? S.res.pitch : 0;
+    S.pitchV = S.res ? ((S.res.pitchH>0)?S.res.pitchH:S.res.pitch) : 0;
     S.pitchLabel = S.res ? S.res.label : "";
 
     const p=currentProduct();
@@ -1487,7 +1492,10 @@
   function renderSales(product,cols,rows,totalW,totalH){
     const grid=$("salesGrid"); grid.innerHTML="";
     const pitch=S.res?S.res.pitch:0;
-    const px=pitch>0?Math.round(totalW/pitch):0, py=pitch>0?Math.round(totalH/pitch):0;
+    // Il pixel non è sempre quadrato: sul Trasparent 3,91-7,82 il passo
+    // verticale è il doppio, e l'altezza va contata con quello.
+    const pitchV=(S.res&&S.res.pitchH>0)?S.res.pitchH:pitch;
+    const px=pitch>0?Math.round(totalW/pitch):0, py=pitchV>0?Math.round(totalH/pitchV):0;
     const totPx=px*py;
     const area=(totalW*totalH)/1e6; // m²
     // potenza (media, da W/m² prodotto) e peso totale
@@ -1503,7 +1511,7 @@
       b.innerHTML='<div class="sk">'+k+'</div><div class="sv">'+v+'</div>'+(sub?'<div class="ssub">'+sub+'</div>':''); return b; };
     // distanza di visione
     if(pitch>0){
-      const dMin=pitch, dOpt=pitch*3; // min ~ pitch in m; comfort fino a ~3x (regola pratica)
+      const dMin=Math.max(pitch,pitchV), dOpt=dMin*3; // comanda l'asse più grossolano; comfort fino a ~3x
       grid.appendChild(card("Distanza di visione", "da ~"+dMin.toString().replace(".",",")+" m",
         "nitida da "+dMin.toString().replace(".",",")+" m · resa ottimale "+dMin.toString().replace(".",",")+"–"+dOpt.toFixed(0)+" m"));
     }
@@ -1735,7 +1743,7 @@
     $("mSize").innerHTML=fmt(totalW)+" × "+fmt(totalH)+' <small>mm</small>';
     $("mArea").innerHTML=((totalW*totalH)/1e6).toFixed(2).replace(".",",")+' <small>m²</small>';
     $("mMods").innerHTML=(cols.length*rows.length)+' <small>· '+cols.length+"×"+rows.length+"</small>";
-    if(S.pitch>0){ const px=Math.round(totalW/S.pitch),py=Math.round(totalH/S.pitch);
+    if(S.pitch>0){ const pv=S.pitchV>0?S.pitchV:S.pitch; const px=Math.round(totalW/S.pitch),py=Math.round(totalH/pv);
       $("mRes").innerHTML=fmt(px)+"×"+fmt(py)+' <small>· '+(S.pitchLabel?S.pitchLabel+" · ":"")+((px*py)/1e6).toFixed(2).replace(".",",")+" Mpx</small>"; }
     else $("mRes").innerHTML='<small>—</small>';
 
@@ -2059,24 +2067,30 @@
       // --- risoluzioni del modello ---
       if(!Array.isArray(p.resolutions)) p.resolutions=[];
       const rb=document.createElement("div");rb.className="resblock";
-      const rh2=document.createElement("div");rh2.className="reshdr";rh2.textContent="Risoluzioni disponibili (nome + pixel pitch mm)";
+      const rh2=document.createElement("div");rh2.className="reshdr";rh2.textContent="Risoluzioni disponibili — nome, passo orizzontale, passo verticale (solo se il pixel è rettangolare)";
       rb.appendChild(rh2);
       if(!p.resolutions.length){ const e=document.createElement("div");e.className="resempty";e.textContent="Nessuna risoluzione — aggiungine una qui sotto.";rb.appendChild(e); }
       p.resolutions.forEach((r,ri)=>{
         const row=document.createElement("div");row.className="resrow";
         const ln=document.createElement("input");ln.type="text";ln.placeholder="es. P2.5";ln.value=r.label||"";ln.addEventListener("input",()=>r.label=ln.value);
         const lp=document.createElement("input");lp.type="number";lp.min="0";lp.step="any";lp.placeholder="pitch mm";if(r.pitch>0)lp.value=r.pitch;lp.addEventListener("input",()=>r.pitch=numOrUndef(lp.value));
+        const lv=document.createElement("input");lv.type="number";lv.min="0";lv.step="any";lv.placeholder="vert. mm";
+        lv.title="Passo verticale. Si compila solo dove il pixel è rettangolare, come il Trasparent 3,91-7,82. Vuoto = pixel quadrato.";
+        if(r.pitchH>0)lv.value=r.pitchH;lv.addEventListener("input",()=>r.pitchH=numOrUndef(lv.value));
         const rm=document.createElement("button");rm.className="rm";rm.textContent="×";rm.title="Rimuovi";rm.addEventListener("click",()=>{ p.resolutions.splice(ri,1); renderProdList(); });
-        row.appendChild(ln);row.appendChild(lp);row.appendChild(moveControl(p.resolutions,ri,renderProdList));row.appendChild(rm);rb.appendChild(row);
+        row.appendChild(ln);row.appendChild(lp);row.appendChild(lv);row.appendChild(moveControl(p.resolutions,ri,renderProdList));row.appendChild(rm);rb.appendChild(row);
       });
       const radd=document.createElement("div");radd.className="resadd";
       const nl=document.createElement("input");nl.type="text";nl.placeholder="Nome (es. P4)";
       const np=document.createElement("input");np.type="number";np.min="0";np.step="any";np.placeholder="pitch mm";
+      const nv=document.createElement("input");nv.type="number";nv.min="0";nv.step="any";nv.placeholder="vert. mm";
+      nv.title="Passo verticale, solo se il pixel è rettangolare. Vuoto = quadrato.";
       const nb=document.createElement("button");nb.className="btn ghost sm";nb.textContent="+ Risoluzione";
-      const addRes=()=>{ const pitch=numOrUndef(np.value); const label=nl.value.trim()||(pitch?("P"+pitch):""); if(pitch>0){ p.resolutions.push({id:rid(),label,pitch}); renderProdList(); } };
+      const addRes=()=>{ const pitch=numOrUndef(np.value); const pitchH=numOrUndef(nv.value); const label=nl.value.trim()||(pitch?("P"+pitch):""); if(pitch>0){ p.resolutions.push(pitchH>0?{id:rid(),label,pitch,pitchH}:{id:rid(),label,pitch}); renderProdList(); } };
       nb.addEventListener("click",addRes);
       np.addEventListener("keydown",e=>{ if(e.key==="Enter") addRes(); });
-      radd.appendChild(nl);radd.appendChild(np);radd.appendChild(nb);rb.appendChild(radd);
+      nv.addEventListener("keydown",e=>{ if(e.key==="Enter") addRes(); });
+      radd.appendChild(nl);radd.appendChild(np);radd.appendChild(nv);radd.appendChild(nb);rb.appendChild(radd);
       box.appendChild(rb);
 
       p.cabinets.forEach((c,ci)=>{

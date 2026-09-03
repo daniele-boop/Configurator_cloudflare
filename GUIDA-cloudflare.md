@@ -120,6 +120,24 @@ Ricordati di aggiornare il percorso `/configuratore-dani` dove serve.
 
 ---
 
+## Passo verticale (pixel rettangolare)
+
+Nel pannello Amministrazione, ogni risoluzione ha tre campi: nome, **passo
+orizzontale** e **passo verticale**. Il terzo si compila solo dove il pixel non
+è quadrato — il Trasparent "INTERNO 3,91-7,82" ha 3,91 mm in orizzontale e 7,82
+in verticale. Lasciato vuoto vale il passo orizzontale su tutti e due gli assi,
+cioè il comportamento di sempre.
+
+Non è un dettaglio estetico: senza quel dato l'altezza in pixel viene contata
+col passo orizzontale e viene fuori il doppio dei pixel reali. Su una parete
+5.000 × 3.000 mm a 2,8-5,6 la differenza è fra 1.786 × 1.071 px e i corretti
+1.786 × 536 px — e da quel numero dipendono la scelta del controller, i
+Megapixel dichiarati e la distanza di visione, che con un pixel rettangolare la
+detta l'asse più grossolano.
+
+Il dato vive nel catalogo, quindi lo scrivi qui una volta sola: la versione
+agenti legge lo stesso archivio e lo prende da sé.
+
 ## Verifica finale
 
 Apri il sito e controlla, nell'ordine:
