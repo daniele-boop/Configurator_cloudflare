@@ -156,20 +156,25 @@ agenti.
 
 ## Le tre viste dell'anteprima
 
-Piatto, 3D e Mockup si alternano nella stessa card. Due cose sono cambiate:
+**Piatto** sta nella pagina. **3D** e **Mockup** si aprono sopra la pagina, a
+tutta finestra, e si chiudono con **✕ Chiudi** o con **Esc**. Il selettore
+Piatto / 3D / Mockup viaggia con loro, in alto al centro: si passa da una
+all'altra senza chiudere niente.
 
-- **Chi non le usa non le paga.** 3D e Mockup restavano nel flusso della pagina
-  anche da chiusi — milleduecento pixel di vuoto da scavalcare a ogni
-  configurazione, prima di arrivare a metriche, alternative e distinta. Ora
-  spariscono davvero: su un portatile la pagina è passata da 4.200 a 3.000
-  pixel, e le metriche si leggono senza scorrere.
-- **La vista sta dentro la finestra.** Il mockup era alto 82vh con un minimo di
-  720 px: su uno schermo da portatile la sua barra degli strumenti finiva sotto
-  il bordo. Ora si adatta all'altezza disponibile, e aprendo 3D o Mockup la
-  pagina si porta la vista sotto gli occhi invece di lasciarla a metà.
+Prima stavano dentro la card, e questo faceva due danni.
 
-In fondo alle due viste c'è **⤢ Schermo intero**: durante una presentazione al
-cliente la pagina intorno non serve, e il mockup si prende tutto lo spazio.
+- **Occupavano spazio anche da chiuse.** `.stage` porta `display:flex`, che ha
+  la meglio sull'attributo `hidden`: milleduecento pixel di vuoto da scavalcare
+  a ogni configurazione, prima di arrivare a metriche, alternative e distinta.
+  Su un portatile la pagina è passata da 4.226 a 3.039 pixel.
+- **Rubavano la rotellina.** Scorrendo la pagina col trackpad, appena il
+  puntatore passava sopra il 3D o il mockup lo scorrimento diventava zoom e la
+  vista schizzava via. Adesso, da chiuse, non ci sono: la pagina scorre e
+  basta. E lo zoom segue quanto si è girato davvero invece di scattare di un
+  passo fisso a ogni evento — un colpo di trackpad non manda più via la vista.
+
+In fondo a tutte e due c'è **⤢ Schermo intero**, per quando si sta mostrando il
+mockup a un cliente e la pagina intorno non serve.
 
 ## Verifica finale
 

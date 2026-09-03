@@ -75,13 +75,7 @@
   .adminbtn svg{width:13px;height:13px}
 
   .grid{display:grid;grid-template-columns:400px 1fr;gap:26px;align-items:start}
-  /* Mockup a tutta larghezza: SOLO la card anteprima si estende oltre la sua colonna,
-     senza toccare le card sotto (metriche, alternative, distinta) né le altre viste. */
-  .previewcard.mockwide{width:calc(400px + 100% + 26px);margin-left:calc(-400px - 26px)}
-  @media(max-width:880px){ .previewcard.mockwide{width:100%;margin-left:0} }
-  /* a tutta larghezza il 16:9 diventava più alto della finestra e la barra
-     degli strumenti finiva fuori campo: il tetto la riporta dentro. */
-  .previewcard.mockwide .stagemock{height:min(72vh,860px);min-height:380px;max-height:none}
+  /* (la card non si allarga piu': 3D e Mockup si aprono sopra la pagina) */
   @media(max-width:880px){.grid{grid-template-columns:1fr}}
 
   .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));
@@ -145,6 +139,19 @@
     border:1px solid var(--line-soft);border-radius:12px;min-height:360px;
     display:flex;align-items:center;justify-content:center;padding:10px;overflow:hidden}
   .stage[hidden]{display:none}
+  /* 3D e Mockup si aprono SOPRA la pagina, non dentro. Da chiusi non
+     occupano nulla; da aperti prendono tutta la finestra, e la rotellina
+     del trackpad non li incontra più mentre si scorre la pagina. */
+  .stage3d:not([hidden]){position:fixed;inset:0;z-index:60;margin:0;
+    height:auto;min-height:0;max-height:none;border:none;border-radius:0}
+  body.viewopen{overflow:hidden}
+  .viewclose{position:absolute;top:14px;right:14px;z-index:40;display:flex;align-items:center;gap:8px;
+    border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.94);color:#0f1622;
+    font-family:var(--mono);font-size:12px;padding:9px 13px;cursor:pointer}
+  .viewclose:hover{background:#fff}
+  .stage3d > .viewseg{position:absolute;top:13px;left:50%;transform:translateX(-50%);z-index:40;
+    background:rgba(255,255,255,.94);box-shadow:0 2px 10px rgba(0,0,0,.10)}
+
   .stage svg{max-width:100%;height:auto;display:block}
   @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .stage svg.anim{animation:fadein .28s ease}
@@ -547,6 +554,7 @@
           <div class="empty"><b>Nessuna configurazione</b>Scegli un prodotto e inserisci base e altezza</div>
         </div>
         <div class="stage stage3d" id="stage3d" hidden>
+          <button class="viewclose" id="d3close">✕ Chiudi</button>
           <canvas id="c3d"></canvas>
           <div class="d3dims" id="d3dims"></div>
           <div class="d3lock" id="d3lock">● vista bloccata</div>
@@ -564,6 +572,7 @@
           <div class="d3err" id="d3err" hidden>Motore 3D non caricato (rete assente). Torna a “Piatto”.</div>
         </div>
         <div class="stage stage3d stagemock warpon" id="stagemock" hidden>
+          <button class="viewclose" id="mClose">✕ Chiudi</button>
           <img id="mockbg" alt="sfondo mockup">
           <canvas id="cmock"></canvas>
           <div class="mockscenes" id="mockscenes"></div>
@@ -805,14 +814,40 @@
      con la sua barra degli strumenti fuori campo: sembrava che il
      configuratore fosse scappato via. Qui la si porta sotto gli occhi, ma
      solo quando serve davvero — se è già visibile non si muove niente. */
-  window.bringViewIntoSight = function(el){
-    if(!el) return;
-    requestAnimationFrame(function(){
-      var r = el.getBoundingClientRect();
-      var margine = 84;                       // spazio per l'intestazione della card
-      if(r.top >= margine && r.bottom <= window.innerHeight) return;
-      window.scrollTo({ top: window.scrollY + r.top - margine, behavior: "smooth" });
-    });
+  /* Aprendo o chiudendo una vista: si blocca lo scorrimento della pagina
+     sotto, e si avvisano i motori che lo spazio è cambiato. */
+  var segHome = null;
+  window.viewOpened = function(panel){
+    document.body.classList.add("viewopen");
+    var seg = document.getElementById("viewSeg");
+    if(seg && panel && seg.parentNode !== panel){
+      if(!segHome) segHome = seg.parentNode;
+      panel.appendChild(seg);
+    }
+    requestAnimationFrame(function(){ window.dispatchEvent(new Event("resize")); });
+  };
+  window.viewClosed = function(){
+    var m=document.getElementById("stagemock"), t=document.getElementById("stage3d");
+    var aperta = (m && !m.hidden) ? m : (t && !t.hidden) ? t : null;
+    var seg = document.getElementById("viewSeg");
+    if(aperta){ if(seg && seg.parentNode !== aperta) aperta.appendChild(seg); return; }
+    if(seg && segHome) segHome.insertBefore(seg, segHome.firstChild);
+    document.body.classList.remove("viewopen");
+  };
+  /* Esc chiude la vista aperta: è il gesto che tutti provano per primo. */
+  document.addEventListener("keydown", function(e){
+    if(e.key!=="Escape" || document.fullscreenElement) return;
+    var m=document.getElementById("stagemock"), t=document.getElementById("stage3d");
+    if(m && !m.hidden){ var b=document.getElementById("mClose"); b&&b.click(); return; }
+    if(t && !t.hidden){ var b2=document.getElementById("d3close"); b2&&b2.click(); }
+  });
+  /* La rotellina: un colpo di trackpad manda decine di eventi, e con un passo
+     fisso la vista schizzava via. Qui lo zoom segue quanto si è girato
+     davvero, con un tetto. */
+  window.wheelFactor = function(e){
+    var d = e.deltaY * (e.deltaMode===1 ? 16 : e.deltaMode===2 ? 400 : 1);
+    d = Math.max(-120, Math.min(120, d));
+    return Math.exp(d * 0.0016);
   };
 
   /* Schermo intero: durante una presentazione al cliente la pagina intorno
@@ -2705,7 +2740,7 @@
         else{rot.y+=dx*0.008;rot.x+=dy*0.008;rot.x=Math.max(-1.3,Math.min(1.3,rot.x));}
         px=e.clientX;py=e.clientY;apply();
       });
-      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();dist*=(e.deltaY>0?1.08:0.93);dist=Math.max(maxDim*0.3,Math.min(maxDim*6,dist));apply();},{passive:false});
+      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();dist*=window.wheelFactor(e);dist=Math.max(maxDim*0.3,Math.min(maxDim*6,dist));apply();},{passive:false});
       cv.addEventListener("touchstart",function(e){if(locked)return;if(e.touches.length===1){drag=true;px=e.touches[0].clientX;py=e.touches[0].clientY;}},{passive:true});
       cv.addEventListener("touchmove",function(e){if(locked||!drag||e.touches.length!==1)return;var t=e.touches[0],dx=t.clientX-px,dy=t.clientY-py;if(mode==="pan"){var k=dist/stage3d.clientHeight*0.9;pan.x+=dx*k;pan.y-=dy*k;}else{rot.y+=dx*0.008;rot.x+=dy*0.008;rot.x=Math.max(-1.3,Math.min(1.3,rot.x));}px=t.clientX;py=t.clientY;apply();},{passive:true});
       cv.addEventListener("touchend",function(){drag=false;});
@@ -2728,7 +2763,7 @@
     function show(){
       $("view3d").classList.add("on");$("viewFlat").classList.remove("on");
       $("stage").hidden=true; $("stage3d").hidden=false; visible=true;
-      bringViewIntoSight($("stage3d"));
+      window.viewOpened($("stage3d"));
       loadThree(function(ok){
         if(!ok){$("d3err").hidden=false;$("c3d").style.display="none";return;}
         $("d3err").hidden=true; $("c3d").style.display="block";
@@ -2740,11 +2775,13 @@
     function flat(){
       $("viewFlat").classList.add("on");$("view3d").classList.remove("on");
       $("stage3d").hidden=true; $("stage").hidden=false; visible=false;
+      window.viewClosed();
     }
 
     $("view3d").addEventListener("click",show);
     $("viewFlat").addEventListener("click",flat);
     var bf=$("d3full"); bf&&bf.addEventListener("click",function(){ window.toggleFullscreen($("stage3d")); });
+    var bc=$("d3close"); bc&&bc.addEventListener("click",flat);
     window.addEventListener("resize",resize);
 
     // API usata da render()
@@ -2940,7 +2977,7 @@
       cv.addEventListener("touchstart",function(e){if(locked||e.touches.length!==1)return;if(ledMove){ld=true;lpx=e.touches[0].clientX;lpy=e.touches[0].clientY;}else if(photoMove){ld="photo";lpx=e.touches[0].clientX;lpy=e.touches[0].clientY;}},{passive:true});
       cv.addEventListener("touchmove",function(e){if(!ld||e.touches.length!==1)return;var t=e.touches[0];if(ld==="photo"){ph.x+=t.clientX-lpx;ph.y+=t.clientY-lpy;applyPhoto();}else{translateAll(t.clientX-lpx,t.clientY-lpy);}lpx=t.clientX;lpy=t.clientY;},{passive:true});
       cv.addEventListener("touchend",function(){ld=false;});
-      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();scaleAll(e.deltaY>0?1/1.06:1.06);},{passive:false});
+      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();scaleAll(1/window.wheelFactor(e));},{passive:false});
 
       // foto
       $("mpZin").addEventListener("click",function(){ph.scale=Math.min(6,ph.scale*1.12);applyPhoto();});
@@ -3015,18 +3052,22 @@
     function show(){
       $("viewMock").classList.add("on"); $("viewFlat").classList.remove("on"); $("view3d").classList.remove("on");
       $("stage").hidden=true; $("stage3d").hidden=true; $("stagemock").hidden=false; visible=true;
-      var pc=previewCard(); if(pc) pc.classList.add("mockwide");
-      bringViewIntoSight($("stagemock"));
+      window.viewOpened($("stagemock"));
       if(!ready)initEngine();
       if(dirty){build();dirty=false;}
       refreshScenes();
       // la larghezza è cambiata: ricalcola canvas e ricostruisci la posa
       requestAnimationFrame(function(){ fit(); if(dst){initDst();} draw(); });
     }
-    function hide(){ $("stagemock").hidden=true; visible=false; var pc=previewCard(); if(pc) pc.classList.remove("mockwide"); }
+    function hide(){
+      $("stagemock").hidden=true; visible=false;
+      var t=$("stage3d"); if(!t || t.hidden) $("stage").hidden=false;
+      window.viewClosed();
+    }
 
     $("viewMock").addEventListener("click",show);
     var mf=$("mFull"); mf&&mf.addEventListener("click",function(){ window.toggleFullscreen($("stagemock")); });
+    var mc=$("mClose"); mc&&mc.addEventListener("click",function(){ $("viewMock").classList.remove("on"); $("viewFlat").classList.add("on"); hide(); });
     var vf=$("viewFlat"), v3=$("view3d");
     vf&&vf.addEventListener("click",function(){$("viewMock").classList.remove("on");hide();});
     v3&&v3.addEventListener("click",function(){$("viewMock").classList.remove("on");hide();});
