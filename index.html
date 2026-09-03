@@ -425,7 +425,9 @@
   .ctrlprice{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
   .ctrlnone{font-family:var(--mono);font-size:12px;color:var(--muted);padding:6px 0}
 
-  .cadmrow{display:grid;grid-template-columns:1.2fr .9fr .8fr .8fr .6fr .9fr .5fr .8fr 1fr auto;gap:7px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:var(--panel-2)}
+  #ctrlAdminList{overflow-x:auto;padding-bottom:6px}
+  .cadmrow,.cadmhead{min-width:1140px}
+  .cadmrow{display:grid;grid-template-columns:1.1fr .8fr .85fr .75fr .75fr .55fr .85fr .5fr .75fr .95fr auto;gap:7px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:var(--panel-2)}
   .movebtns{display:inline-flex;gap:3px;align-items:center}
   .movebtns .mv{width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;font-size:9px;line-height:1;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);color:var(--muted);cursor:pointer;transition:.12s}
   .movebtns .mv:hover:not(:disabled){border-color:#37c3d1;color:#37c3d1}
@@ -438,8 +440,8 @@
   .cadd-grid input{padding:8px;font-size:12.5px;width:100%}
   .ctrladd{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
   .add-title{font-family:var(--mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
-  .cadmhead{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);display:grid;grid-template-columns:1.2fr .9fr .8fr .8fr .6fr .9fr .5fr .8fr 1fr auto;gap:7px;padding:0 9px 4px}
-  @media(max-width:760px){ .cadmrow,.cadmhead{grid-template-columns:1fr 1fr 1fr;}.cadmhead{display:none} }
+  .cadmhead{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);display:grid;grid-template-columns:1.1fr .8fr .85fr .75fr .75fr .55fr .85fr .5fr .75fr .95fr auto;gap:7px;padding:0 9px 4px}
+  @media(max-width:760px){ .cadmrow,.cadmhead{grid-template-columns:1fr 1fr 1fr;min-width:0}.cadmhead{display:none} }
 
   .adminsec{border-top:1px solid var(--line);margin-top:22px;padding-top:20px}
   .adminsec h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin:0 0 14px}
@@ -705,11 +707,13 @@
       <div class="adminsec">
         <h3>Controller</h3>
         <p class="sub" style="margin:0 0 12px">Controller/processori per pilotare le pareti. Il configuratore propone quelli compatibili con i pixel della parete. Prezzo e <b>codice Odoo</b> (Riferimento interno) servono per il preventivo.</p>
+        <datalist id="brandList"><option value="Huidu"><option value="Novastar"></datalist>
         <div id="ctrlAdminList"></div>
         <div class="ctrladd">
           <div class="add-title">+ Aggiungi controller</div>
           <div class="cadd-grid">
             <div><label>Modello</label><input id="c-mod" placeholder="es. HD-A9"></div>
+            <div><label>Marca</label><input id="c-brand" list="brandList" placeholder="Huidu"></div>
             <div><label>Max px totali</label><input type="number" id="c-tot" placeholder="2600000"></div>
             <div><label>Max px base</label><input type="number" id="c-base" placeholder="16384"></div>
             <div><label>Max px alt.</label><input type="number" id="c-ht" placeholder="4096"></div>
@@ -860,6 +864,7 @@
       ports: (+c.ports>0?+c.ports:undefined),
       maxResPort: (+c.maxResPort>0?+c.maxResPort:(+c.resPort>0?+c.resPort:undefined)),
       k4: (typeof c.k4==="string"&&c.k4.trim()?c.k4.trim():undefined),
+      brand: (typeof c.brand==="string"&&c.brand.trim()?c.brand.trim():undefined),
       price: (+c.price>0?+c.price:undefined),
       code: (typeof c.code==="string"&&c.code.trim()?c.code.trim():undefined)
     }));
@@ -874,6 +879,9 @@
         return {
           id:p.id||("p_"+Math.random().toString(36).slice(2)),
           name:p.name||"Prodotto",
+          // marche di controller da proporre; vuoto o assente = tutte
+          ctrlBrands:(Array.isArray(p.ctrlBrands)&&p.ctrlBrands.length
+            ? [...new Set(p.ctrlBrands.map(b=>String(b).trim()).filter(Boolean))] : undefined),
           desc:(typeof p.desc==="string"?p.desc:undefined),
           selling:(typeof p.selling==="string"?p.selling:undefined),
           sellingEn:(typeof p.sellingEn==="string"?p.sellingEn:undefined),
@@ -1546,7 +1554,10 @@
 
   function renderControllers(){
     const card=$("ctrlCard"), hint=$("ctrlHint"), host=$("ctrlList");
-    const ctrls=(DB.controllers||[]);
+    // solo le marche ammesse dal prodotto; nessuna scelta = tutte
+    const prod0=currentProduct();
+    const allow=(prod0&&Array.isArray(prod0.ctrlBrands)&&prod0.ctrlBrands.length)?prod0.ctrlBrands:null;
+    const ctrls=(DB.controllers||[]).filter(c=>!allow||allow.includes((c.brand||"").trim()));
     if(!ctrls.length){ card.hidden=true; return; }
     card.hidden=false; host.innerHTML="";
     const px=currentPx();
@@ -1565,6 +1576,7 @@
 
     const capTxt=c=>{
       const bits=[];
+      if(c.brand) bits.push(c.brand);
       if(c.maxTotal) bits.push(fmt(c.maxTotal)+" px");
       if(c.maxBase&&c.maxHeight) bits.push(fmt(c.maxBase)+"×"+fmt(c.maxHeight));
       if(c.ports) bits.push(c.ports+" porte");
@@ -2034,6 +2046,40 @@
       staE.addEventListener("input",()=>p.sellingEn=(staE.value||undefined));
       swrapE.appendChild(slE);swrapE.appendChild(staE);box.appendChild(swrapE);
 
+      // --- quali marche di controller proporre su questo prodotto ---
+      // I rental montano solo Novastar: senza questo filtro il configuratore
+      // proponeva anche gli Huidu, che su quelle pareti non si usano.
+      const brands=[...new Set((draftControllers||[]).map(c=>(c.brand||"").trim()).filter(Boolean))].sort();
+      if(brands.length){
+        const bsec=document.createElement("div");bsec.className="resblock";
+        const bh=document.createElement("div");bh.className="reshdr";
+        bh.textContent="Controller da proporre — marche";
+        bsec.appendChild(bh);
+        const brow=document.createElement("div");
+        brow.style.cssText="display:flex;flex-wrap:wrap;gap:8px;align-items:center";
+        const hint=document.createElement("span");
+        hint.style.cssText="font-size:12px;color:var(--muted-2)";
+        const refresh=()=>{ const cur=Array.isArray(p.ctrlBrands)?p.ctrlBrands:[];
+          hint.textContent = cur.length ? "gli altri non vengono proposti su questo prodotto"
+                                        : "nessuna scelta: si propongono tutte";
+        };
+        brands.forEach(b=>{
+          const lb=document.createElement("label");
+          lb.style.cssText="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer";
+          const cb=document.createElement("input");cb.type="checkbox";cb.style.width="auto";
+          cb.checked=Array.isArray(p.ctrlBrands)&&p.ctrlBrands.includes(b);
+          cb.addEventListener("change",()=>{
+            const cur=Array.isArray(p.ctrlBrands)?p.ctrlBrands.slice():[];
+            const next=cb.checked?[...new Set(cur.concat([b]))]:cur.filter(x=>x!==b);
+            p.ctrlBrands = next.length ? next : undefined;
+            refresh();
+          });
+          lb.appendChild(cb);lb.appendChild(document.createTextNode(b));brow.appendChild(lb);
+        });
+        brow.appendChild(hint); refresh();
+        bsec.appendChild(brow); box.appendChild(bsec);
+      }
+
       // --- scheda tecnica: campi tecnici + foto prodotto ---
       const tsec=document.createElement("div");tsec.className="techsec";
       const th=document.createElement("div");th.className="techhead";th.textContent="Scheda tecnica (dati prodotto)";tsec.appendChild(th);
@@ -2132,7 +2178,7 @@
       const e=document.createElement("div");e.className="resempty";e.textContent="Nessun controller — aggiungine uno qui sotto oppure carica i modelli Huidu.";host.appendChild(e);
     } else {
       const head=document.createElement("div");head.className="cadmhead";
-      head.innerHTML="<span>Modello</span><span>Max px tot.</span><span>Max base</span><span>Max alt.</span><span>Porte</span><span>Res/porta</span><span>4K</span><span>Prezzo</span><span>Cod. Odoo</span><span></span>";
+      head.innerHTML="<span>Modello</span><span>Marca</span><span>Max px tot.</span><span>Max base</span><span>Max alt.</span><span>Porte</span><span>Res/porta</span><span>4K</span><span>Prezzo</span><span>Cod. Odoo</span><span></span>";
       host.appendChild(head);
     }
     const num=(obj,key,ph)=>{ const i=document.createElement("input");i.type="number";i.min="0";i.step="any";i.placeholder=ph||"";if(obj[key]>0)i.value=obj[key];i.addEventListener("input",()=>obj[key]=numOrUndef(i.value));return i; };
@@ -2140,6 +2186,7 @@
     draftControllers.forEach((c,ci)=>{
       const row=document.createElement("div");row.className="cadmrow";
       row.appendChild(txt(c,"model","Modello"));
+      const br=txt(c,"brand","Huidu"); br.setAttribute("list","brandList"); row.appendChild(br);
       row.appendChild(num(c,"maxTotal","px tot"));
       row.appendChild(num(c,"maxBase","base"));
       row.appendChild(num(c,"maxHeight","alt"));
@@ -2164,8 +2211,9 @@
     if(!model||!maxTotal||!maxBase||!maxHeight){ alert("Inserisci almeno: Modello, Max px totali, base e altezza."); return; }
     draftControllers.push({ id:"c_"+Date.now().toString(36), model, maxTotal, maxBase, maxHeight,
       ports:numOrUndef($("c-ports").value), maxResPort:numOrUndef($("c-rp").value),
-      k4:($("c-k4").value.trim()||undefined), price:numOrUndef($("c-price").value), code:($("c-code").value.trim()||undefined) });
-    ["c-mod","c-tot","c-base","c-ht","c-ports","c-rp","c-k4","c-price","c-code"].forEach(id=>$(id).value="");
+      k4:($("c-k4").value.trim()||undefined), brand:(($("c-brand")&&$("c-brand").value.trim())||undefined),
+      price:numOrUndef($("c-price").value), code:($("c-code").value.trim()||undefined) });
+    ["c-mod","c-brand","c-tot","c-base","c-ht","c-ports","c-rp","c-k4","c-price","c-code"].forEach(id=>{ if($(id)) $(id).value=""; });
     renderCtrlAdmin();
   });
   $("seedHuidu").addEventListener("click",()=>{

@@ -138,6 +138,22 @@ detta l'asse più grossolano.
 Il dato vive nel catalogo, quindi lo scrivi qui una volta sola: la versione
 agenti legge lo stesso archivio e lo prende da sé.
 
+## Quali controller proporre
+
+I rental — RX indoor, Outdoor RS, Trasparent rental — montano **solo Novastar**.
+Finché il configuratore non lo sapeva, proponeva anche gli Huidu su quelle
+pareti: compatibili sui pixel, sbagliati nella pratica.
+
+Nel pannello Amministrazione ogni controller ha ora un campo **Marca** (Huidu e
+Novastar sono suggeriti mentre scrivi, ma puoi metterne altre). E in ogni
+scheda prodotto c'è **Controller da proporre — marche**, con una spunta per
+marca: si propongono solo quelle accese. Nessuna spunta significa tutte, quindi
+i prodotti già a catalogo non cambiano comportamento finché non li tocchi.
+
+Il filtro è sul prodotto, non sull'agente: è un fatto tecnico della parete, non
+una scelta commerciale. Sta nel catalogo, quindi vale anche per la versione
+agenti.
+
 ## Verifica finale
 
 Apri il sito e controlla, nell'ordine:
