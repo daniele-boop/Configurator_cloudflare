@@ -138,6 +138,28 @@ detta l'asse più grossolano.
 Il dato vive nel catalogo, quindi lo scrivi qui una volta sola: la versione
 agenti legge lo stesso archivio e lo prende da sé.
 
+## Prodotti & cabinet: come ci si muove
+
+Con quindici prodotti, ognuno con i suoi cabinet e un prezzo più un codice
+Odoo per ogni risoluzione, la scheda aperta tutta insieme era lunga
+**trentamila pixel**: quaranta schermate per arrivare in fondo.
+
+Ora ogni prodotto sta in una riga: pallino del colore, nome, e il conto di
+quello che contiene — *7 cabinet · 3 risoluzioni · 21 codici*. Si apre solo
+quello su cui devi lavorare. Chiuso tutto, l'elenco è **1.400 pixel**: ci sta
+in due schermate.
+
+Dentro un prodotto, anche i cabinet sono righe: *640×320 mm · 5 kg · 4 moduli ·
+4 prezzi*. Si apre quello da toccare e gli altri restano fuori dai piedi.
+
+**La ricerca** in cima filtra per nome del prodotto, per misura di un cabinet
+(`960x640`) e per **codice Odoo**: incolli il riferimento interno e ti resta
+davanti solo il prodotto che lo contiene, già aperto. Accanto, *Apri tutti* e
+*Chiudi tutti*.
+
+Aperto e chiuso si ricordano mentre lavori: la lista si ridisegna a ogni
+modifica, e richiudersi tutto a ogni tasto sarebbe stato peggio del male.
+
 ## Controller: cosa riempie Odoo e cosa no
 
 Nel pannello Amministrazione, accanto al codice di ogni controller c'è il

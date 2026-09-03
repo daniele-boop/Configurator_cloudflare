@@ -255,8 +255,28 @@
   .btn.danger:hover{background:rgba(232,105,95,.12)}
   .err{color:var(--danger);font-family:var(--mono);font-size:12px;margin-top:10px;min-height:16px}
 
-  .prod{border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:14px;background:var(--panel-2)}
-  .prod .phead{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+  .prod{border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:10px;background:var(--panel-2)}
+  /* Quindici prodotti aperti tutti insieme facevano una pagina lunga come un
+     lenzuolo. Ora ognuno sta in una riga e si apre quello che serve. */
+  .prod .pbody{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+  .prod.open .pbody{display:block}
+  .ptoggle{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:12px;
+    width:22px;height:22px;flex:0 0 auto;line-height:1;transition:transform .15s ease}
+  .prod.open .ptoggle{transform:rotate(90deg)}
+  .psum{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);cursor:pointer;
+    white-space:nowrap;flex:0 0 auto}
+  .prod .phead .pdot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+  .cabcard .cabbody{display:none}
+  .cabcard.open .cabbody{display:block}
+  .cabcard .cabcard-head{margin-bottom:0;cursor:pointer}
+  .cabcard.open .cabcard-head{margin-bottom:11px}
+  .cabsum{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin-left:auto;
+    margin-right:8px;white-space:nowrap}
+  .prodbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .prodbar input{max-width:340px;min-width:240px}
+  .prodbar .found{font-family:var(--mono);font-size:11.5px;color:var(--muted-2)}
+  .prod .phead{display:flex;gap:10px;align-items:center;margin-bottom:0}
+  .prod .pbody .pmod{margin-bottom:12px}
   .prod .phead > input{flex:1;font-family:var(--disp);font-size:16px;font-weight:700;color:var(--ink);
     background:var(--panel);border:2.5px solid var(--ink)}
   .prod .phead > input:focus{border-color:#37c3d1;box-shadow:0 0 0 3px rgba(55,195,209,.30)}
@@ -2109,8 +2129,39 @@
     dn.addEventListener("click",()=>{ if(idx<arr.length-1){ const t=arr[idx+1];arr[idx+1]=arr[idx];arr[idx]=t; rerender(); } });
     wrap.appendChild(up);wrap.appendChild(dn);return wrap;
   }
+  // aperti/chiusi si ricordano fra un ridisegno e l'altro: la lista si
+  // ricostruisce a ogni modifica, e richiudersi tutto a ogni tasto è insopportabile
+  const apertiProd = new Set(), apertiCab = new Set();
+  let filtroProd = "";
+
   function renderProdList(){
     const host=$("prodList");host.innerHTML="";
+    // barra di ricerca
+    const bar=document.createElement("div"); bar.className="prodbar";
+    const cerca=document.createElement("input");
+    cerca.type="search"; cerca.placeholder="Cerca prodotto, misura cabinet o codice Odoo";
+    cerca.value=filtroProd;
+    const trovati=document.createElement("span"); trovati.className="found";
+    const apri=document.createElement("button"); apri.type="button"; apri.className="btn ghost sm"; apri.textContent="Apri tutti";
+    const chiudi=document.createElement("button"); chiudi.type="button"; chiudi.className="btn ghost sm"; chiudi.textContent="Chiudi tutti";
+    apri.addEventListener("click",()=>{ draft.forEach(x=>apertiProd.add(x.id)); renderProdList(); });
+    chiudi.addEventListener("click",()=>{ apertiProd.clear(); apertiCab.clear(); renderProdList(); });
+    bar.append(cerca,apri,chiudi,trovati);
+    host.appendChild(bar);
+
+    const q=filtroProd.trim().toLowerCase();
+    const combacia = pr => {
+      if(!q) return true;
+      const pezzi=[pr.name||"", pr.desc||""];
+      (pr.resolutions||[]).forEach(r=>pezzi.push(r.label||""));
+      (pr.cabinets||[]).forEach(c=>{
+        pezzi.push(c.w+"x"+c.h, c.w+"×"+c.h);
+        if(c.code) pezzi.push(c.code);
+        Object.values(c.codes||{}).forEach(v=>v&&pezzi.push(v));
+      });
+      return pezzi.join(" ").toLowerCase().includes(q);
+    };
+    let visti=0;
     draft.forEach((p,pi)=>{
       const box=document.createElement("div");box.className="prod";
       const head=document.createElement("div");head.className="phead";
@@ -2126,7 +2177,22 @@
       pmod.appendChild(mwl);pmod.appendChild(mw);pmod.appendChild(mtimes);pmod.appendChild(mh);pmod.appendChild(mmm);
       const del=document.createElement("button");del.className="btn danger sm";del.textContent="Elimina";
       del.addEventListener("click",()=>{ draft.splice(pi,1); renderProdList(); });
-      head.appendChild(nm);head.appendChild(pmod);head.appendChild(del);box.appendChild(head);
+
+      const tog=document.createElement("button");tog.type="button";tog.className="ptoggle";tog.textContent="▸";
+      tog.title="Apri o chiudi la scheda";
+      const dot=document.createElement("span");dot.className="pdot";
+      dot.style.background=(p.cabinets&&p.cabinets[0]) ? (p.cabinets[0].color||autoHex(p,p.cabinets[0].w,p.cabinets[0].h)) : "var(--line)";
+      const nCod=(p.cabinets||[]).reduce((a,c)=>a+Object.values(c.codes||{}).filter(Boolean).length+(c.code?1:0),0);
+      const sum=document.createElement("span");sum.className="psum";
+      sum.textContent=(p.cabinets||[]).length+" cabinet · "+(p.resolutions||[]).length+" risoluzioni"+(nCod?" · "+nCod+" codici":"");
+      const apriChiudi=()=>{ if(apertiProd.has(p.id)) apertiProd.delete(p.id); else apertiProd.add(p.id);
+        box.classList.toggle("open"); };
+      tog.addEventListener("click",apriChiudi);
+      sum.addEventListener("click",apriChiudi);
+
+      head.appendChild(tog);head.appendChild(dot);head.appendChild(nm);head.appendChild(sum);head.appendChild(del);
+      box.appendChild(head);
+      box.appendChild(pmod);   // finisce nel corpo: a riga chiusa non serve
 
       // --- descrizione per il preventivo Odoo ---
       const dwrap=document.createElement("div");dwrap.className="pdesc";
@@ -2258,9 +2324,24 @@
         const dim=document.createElement("span");dim.className="cdim";dim.textContent=c.w+"×"+c.h+" mm";
         const rm=document.createElement("button");rm.className="rm";rm.textContent="×";rm.title="Rimuovi cabinet";
         rm.addEventListener("click",()=>{ p.cabinets.splice(ci,1); renderProdList(); });
-        ch.appendChild(dot);ch.appendChild(dim);ch.appendChild(moveControl(p.cabinets,ci,renderProdList));ch.appendChild(rm);
+        const chiave=p.id+"|"+c.w+"x"+c.h;
+        const cs=document.createElement("span");cs.className="cabsum";
+        const nP=Object.values(c.prices||{}).filter(v=>v>0).length;
+        cs.textContent=[(c.weight>0?c.weight+" kg":null),(c.modQty>0?c.modQty+" moduli":null),
+                        (nP?nP+" prezzi":"nessun prezzo")].filter(Boolean).join(" · ");
+        ch.appendChild(dot);ch.appendChild(dim);ch.appendChild(cs);
+        ch.appendChild(moveControl(p.cabinets,ci,renderProdList));ch.appendChild(rm);
+        ch.addEventListener("click",e=>{
+          if(e.target.closest("button")) return;      // i tasti sposta/rimuovi fanno il loro
+          if(apertiCab.has(chiave)) apertiCab.delete(chiave); else apertiCab.add(chiave);
+          card.classList.toggle("open");
+        });
         const grid=optionalGrid(c); grid.appendChild(mkColorField(c,p,dot));
-        card.appendChild(ch); card.appendChild(grid); card.appendChild(priceBlock(c,p)); box.appendChild(card);
+        const cbody=document.createElement("div"); cbody.className="cabbody";
+        cbody.appendChild(grid); cbody.appendChild(priceBlock(c,p));
+        card.appendChild(ch); card.appendChild(cbody);
+        if(apertiCab.has(chiave)) card.classList.add("open");
+        box.appendChild(card);
       });
 
       const addCard=document.createElement("div");addCard.className="cabcard";
@@ -2271,7 +2352,7 @@
       const ih=document.createElement("input");ih.type="number";ih.min="1";ih.placeholder="alt.";
       aw.appendChild(iw);aw.appendChild(tx);aw.appendChild(ih);
       const cap=document.createElement("span");cap.className="cdim";cap.style.color="var(--muted-2)";cap.style.fontSize="12px";cap.textContent="nuovo cabinet";
-      ah.appendChild(aw);ah.appendChild(cap);addCard.appendChild(ah);
+      ah.appendChild(aw);ah.appendChild(cap);addCard.appendChild(ah);addCard.classList.add("open");
       const tmp={}; addCard.appendChild(optionalGrid(tmp)); addCard.appendChild(priceBlock(tmp,p));
       const foot=document.createElement("div");foot.className="cabcard-foot";
       const ab=document.createElement("button");ab.className="btn ghost sm";ab.textContent="+ Aggiungi cabinet";
@@ -2279,7 +2360,27 @@
         if(w>0&&h>0&&!p.cabinets.some(c=>c.w===w&&c.h===h)){ p.cabinets.push(Object.assign({w,h},tmp)); renderProdList(); } });
       foot.appendChild(ab);addCard.appendChild(foot);
       box.appendChild(addCard);
+
+      // tutto quello che sta sotto la testata finisce nel corpo richiudibile
+      const body=document.createElement("div"); body.className="pbody";
+      while(head.nextSibling) body.appendChild(head.nextSibling);
+      box.appendChild(body);
+      if(apertiProd.has(p.id) || (q && combacia(p))) box.classList.add("open");
+
+      if(!combacia(p)){ return; }
+      visti++;
       host.appendChild(box);
+    });
+
+    trovati.textContent = q ? (visti+" di "+draft.length) : (draft.length+" prodotti");
+    let t=null;
+    cerca.addEventListener("input",()=>{
+      clearTimeout(t);
+      const v=cerca.value;
+      t=setTimeout(()=>{ filtroProd=v; renderProdList();
+        const c2=$("prodList").querySelector('input[type=search]');
+        if(c2){ c2.focus(); c2.setSelectionRange(v.length,v.length); }
+      },220);
     });
   }
 
