@@ -731,6 +731,7 @@
         <p class="sub" style="margin:0 0 12px">Controller/processori per pilotare le pareti. Il configuratore propone quelli compatibili con i pixel della parete. Prezzo e <b>codice Odoo</b> (Riferimento interno) servono per il preventivo.</p>
         <datalist id="brandList"><option value="Huidu"><option value="Novastar"></datalist>
         <div id="ctrlAdminList"></div>
+        <div class="odoostatus" id="ctrlMsg"></div>
         <div class="ctrladd">
           <div class="add-title">+ Aggiungi controller</div>
           <div class="cadd-grid">
@@ -743,9 +744,10 @@
             <div><label>Max res/porta</label><input type="number" id="c-rp" placeholder="655350"></div>
             <div><label>4K</label><input id="c-k4" placeholder="SI"></div>
             <div><label>Prezzo €</label><input type="number" id="c-price" placeholder="—"></div>
-            <div><label>Codice Odoo</label><input id="c-code" placeholder="—"></div>
+            <div><label>Codice Odoo</label><input id="c-code" placeholder="CNTA3L"></div>
           </div>
           <div class="rowbtns" style="margin-top:10px">
+            <button class="btn ghost sm" id="odooFill">Riempi da Odoo</button>
             <button class="btn ghost sm" id="addCtrl">Aggiungi controller</button>
             <button class="btn ghost sm" id="seedHuidu">Aggiungi modelli Huidu</button>
           </div>
@@ -809,6 +811,27 @@
 (function(){
   "use strict";
   const $ = id => document.getElementById(id);
+
+  /* Ricerca su Odoo. Odoo sa nome, listino e costo di un articolo; NON sa i
+     limiti tecnici di un controller — pixel massimi, porte, 4K stanno sulla
+     scheda del produttore. Quelli restano da scrivere una volta. */
+  window.odooLookup = async function(body){
+    try{
+      const r = await fetch("/api/odoo-lookup", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(body)
+      });
+      return await r.json();
+    }catch(e){ return {ok:false, error:"Odoo non raggiungibile."}; }
+  };
+  /* La marca si legge dal nome: NSE Controller HD-A3L è Huidu, VX600PRO
+     è Novastar. Se non si capisce si lascia vuota invece di indovinare. */
+  window.brandFromName = function(nome){
+    const t = String(nome||"").toLowerCase();
+    if(/\bhd-|huidu/.test(t)) return "Huidu";
+    if(/novastar|\bvx\d|\bmctrl/.test(t)) return "Novastar";
+    return "";
+  };
 
   /* Aprendo 3D o Mockup la vista nasceva spesso sotto il bordo dello schermo,
      con la sua barra degli strumenti fuori campo: sembrava che il
@@ -2250,9 +2273,25 @@
     });
   }
 
+  let ctrlMsgTimer=null;
+  function ctrlMsg(testo,tipo){
+    const el=$("ctrlMsg"); if(!el) return;
+    el.className="odoostatus "+(tipo||"");
+    el.textContent=testo||"";
+    clearTimeout(ctrlMsgTimer);
+    if(testo) ctrlMsgTimer=setTimeout(()=>{ el.textContent=""; el.className="odoostatus"; }, 9000);
+  }
+
   function renderCtrlAdmin(){
     const host=$("ctrlAdminList"); if(!host) return; host.innerHTML="";
     if(!Array.isArray(draftControllers)) draftControllers=[];
+    const nota=document.createElement("div");
+    nota.className="sub"; nota.style.cssText="margin:0 0 10px;font-size:12px";
+    nota.innerHTML='Il pulsante <b>Odoo</b> accanto al codice riempie modello, prezzo e marca. '+
+      'I limiti tecnici — pixel massimi, base, altezza, porte, 4K — su Odoo non ci sono: '+
+      'stanno sulla scheda del produttore e vanno scritti a mano una volta.';
+    host.appendChild(nota);
+
     if(!draftControllers.length){
       const e=document.createElement("div");e.className="resempty";e.textContent="Nessun controller — aggiungine uno qui sotto oppure carica i modelli Huidu.";host.appendChild(e);
     } else {
@@ -2273,7 +2312,33 @@
       row.appendChild(num(c,"maxResPort","res/porta"));
       row.appendChild(txt(c,"k4","4K"));
       row.appendChild(num(c,"price","€"));
-      row.appendChild(txt(c,"code","codice Odoo"));
+      const cod=document.createElement("div");
+      cod.style.cssText="display:flex;gap:5px;align-items:center;min-width:0";
+      const ci2=txt(c,"code","codice Odoo"); ci2.style.minWidth="0";
+      const go=document.createElement("button");
+      go.type="button"; go.className="btn ghost sm"; go.textContent="Odoo";
+      go.title="Cerca questo codice su Odoo e riempi modello, prezzo e marca";
+      go.style.cssText="padding:6px 8px;flex:0 0 auto;font-size:11px";
+      go.addEventListener("click",async()=>{
+        const codice=(c.code||"").trim();
+        if(!codice){ ctrlMsg("Scrivi prima il codice dell'articolo.","err"); return; }
+        go.disabled=true; go.textContent="…";
+        const r=await window.odooLookup({code:codice});
+        go.disabled=false; go.textContent="Odoo";
+        if(!r.ok){ ctrlMsg(r.error||"Ricerca non riuscita.","err"); return; }
+        if(r.found && r.item){
+          c.model=r.item.name||c.model;
+          if(r.item.price>0) c.price=r.item.price;
+          if(!c.brand) c.brand=window.brandFromName(r.item.name);
+          renderCtrlAdmin();
+          ctrlMsg("Da Odoo: "+r.item.name+" — "+r.item.price+" €. Controlla i limiti tecnici.","ok");
+          return;
+        }
+        ctrlMsg((r.message||"Non trovato.")+((r.items||[]).length
+          ? " Vicini: "+r.items.slice(0,6).map(x=>x.code).join(", ") : ""),"err");
+      });
+      cod.appendChild(ci2); cod.appendChild(go);
+      row.appendChild(cod);
       const rm=document.createElement("button");rm.className="rm";rm.textContent="×";rm.title="Rimuovi";
       rm.addEventListener("click",()=>{ draftControllers.splice(ci,1); renderCtrlAdmin(); });
       const acts=document.createElement("div");acts.className="cadmacts";
@@ -2284,6 +2349,25 @@
   }
 
   $("addProd").addEventListener("click",()=>{ const name=$("newProdName").value.trim(); if(!name) return; draft.push({id:"p_"+Date.now().toString(36),name,resolutions:[],cabinets:[]}); $("newProdName").value=""; renderProdList(); });
+  $("odooFill") && $("odooFill").addEventListener("click", async ()=>{
+    const codice=$("c-code").value.trim();
+    if(!codice){ ctrlMsg("Scrivi il codice dell'articolo nel campo Codice Odoo.","err"); return; }
+    const b=$("odooFill"); b.disabled=true; b.textContent="Cerco…";
+    let r=await window.odooLookup({code:codice});
+    if(r.ok && !r.found && !(r.items||[]).length) r=await window.odooLookup({q:codice});
+    b.disabled=false; b.textContent="Riempi da Odoo";
+    if(!r.ok){ ctrlMsg(r.error||"Ricerca non riuscita.","err"); return; }
+    if(r.found && r.item){
+      $("c-mod").value=r.item.name||"";
+      if(r.item.price>0) $("c-price").value=r.item.price;
+      const m=$("c-brand"); if(m && !m.value) m.value=window.brandFromName(r.item.name);
+      ctrlMsg("Da Odoo: "+r.item.name+" — "+r.item.price+" €. Restano i limiti tecnici: pixel massimi, base, altezza.","ok");
+      return;
+    }
+    const vicini=(r.items||[]).slice(0,8).map(x=>x.code+" · "+x.name).join(" | ");
+    ctrlMsg((r.message||"Non trovato.")+(vicini?"  Forse: "+vicini:""),"err");
+  });
+
   $("addCtrl").addEventListener("click",()=>{
     const model=$("c-mod").value.trim();
     const maxTotal=numOrUndef($("c-tot").value), maxBase=numOrUndef($("c-base").value), maxHeight=numOrUndef($("c-ht").value);

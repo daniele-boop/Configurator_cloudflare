@@ -138,6 +138,23 @@ detta l'asse più grossolano.
 Il dato vive nel catalogo, quindi lo scrivi qui una volta sola: la versione
 agenti legge lo stesso archivio e lo prende da sé.
 
+## Controller: cosa riempie Odoo e cosa no
+
+Nel pannello Amministrazione, accanto al codice di ogni controller c'è il
+pulsante **Odoo**. Scrivi il riferimento interno, premi, e arrivano **modello,
+prezzo di listino e marca** — la marca si legge dal nome, "NSE Controller
+HD-A3L" è Huidu, "VX600PRO" è Novastar. Nel modulo di aggiunta lo stesso lo fa
+**Riempi da Odoo**.
+
+Quello che Odoo **non** sa sono i limiti tecnici: pixel massimi totali, base,
+altezza, porte, risoluzione per porta, 4K. Su Odoo un controller è un articolo
+con un nome e un prezzo, non una scheda tecnica. Quei numeri stanno sul
+datasheet del produttore e si scrivono a mano una volta sola — e il pannello te
+lo ricorda invece di lasciarti credere che siano arrivati anche loro.
+
+Se il codice non esiste, escono i riferimenti che gli somigliano: un refuso si
+corregge sul posto.
+
 ## Quali controller proporre
 
 I rental — RX indoor, Outdoor RS, Trasparent rental — montano **solo Novastar**.
