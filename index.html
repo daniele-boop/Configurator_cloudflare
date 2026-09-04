@@ -840,11 +840,11 @@
 
       <div class="adminsec">
         <h3>Sicurezza</h3>
-        <div class="rowbtns">
-          <input id="newPw" type="password" placeholder="Nuova password" style="flex:1;min-width:180px">
-          <button class="btn ghost sm" id="changePw">Aggiorna password</button>
-        </div>
-        <div class="err" id="pwOk" style="color:var(--ok)"></div>
+        <p class="sub" style="margin:0">La password non sta più nel catalogo — stava in chiaro e chiunque
+        poteva leggerla dall'indirizzo del catalogo. Adesso vive fra i Secret di Cloudflare: si cambia da
+        <b>Workers &amp; Pages → configurator-cloudflare → Settings → Variables and Secrets</b>, alla voce
+        <b>ADMIN_PASSWORD</b>. Il salvataggio non chiede più il token: entrando qui ricevi un permesso
+        firmato che vale otto ore.</p>
       </div>
 
       <div class="adminsec">
@@ -859,7 +859,7 @@
 
       <div class="adminsec">
         <h3>Pubblicazione catalogo</h3>
-        <p class="sub" style="margin:0 0 12px"><b>Salva sul sito</b> rende subito attive per tutti le modifiche, senza passare da GitHub (richiede il token impostato su Cloudflare). In alternativa puoi esportare <b>catalog.json</b> e caricarlo manualmente.</p>
+        <p class="sub" style="margin:0 0 12px"><b>Salva sul sito</b> rende subito attive per tutti le modifiche, senza passare da GitHub. In alternativa puoi esportare <b>catalog.json</b> e caricarlo manualmente.</p>
         <div class="rowbtns">
           <button class="btn primary sm" id="cloudSaveBtn">Salva sul sito (tutti)</button>
           <button class="btn ghost sm" id="exportBtn">Esporta catalog.json</button>
@@ -961,8 +961,12 @@
   });
   const STORE_KEY = "nseled_led_config_v2";
 
+  // Il biglietto d'ingresso al pannello: lo firma il server quando la password
+  // è giusta, vale otto ore e viaggia con i salvataggi. La password non sta
+  // più qui dentro né nel catalogo: sta fra i Secret di Cloudflare.
+  let BIGLIETTO = null;
+
   const DEFAULTS = {
-    password: "nseled2026",
     products: [
       { id:"p_std", name:"NSELED — Serie standard", modW:320, modH:160,
         resolutions:[{id:"s25",label:"P2.5",pitch:2.5},{id:"s39",label:"P3.9",pitch:3.9},{id:"s4",label:"P4",pitch:4}],
@@ -1078,7 +1082,6 @@
   }
   function normalizeDB(j){
     return {
-      password: (typeof j.password==="string" && j.password) ? j.password : DEFAULTS.password,
       products: (Array.isArray(j.products)?j.products:[]).map(p=>{
         const cabs=(p.cabinets||[]).filter(c=>c.w>0&&c.h>0);
         let modW=(p.modW>0?p.modW:undefined), modH=(p.modH>0?p.modH:undefined);
@@ -2312,9 +2315,24 @@
   overlay.addEventListener("click",e=>{ if(e.target===overlay) closeAdmin(); });
 
   let draft=null; let draftControllers=null; let draftBackgrounds=null;
-  function tryEnter(){
-    if($("pwInput").value===DB.password){ draft=JSON.parse(JSON.stringify(DB.products)); draftControllers=JSON.parse(JSON.stringify(DB.controllers||[])); draftBackgrounds=JSON.parse(JSON.stringify(DB.backgrounds||[])); $("lockView").classList.add("hidden"); $("panelView").classList.remove("hidden"); document.querySelector(".overlay .modal").classList.add("wide"); renderProdList(); renderCtrlAdmin(); renderBgAdmin(); }
-    else { $("pwErr").textContent="Password errata."; }
+  async function tryEnter(){
+    const b=$("pwEnter"); if(b.disabled) return;
+    b.disabled=true; const eti=b.textContent; b.textContent="…"; $("pwErr").textContent="";
+    try{
+      const r=await fetch("/api/admin-login",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({password:$("pwInput").value})});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok||!d.ok){ $("pwErr").textContent=d.error||"Password errata."; return; }
+      BIGLIETTO=d.ticket;
+      $("pwInput").value="";
+      draft=JSON.parse(JSON.stringify(DB.products));
+      draftControllers=JSON.parse(JSON.stringify(DB.controllers||[]));
+      draftBackgrounds=JSON.parse(JSON.stringify(DB.backgrounds||[]));
+      $("lockView").classList.add("hidden"); $("panelView").classList.remove("hidden");
+      document.querySelector(".overlay .modal").classList.add("wide");
+      renderProdList(); renderCtrlAdmin(); renderBgAdmin();
+    }catch(err){ $("pwErr").textContent="Server non raggiungibile."; }
+    finally{ b.disabled=false; b.textContent=eti; }
   }
   $("pwEnter").addEventListener("click",tryEnter);
   $("pwInput").addEventListener("keydown",e=>{ if(e.key==="Enter") tryEnter(); });
@@ -2994,23 +3012,21 @@
   $("panelClose").addEventListener("click",closeAdmin);
 
   $("exportBtn").addEventListener("click",()=>{
-    const data=JSON.stringify({password:DB.password, products:draft||DB.products, controllers:draftControllers||DB.controllers||[], backgrounds:draftBackgrounds||DB.backgrounds||[]},null,2);
+    const data=JSON.stringify({products:draft||DB.products, controllers:draftControllers||DB.controllers||[], backgrounds:draftBackgrounds||DB.backgrounds||[]},null,2);
     const blob=new Blob([data],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="catalog.json";a.click();URL.revokeObjectURL(a.href);
   });
   $("importBtn").addEventListener("click",()=>$("importFile").click());
   $("cloudSaveBtn").addEventListener("click",async ()=>{
     const msg=$("cloudSaveMsg");
-    const token=prompt("Token di salvataggio (impostato su Cloudflare come ADMIN_TOKEN):");
-    if(token===null) return;
-    if(!token.trim()){ msg.className="odoostatus err"; msg.textContent="Token mancante."; return; }
+    if(!BIGLIETTO){ msg.className="odoostatus err"; msg.textContent="Sessione scaduta: richiudi e riapri il pannello."; return; }
     const products=(draft||DB.products).filter(p=>p.name.trim());
     const controllers=normControllers(draftControllers||DB.controllers||[]);
     const backgrounds=(draftBackgrounds||DB.backgrounds||[]).filter(b=>b&&b.img);
-    const catalog={ password:DB.password, products, controllers, backgrounds };
+    const catalog={ products, controllers, backgrounds };
     msg.className="odoostatus wait"; msg.textContent="Salvataggio sul sito in corso…";
     try{
-      const r=await fetch("/api/save-catalog",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:token.trim(),catalog})});
+      const r=await fetch("/api/save-catalog",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ticket:BIGLIETTO,catalog})});
       const d=await r.json().catch(()=>({}));
       if(r.ok&&d.ok){
         // applica subito anche in locale, così pannello e pagina restano allineati
@@ -3109,7 +3125,6 @@
       draft=norm.products;
       draftControllers=norm.controllers;
       draftBackgrounds=norm.backgrounds||[];
-      if(typeof obj.password==="string"&&obj.password){ DB.password=obj.password; }
       try{
         renderProdList(); renderCtrlAdmin(); renderBgAdmin();
       }catch(err){

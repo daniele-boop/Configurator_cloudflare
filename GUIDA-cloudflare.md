@@ -92,9 +92,31 @@ inserite come **Secret**, non come testo normale.
 | `ODOO_API_KEY` | la API key di Odoo | **segreto** |
 | `ODOO_PARTNER_NAME` | `Cliente da definire` | testo |
 | `ODOO_OBJECT_FIELD` | `x_studio_oggetto` | testo |
-| `ADMIN_TOKEN` | il token per salvare il catalogo | **segreto** |
+| `ADMIN_TOKEN` | la chiave con cui il server firma i permessi | **segreto** |
+| `ADMIN_PASSWORD` | la password del pannello Amministrazione | **segreto** |
 
-Sono le stesse che avevi su Netlify: puoi rileggerle da lì prima di dismetterlo.
+Sono le stesse che avevi su Netlify, più `ADMIN_PASSWORD`: puoi rileggere le altre
+da lì prima di dismetterlo.
+
+### La password del pannello
+
+Fino a settembre 2026 la password stava **dentro il catalogo**, e il catalogo lo
+serve `/api/get-catalog` senza chiedere niente a nessuno: bastava aprire quell
+indirizzo in un browser per leggerla. Adesso sta qui, fra i Secret, e a
+confrontarla è il server.
+
+Due conseguenze pratiche:
+
+- **La vecchia password va considerata bruciata.** Chiunque abbia aperto quel
+  link una volta ce l'ha ancora. Metti in `ADMIN_PASSWORD` una password
+  **nuova**, e se quella vecchia la usavi altrove cambiala anche lì.
+- **`ADMIN_TOKEN` non si digita più.** Entrando nel pannello con la password
+  ricevi un permesso firmato che vale otto ore e viaggia da solo con i
+  salvataggi. Il token resta, ma solo come chiave di firma: sta su Cloudflare e
+  non passa mai dal browser.
+
+Per cambiarla in futuro: **Workers & Pages → configurator-cloudflare → Settings
+→ Variables and Secrets → `ADMIN_PASSWORD`**, poi un nuovo deploy.
 
 **Importante:** dopo aver aggiunto variabili o binding serve un nuovo deploy perché
 diventino attivi (**Deployments → Retry deployment**).
@@ -105,7 +127,7 @@ Il catalogo vive nello storage, non nel codice: va ricaricato una volta.
 
 1. Apri il **vecchio** sito Netlify, entra nel pannello Amministrazione ed **esporta il catalog.json**.
 2. Apri il **nuovo** sito Cloudflare (`…pages.dev`), pannello Amministrazione, **importa** quel file.
-3. Premi **Salva sul sito** e inserisci l'`ADMIN_TOKEN`.
+3. Premi **Salva sul sito**.
 
 Le configurazioni salvate (CFG-xxxx) **non migrano**: restano su Netlify. I numeri sul
 nuovo sistema ripartiranno da CFG-0001. Se ti serve conservarle, dimmelo prima di
