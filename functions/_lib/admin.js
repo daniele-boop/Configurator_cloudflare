@@ -81,3 +81,44 @@ export function senzaSegreti(catalogo) {
   const { password, ...resto } = catalogo;
   return resto;
 }
+
+/**
+ * Chi arriva passando da Cloudflare Access porta con sé il biglietto che Access
+ * gli ha messo in tasca. Non lo verifichiamo contro le chiavi del team — per
+ * quello basta Access, che è davanti — ma la sua ASSENZA dice una cosa utile:
+ * questa richiesta non è passata dal portone.
+ *
+ * Serve perché ogni deploy di Pages ha anche un suo indirizzo con l'hash
+ * davanti, e quegli indirizzi Access non li copre. Da lì usciva il catalogo
+ * intero.
+ */
+export const dentroAccess = request =>
+  !!(request && request.headers && request.headers.get("Cf-Access-Jwt-Assertion"));
+
+/**
+ * Il catalogo per chi non è passato da Access: struttura sì, soldi no.
+ *
+ * Restano prodotti, cabinet, misure e schede tecniche — servono a comporre una
+ * parete e non sono un segreto. Spariscono i **prezzi** (che sono i nostri
+ * costi d'acquisto) e i **codici Odoo** (che dicono da chi compriamo). Una
+ * pagina aperta da lì compone la parete e non mostra il totale, ed è giusto
+ * così: meglio un prezzo che non compare di un costo che gira.
+ */
+export function senzaSoldi(catalogo) {
+  const c = senzaSegreti(catalogo);
+  if (!c || typeof c !== "object") return c;
+  const via = ({ price, prices, codes, code, cost, ...resto }) => resto;
+  return {
+    ...c,
+    products: (c.products || []).map(p => ({
+      ...p,
+      cabinets: (p.cabinets || []).map(via),
+      flightcases: p.flightcases
+        ? { ...p.flightcases, cases: (p.flightcases.cases || []).map(via) } : p.flightcases,
+      accessories: p.accessories
+        ? { ...p.accessories, items: (p.accessories.items || []).map(via) } : p.accessories
+    })),
+    controllers: (c.controllers || []).map(via),
+    __ridotto: true
+  };
+}

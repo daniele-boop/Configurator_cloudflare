@@ -118,6 +118,24 @@ Due conseguenze pratiche:
 Per cambiarla in futuro: **Workers & Pages → configurator-cloudflare → Settings
 → Variables and Secrets → `ADMIN_PASSWORD`**, poi un nuovo deploy.
 
+### Prezzi e codici: chi non passa dal portone non li vede
+
+Il sito sta dietro Cloudflare Access, ma **ogni deploy di Pages ha anche un suo
+indirizzo con l'hash davanti** (`76cc050f.configurator-cloudflare.pages.dev`) e
+quegli indirizzi Access non li copre: il carattere jolly su `.pages.dev` non
+attacca. Da lì il catalogo usciva intero — prezzi d'acquisto e codici Odoo
+compresi.
+
+Adesso `/api/get-catalog` guarda se la richiesta porta il biglietto che Access
+mette in tasca a chi passa dal portone (`Cf-Access-Jwt-Assertion`). Se non c'è,
+risponde con il catalogo **senza prezzi e senza codici**: restano prodotti,
+cabinet, misure e schede tecniche, che servono a comporre una parete e non sono
+un segreto.
+
+Conseguenza voluta: una pagina aperta da un indirizzo di deploy compone la
+parete e **non mostra il totale**. Se un giorno vedi il configuratore senza
+prezzi, non è rotto — è che ci sei arrivato da fuori Access.
+
 **Importante:** dopo aver aggiunto variabili o binding serve un nuovo deploy perché
 diventino attivi (**Deployments → Retry deployment**).
 
