@@ -1277,8 +1277,18 @@
      quindi vale la pena che sia quello vero. Sommare cabinet per cabinet, e
      non moltiplicare, fa tornare il conto anche sulle pareti composte da
      misure diverse. */
-  function pixelAsse(misure, passo){
+  function pixelAsse(misure, passo, modulo){
     if(!(passo>0) || !misure || !misure.length) return 0;
+    // Il conto si chiude sul MODULO quando lo conosciamo. Il modulo e' la
+    // piastrella LED: e' lui a portare un numero intero di pixel deciso
+    // dall'hardware, e cabinet e parete sono suoi multipli. Arrotondando li'
+    // l'approssimazione dell'etichetta resta dentro i 250 mm del modulo,
+    // invece di crescere con la misura: sullo stesso muro 3000x2000 a P2,6
+    // veniva 1152 componendolo con cabinet da 500 e 1155 con cabinet da 1000.
+    if(modulo>0){
+      const pxMod=Math.round(modulo/passo);
+      return misure.reduce((s,mm)=>s+pxMod*Math.round(mm/modulo), 0);
+    }
     return misure.reduce((s,mm)=>s+Math.round(mm/passo), 0);
   }
 
@@ -1478,7 +1488,7 @@
     // Il pixel non è sempre quadrato: sul Trasparent 3,91-7,82 il passo
     // verticale è il doppio, e l'altezza va contata con quello.
     const pitchV=(S.res&&S.res.pitchH>0)?S.res.pitchH:pitch;
-    const px=pixelAsse(cols, pitch), py=pixelAsse(rows, pitchV);
+    const px=pixelAsse(cols, pitch, p.modW), py=pixelAsse(rows, pitchV, p.modH);
     const totPx=px*py;
     const img=wallPreviewPng();
     const img3d=(window.__wall3d && window.__wall3d.snapshot) ? window.__wall3d.snapshot() : null;
@@ -1636,7 +1646,8 @@
   function currentPx(){
     if(!(S.pitch>0)||!S.selWc||!S.selHc) return null;
     const pv=S.pitchV>0?S.pitchV:S.pitch;
-    return { base:pixelAsse(expand(S.selWc.counts), S.pitch), h:pixelAsse(expand(S.selHc.counts), pv) };
+    const p=currentProduct();
+    return { base:pixelAsse(expand(S.selWc.counts), S.pitch, p&&p.modW), h:pixelAsse(expand(S.selHc.counts), pv, p&&p.modH) };
   }
   function buildOffer(){
     const p=currentProduct(); if(!p||!S.selWc||!S.selHc) return null;
@@ -1840,7 +1851,7 @@
     // Il pixel non è sempre quadrato: sul Trasparent 3,91-7,82 il passo
     // verticale è il doppio, e l'altezza va contata con quello.
     const pitchV=(S.res&&S.res.pitchH>0)?S.res.pitchH:pitch;
-    const px=pixelAsse(cols, pitch), py=pixelAsse(rows, pitchV);
+    const px=pixelAsse(cols, pitch, product.modW), py=pixelAsse(rows, pitchV, product.modH);
     const totPx=px*py;
     const area=(totalW*totalH)/1e6; // m²
     // potenza (media, da W/m² prodotto) e peso totale
@@ -2094,7 +2105,7 @@
     $("mSize").innerHTML=fmt(totalW)+" × "+fmt(totalH)+' <small>mm</small>';
     $("mArea").innerHTML=((totalW*totalH)/1e6).toFixed(2).replace(".",",")+' <small>m²</small>';
     $("mMods").innerHTML=(cols.length*rows.length)+' <small>· '+cols.length+"×"+rows.length+"</small>";
-    if(S.pitch>0){ const pv=S.pitchV>0?S.pitchV:S.pitch; const px=Math.round(totalW/S.pitch),py=Math.round(totalH/pv);
+    if(S.pitch>0){ const pv=S.pitchV>0?S.pitchV:S.pitch; const px=pixelAsse(cols,S.pitch,product.modW),py=pixelAsse(rows,pv,product.modH);
       $("mRes").innerHTML=fmt(px)+"×"+fmt(py)+' <small>· '+(S.pitchLabel?S.pitchLabel+" · ":"")+((px*py)/1e6).toFixed(2).replace(".",",")+" Mpx</small>"; }
     else $("mRes").innerHTML='<small>—</small>';
 

@@ -1,0 +1,19 @@
+# Intestazioni HTTP servite da Cloudflare Pages.
+
+# Il configuratore è un file solo, e cambia a ogni deploy. Senza questa regola
+# il browser ripesca dal disco l'HTML di prima e continua a mostrare il codice
+# vecchio anche dopo un deploy andato a buon fine: è successo con il conteggio
+# dei pixel, che restava a 1154×769 con la correzione già online.
+# "no-cache" non vuol dire "non salvare": vuol dire "prima di riusarlo chiedi
+# al server se è ancora quello giusto".
+/
+  Cache-Control: no-cache
+/*.html
+  Cache-Control: no-cache
+/*.js
+  Cache-Control: no-cache
+
+# Le risposte delle API non vanno mai in cache: catalogo e prezzi dipendono da
+# chi sta chiedendo.
+/api/*
+  Cache-Control: no-store, must-revalidate
