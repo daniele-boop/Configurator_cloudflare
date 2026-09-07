@@ -1651,13 +1651,34 @@
       else imgs.forEach(i=>{ if(!i.complete){ i.addEventListener("load",()=>{ if(--pending<=0) done(); }); i.addEventListener("error",()=>{ if(--pending<=0) done(); }); } });
     });
   }
+  /* Quante porte servono ALMENO. È un minimo, non il numero esatto: le porte
+     pilotano gruppi di cabinet attaccati fra loro, e una spartizione reale può
+     averne bisogno di qualcuna in più. Come minimo basta però a bocciare: se
+     non bastano nemmeno nel caso più fortunato, quel player non ce la fa.
+     Un player regge un totale di pixel, ma li fa
+     uscire da più porte e ogni porta ha un tetto suo: l'HD-A6L dichiara
+     2.600.000 px, però ha 4 porte da 576.000, quindi il tetto vero è
+     2.304.000 — meno di quello sulla scheda. Zero = il dato non c'è a
+     catalogo, e allora non si conclude niente. */
+  function porteServono(c,px){
+    if(!c || !(c.maxResPort>0) || !px || !(px.base>0) || !(px.h>0)) return 0;
+    return Math.ceil((px.base*px.h)/c.maxResPort);
+  }
   function ctrlFits(c,px){
     if(!px) return false;
     // Senza nessun limite scritto non si può affermare che regga la parete:
     // prima passava per compatibile con qualsiasi cosa.
     if(!(c.maxTotal>0) && !(c.maxBase>0) && !(c.maxHeight>0)) return false;
     const tot=px.base*px.h;
-    return (!c.maxTotal || tot<=c.maxTotal) && (!c.maxBase || px.base<=c.maxBase) && (!c.maxHeight || px.h<=c.maxHeight);
+    if(c.maxTotal && tot>c.maxTotal) return false;
+    if(c.maxBase && px.base>c.maxBase) return false;
+    if(c.maxHeight && px.h>c.maxHeight) return false;
+    // Il conto sulle porte si fa solo dove il catalogo dice quante sono e
+    // quanto porta ognuna: dove il dato manca si resta al comportamento di
+    // prima, invece di bocciare un controller che magari va benissimo.
+    const n=porteServono(c,px);
+    if(n && c.ports>0 && n>c.ports) return false;
+    return true;
   }
   function currentPx(){
     if(!(S.pitch>0)||!S.selWc||!S.selHc) return null;
@@ -1946,6 +1967,8 @@
       if(c.maxTotal) bits.push(fmt(c.maxTotal)+" px");
       if(c.maxBase&&c.maxHeight) bits.push(fmt(c.maxBase)+"×"+fmt(c.maxHeight));
       if(c.ports) bits.push(c.ports+" porte");
+      const np=porteServono(c,px);
+      if(np) bits.push("almeno "+np+(np===1?" porta":" porte"));
       if(c.k4&&c.k4!=="-") bits.push("4K "+c.k4);
       return bits.join(" · ");
     };
