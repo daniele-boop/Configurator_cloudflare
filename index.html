@@ -1265,6 +1265,23 @@
   function compFromTotal(eng,total){ return {total, counts: eng.decompose(total)}; }
   function expand(counts){ const a=[]; Object.keys(counts).map(Number).sort((x,y)=>y-x).forEach(k=>{ for(let i=0;i<counts[k];i++)a.push(k); }); return a; }
 
+  /* I pixel di un asse: la SOMMA dei pixel di ogni cabinet, non la divisione
+     del totale in millimetri per il passo.
+     Ogni cabinet porta un numero intero di pixel deciso dall'hardware, e la
+     parete ne ha la somma. Dividendo i millimetri usciva un numero che non
+     esiste: su 3000 mm a P2,6 dava 1154 dove i pixel sono 1152, perché "P2,6"
+     è l'etichetta commerciale di un passo che in realtà è 2,604 (500 mm ÷ 192
+     px). E l'errore cambia segno a seconda del passo: su P3,91 dava 767 dove
+     ce ne sono 768.
+     È il numero che l'integratore usa per impostare i contenuti sul player,
+     quindi vale la pena che sia quello vero. Sommare cabinet per cabinet, e
+     non moltiplicare, fa tornare il conto anche sulle pareti composte da
+     misure diverse. */
+  function pixelAsse(misure, passo){
+    if(!(passo>0) || !misure || !misure.length) return 0;
+    return misure.reduce((s,mm)=>s+Math.round(mm/passo), 0);
+  }
+
   function rawProduct(){ return DB.products.find(p=>p.id===S.productId) || DB.products[0]; }
   // Vista del prodotto usata dal configuratore. Con S.rot attivo TUTTI i cabinet sono ruotati
   // di 90° (mai orientamenti misti): cambiano solo le dimensioni, non prezzi né codici Odoo.
@@ -1461,7 +1478,7 @@
     // Il pixel non è sempre quadrato: sul Trasparent 3,91-7,82 il passo
     // verticale è il doppio, e l'altezza va contata con quello.
     const pitchV=(S.res&&S.res.pitchH>0)?S.res.pitchH:pitch;
-    const px=pitch>0?Math.round(totalW/pitch):0, py=pitchV>0?Math.round(totalH/pitchV):0;
+    const px=pixelAsse(cols, pitch), py=pixelAsse(rows, pitchV);
     const totPx=px*py;
     const img=wallPreviewPng();
     const img3d=(window.__wall3d && window.__wall3d.snapshot) ? window.__wall3d.snapshot() : null;
@@ -1619,7 +1636,7 @@
   function currentPx(){
     if(!(S.pitch>0)||!S.selWc||!S.selHc) return null;
     const pv=S.pitchV>0?S.pitchV:S.pitch;
-    return { base:Math.round(S.selWc.total/S.pitch), h:Math.round(S.selHc.total/pv) };
+    return { base:pixelAsse(expand(S.selWc.counts), S.pitch), h:pixelAsse(expand(S.selHc.counts), pv) };
   }
   function buildOffer(){
     const p=currentProduct(); if(!p||!S.selWc||!S.selHc) return null;
@@ -1823,7 +1840,7 @@
     // Il pixel non è sempre quadrato: sul Trasparent 3,91-7,82 il passo
     // verticale è il doppio, e l'altezza va contata con quello.
     const pitchV=(S.res&&S.res.pitchH>0)?S.res.pitchH:pitch;
-    const px=pitch>0?Math.round(totalW/pitch):0, py=pitchV>0?Math.round(totalH/pitchV):0;
+    const px=pixelAsse(cols, pitch), py=pixelAsse(rows, pitchV);
     const totPx=px*py;
     const area=(totalW*totalH)/1e6; // m²
     // potenza (media, da W/m² prodotto) e peso totale
