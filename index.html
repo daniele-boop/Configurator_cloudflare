@@ -986,8 +986,18 @@
       { id:"hd_a4l", model:"HD-A4L", maxTotal:655350,  maxBase:16384, maxHeight:4096, ports:2, maxResPort:655350, k4:"SI" },
       { id:"hd_a5l", model:"HD-A5L", maxTotal:1300000, maxBase:16384, maxHeight:4096, ports:2, maxResPort:655350, k4:"SI" },
       { id:"hd_a6l", model:"HD-A6L", maxTotal:2600000, maxBase:16384, maxHeight:4096, ports:4, maxResPort:576000, k4:"SI" },
-      { id:"hd_a7",  model:"HD-A7",  maxTotal:5160000, maxBase:15360, maxHeight:4096, ports:8, maxResPort:655350, k4:"-" },
-      { id:"hd_a8",  model:"HD-A8",  maxTotal:8294400, maxBase:16384, maxHeight:4096, ports:8, maxResPort:655350, k4:"-" }
+      // A7 e A8: valori presi dalle schede Huidu V2.4 (sezione Output). Le due
+      // schede dicono la capacita' in ASINCRONO (contenuto sul player) e in
+      // SINCRONO (sorgente HDMI dal vivo). Qui si tiene l'ASINCRONO, che e' il
+      // modo in cui vendiamo: e' il piu' basso dei due, quindi non promette
+      // niente che poi non regga.
+      //
+      // Da quelle due schede si ricava anche quanto porta OGNI porta, che
+      // nessuna delle due scrive: il sincrono e' esattamente porte x 650.000
+      // su tutti e due i modelli (A8: 16 x 650.000 = 10,4 mln; A7: 8 x 650.000
+      // = 5,2 mln). Non e' una stima, e' un'identita' che torna due volte.
+      { id:"hd_a7",  model:"HD-A7",  maxTotal:5160000, maxBase:65536, maxHeight:4096, ports:8,  maxResPort:650000, k4:"-" },
+      { id:"hd_a8",  model:"HD-A8",  maxTotal:8294400, maxBase:65536, maxHeight:4096, ports:16, maxResPort:650000, k4:"-" }
     ]
   };
   const HUIDU_SEED = JSON.parse(JSON.stringify(DEFAULTS.controllers));
