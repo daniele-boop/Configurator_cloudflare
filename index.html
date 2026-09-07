@@ -981,23 +981,26 @@
         {w:500,h:250,weight:4,power:65,modQty:2,prices:{r19:150,r25:120},codes:{r19:"OSO-250-P19",r25:"OSO-250-P25"}}
       ]}
     ],
+    // I sei player Huidu, dalle schede ufficiali (A3L V1.1, A4L V1.3, A5L V1.3,
+    // A6L V1.4, A7 e A8 V2.4), sezione Output di ciascuna.
+    //
+    // A7 e A8 dichiarano due capacita': ASINCRONO (contenuto sul player) e
+    // SINCRONO (sorgente HDMI dal vivo). Qui si tiene l'asincrono, che e' il
+    // modo in cui vendiamo ed e' il piu' basso dei due — cosi' il configuratore
+    // non promette niente che poi non regga. Gli altri quattro ne dichiarano
+    // una sola.
+    //
+    // maxResPort non e' scritto in nessuna scheda: si ricava. Dove la scheda da'
+    // porte e totale, il totale e' esattamente porte x 650.000 (A5L 2x, A6L 4x,
+    // A7 8x sul sincrono, A8 16x sul sincrono). A3L e A4L fanno eccezione perche'
+    // il loro totale e' fermato dal decodificatore, non dalle porte.
     controllers: [
-      { id:"hd_a3l", model:"HD-A3L", maxTotal:655350,  maxBase:8192,  maxHeight:2560, ports:1, maxResPort:655350, k4:"SI" },
-      { id:"hd_a4l", model:"HD-A4L", maxTotal:655350,  maxBase:16384, maxHeight:4096, ports:2, maxResPort:655350, k4:"SI" },
-      { id:"hd_a5l", model:"HD-A5L", maxTotal:1300000, maxBase:16384, maxHeight:4096, ports:2, maxResPort:655350, k4:"SI" },
-      { id:"hd_a6l", model:"HD-A6L", maxTotal:2600000, maxBase:16384, maxHeight:4096, ports:4, maxResPort:576000, k4:"SI" },
-      // A7 e A8: valori presi dalle schede Huidu V2.4 (sezione Output). Le due
-      // schede dicono la capacita' in ASINCRONO (contenuto sul player) e in
-      // SINCRONO (sorgente HDMI dal vivo). Qui si tiene l'ASINCRONO, che e' il
-      // modo in cui vendiamo: e' il piu' basso dei due, quindi non promette
-      // niente che poi non regga.
-      //
-      // Da quelle due schede si ricava anche quanto porta OGNI porta, che
-      // nessuna delle due scrive: il sincrono e' esattamente porte x 650.000
-      // su tutti e due i modelli (A8: 16 x 650.000 = 10,4 mln; A7: 8 x 650.000
-      // = 5,2 mln). Non e' una stima, e' un'identita' che torna due volte.
-      { id:"hd_a7",  model:"HD-A7",  maxTotal:5160000, maxBase:65536, maxHeight:4096, ports:8,  maxResPort:650000, k4:"-" },
-      { id:"hd_a8",  model:"HD-A8",  maxTotal:8294400, maxBase:65536, maxHeight:4096, ports:16, maxResPort:650000, k4:"-" }
+      { id:"hd_a3l", model:"HD-A3L", maxTotal:655360,  maxBase:8192,  maxHeight:3840, ports:1,  maxResPort:655360, k4:"SI" },
+      { id:"hd_a4l", model:"HD-A4L", maxTotal:655360,  maxBase:16384, maxHeight:8192, ports:2,  maxResPort:650000, k4:"SI" },
+      { id:"hd_a5l", model:"HD-A5L", maxTotal:1300000, maxBase:16384, maxHeight:8192, ports:2,  maxResPort:650000, k4:"SI" },
+      { id:"hd_a6l", model:"HD-A6L", maxTotal:2600000, maxBase:65536, maxHeight:8192, ports:4,  maxResPort:650000, k4:"SI" },
+      { id:"hd_a7",  model:"HD-A7",  maxTotal:5160000, maxBase:65536, maxHeight:8192, ports:8,  maxResPort:650000, k4:"-" },
+      { id:"hd_a8",  model:"HD-A8",  maxTotal:8294400, maxBase:65536, maxHeight:8192, ports:16, maxResPort:650000, k4:"-" }
     ]
   };
   const HUIDU_SEED = JSON.parse(JSON.stringify(DEFAULTS.controllers));
