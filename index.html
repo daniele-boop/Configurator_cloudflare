@@ -1292,6 +1292,22 @@
     return misure.reduce((s,mm)=>s+Math.round(mm/passo), 0);
   }
 
+  /* Il modulo non e' scritto a catalogo per tutti i prodotti: l'Indoor Serie
+     500 ha i moduli contati (96) ma non la loro misura, e senza quella il
+     conto ripiegava sul cabinet da un metro e tornava a sbagliare (1155 al
+     posto di 1152). Quando manca lo si deduce dal cabinet piu' piccolo del
+     prodotto: un cabinet e' fatto di moduli interi, quindi la sua misura e'
+     comunque un multiplo del modulo, e arrotondare su 250 o 500 mm sbaglia
+     molto meno che arrotondare su 1000. Resta meglio scriverlo a catalogo:
+     finisce anche nella scheda tecnica. */
+  function unitaModulo(p, asse){
+    if(!p) return 0;
+    const m = asse==="h" ? p.modH : p.modW;
+    if(m>0) return m;
+    const misure=(p.cabinets||[]).map(c=>asse==="h"?c.h:c.w).filter(v=>v>0);
+    return misure.length ? Math.min.apply(null, misure) : 0;
+  }
+
   function rawProduct(){ return DB.products.find(p=>p.id===S.productId) || DB.products[0]; }
   // Vista del prodotto usata dal configuratore. Con S.rot attivo TUTTI i cabinet sono ruotati
   // di 90° (mai orientamenti misti): cambiano solo le dimensioni, non prezzi né codici Odoo.
@@ -1488,7 +1504,7 @@
     // Il pixel non è sempre quadrato: sul Trasparent 3,91-7,82 il passo
     // verticale è il doppio, e l'altezza va contata con quello.
     const pitchV=(S.res&&S.res.pitchH>0)?S.res.pitchH:pitch;
-    const px=pixelAsse(cols, pitch, p.modW), py=pixelAsse(rows, pitchV, p.modH);
+    const px=pixelAsse(cols, pitch, unitaModulo(p,"w")), py=pixelAsse(rows, pitchV, unitaModulo(p,"h"));
     const totPx=px*py;
     const img=wallPreviewPng();
     const img3d=(window.__wall3d && window.__wall3d.snapshot) ? window.__wall3d.snapshot() : null;
@@ -1647,7 +1663,7 @@
     if(!(S.pitch>0)||!S.selWc||!S.selHc) return null;
     const pv=S.pitchV>0?S.pitchV:S.pitch;
     const p=currentProduct();
-    return { base:pixelAsse(expand(S.selWc.counts), S.pitch, p&&p.modW), h:pixelAsse(expand(S.selHc.counts), pv, p&&p.modH) };
+    return { base:pixelAsse(expand(S.selWc.counts), S.pitch, unitaModulo(p,"w")), h:pixelAsse(expand(S.selHc.counts), pv, unitaModulo(p,"h")) };
   }
   function buildOffer(){
     const p=currentProduct(); if(!p||!S.selWc||!S.selHc) return null;
@@ -1851,7 +1867,7 @@
     // Il pixel non è sempre quadrato: sul Trasparent 3,91-7,82 il passo
     // verticale è il doppio, e l'altezza va contata con quello.
     const pitchV=(S.res&&S.res.pitchH>0)?S.res.pitchH:pitch;
-    const px=pixelAsse(cols, pitch, product.modW), py=pixelAsse(rows, pitchV, product.modH);
+    const px=pixelAsse(cols, pitch, unitaModulo(product,"w")), py=pixelAsse(rows, pitchV, unitaModulo(product,"h"));
     const totPx=px*py;
     const area=(totalW*totalH)/1e6; // m²
     // potenza (media, da W/m² prodotto) e peso totale
@@ -2105,7 +2121,7 @@
     $("mSize").innerHTML=fmt(totalW)+" × "+fmt(totalH)+' <small>mm</small>';
     $("mArea").innerHTML=((totalW*totalH)/1e6).toFixed(2).replace(".",",")+' <small>m²</small>';
     $("mMods").innerHTML=(cols.length*rows.length)+' <small>· '+cols.length+"×"+rows.length+"</small>";
-    if(S.pitch>0){ const pv=S.pitchV>0?S.pitchV:S.pitch; const px=pixelAsse(cols,S.pitch,product.modW),py=pixelAsse(rows,pv,product.modH);
+    if(S.pitch>0){ const pv=S.pitchV>0?S.pitchV:S.pitch; const px=pixelAsse(cols,S.pitch,unitaModulo(product,"w")),py=pixelAsse(rows,pv,unitaModulo(product,"h"));
       $("mRes").innerHTML=fmt(px)+"×"+fmt(py)+' <small>· '+(S.pitchLabel?S.pitchLabel+" · ":"")+((px*py)/1e6).toFixed(2).replace(".",",")+" Mpx</small>"; }
     else $("mRes").innerHTML='<small>—</small>';
 
