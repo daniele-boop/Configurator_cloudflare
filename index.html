@@ -1000,7 +1000,37 @@
       { id:"hd_a5l", model:"HD-A5L", maxTotal:1300000, maxBase:16384, maxHeight:8192, ports:2,  maxResPort:650000, k4:"SI" },
       { id:"hd_a6l", model:"HD-A6L", maxTotal:2600000, maxBase:65536, maxHeight:8192, ports:4,  maxResPort:650000, k4:"SI" },
       { id:"hd_a7",  model:"HD-A7",  maxTotal:5160000, maxBase:65536, maxHeight:8192, ports:8,  maxResPort:650000, k4:"-" },
-      { id:"hd_a8",  model:"HD-A8",  maxTotal:8294400, maxBase:65536, maxHeight:8192, ports:16, maxResPort:650000, k4:"-" }
+      { id:"hd_a8",  model:"HD-A8",  maxTotal:8294400, maxBase:65536, maxHeight:8192, ports:16, maxResPort:650000, k4:"-" },
+
+      // ---- Novastar, dalle schede ufficiali (sezione Output di ciascuna) ----
+      // Attenzione a cosa sono: le schede MSD e i controller MCTRL NON sono
+      // player. Non hanno memoria ne' decodifica: vogliono una sorgente (un PC,
+      // un media player). Gli Huidu qui sopra invece riproducono da soli. Se il
+      // configuratore propone un Novastar su una parete che deve funzionare
+      // sola, al cliente serve anche la sorgente — e quella non e' in offerta.
+      //
+      // I pixel per porta sono 650.000 su TUTTA la famiglia: e' la capacita' di
+      // una porta Gigabit a 8 bit e 60 Hz, ed e' scritta nero su bianco su ogni
+      // scheda (non ricavata, come e' stato per gli A7/A8). Due avvertenze che
+      // le schede dicono e che qui non modelliamo:
+      //   - a 10 o 12 bit la capacita' per porta si DIMEZZA (325.000);
+      //   - sotto i 60 Hz sale (il 700 Pro dichiara 1.319.444 px/porta a 30 Hz).
+      // Il valore qui e' quello a 8 bit / 60 Hz, cioe' il caso normale.
+      { id:"nv_msd300",   model:"Novastar MSD300",      brand:"Novastar", maxTotal:1300000, maxBase:3840, maxHeight:3840, ports:2,  maxResPort:650000, k4:"-" },
+      { id:"nv_mctrl300", model:"Novastar MCTRL300",    brand:"Novastar", maxTotal:1300000, maxBase:3840, maxHeight:3840, ports:2,  maxResPort:650000, k4:"-" },
+      { id:"nv_msd600",   model:"Novastar MSD600",      brand:"Novastar", maxTotal:2600000, maxBase:3840, maxHeight:3840, ports:4,  maxResPort:650000, k4:"-" },
+      // il 500 e' l'unico con l'altezza piu' bassa: 2560, non 3840
+      { id:"nv_mctrl500", model:"Novastar MCTRL500",    brand:"Novastar", maxTotal:2600000, maxBase:3840, maxHeight:2560, ports:4,  maxResPort:650000, k4:"-" },
+      { id:"nv_mctrl600", model:"Novastar MCTRL600",    brand:"Novastar", maxTotal:2600000, maxBase:3840, maxHeight:3840, ports:4,  maxResPort:650000, k4:"-" },
+      { id:"nv_mctrl660", model:"Novastar MCTRL660",    brand:"Novastar", maxTotal:2600000, maxBase:3840, maxHeight:3840, ports:4,  maxResPort:650000, k4:"-" },
+      { id:"nv_660pro",   model:"Novastar MCTRL660 PRO",brand:"Novastar", maxTotal:3900000, maxBase:3840, maxHeight:3840, ports:6,  maxResPort:650000, k4:"-" },
+      { id:"nv_mctrl700", model:"Novastar MCTRL700",    brand:"Novastar", maxTotal:3900000, maxBase:3840, maxHeight:3840, ports:6,  maxResPort:650000, k4:"-" },
+      { id:"nv_700pro",   model:"Novastar MCTRL700 Pro",brand:"Novastar", maxTotal:3900000, maxBase:3840, maxHeight:3840, ports:6,  maxResPort:650000, k4:"-" },
+      { id:"nv_r5",       model:"Novastar MCTRL R5",    brand:"Novastar", maxTotal:5200000, maxBase:3840, maxHeight:3840, ports:8,  maxResPort:650000, k4:"-" },
+      // Il 4K e' l'unico dove NON comandano le porte: 16 x 650.000 farebbero
+      // 10,4 milioni, ma l'ingresso si ferma prima — 8,8 milioni via DP/HDMI e
+      // 8,3 via DVI. Si tiene il piu' basso dei due, come sempre.
+      { id:"nv_4k",       model:"Novastar MCTRL4K",     brand:"Novastar", maxTotal:8300000, maxBase:7680, maxHeight:7680, ports:16, maxResPort:650000, k4:"SI" }
     ]
   };
   const HUIDU_SEED = JSON.parse(JSON.stringify(DEFAULTS.controllers));
@@ -1971,7 +2001,14 @@
     }
     // ordina: compatibili (dal più piccolo che regge) poi non compatibili
     const withFit=ctrls.map(c=>({c,fit:ctrlFits(c,px)}));
-    const okList=withFit.filter(x=>x.fit).sort((a,b)=>(a.c.maxTotal||0)-(b.c.maxTotal||0));
+    // A parita' di capacita' decide il prezzo, poi il numero di porte. Serve:
+    // MSD600, MCTRL500, MCTRL600 e MCTRL660 dichiarano tutti 2.600.000 pixel, e
+    // senza questo l'ordine fra loro sarebbe quello con cui capitano a catalogo.
+    // Chi non ha prezzo su Odoo va in fondo fra i pari: non e' il piu' economico,
+    // e' uno di cui non sappiamo il costo.
+    const costo = c => (Number(c.price) > 0 ? Number(c.price) : Infinity);
+    const okList=withFit.filter(x=>x.fit).sort((a,b)=>
+      ((a.c.maxTotal||0)-(b.c.maxTotal||0)) || (costo(a.c)-costo(b.c)) || ((a.c.ports||0)-(b.c.ports||0)));
     const koList=withFit.filter(x=>!x.fit).sort((a,b)=>(a.c.maxTotal||0)-(b.c.maxTotal||0));
 
     const capTxt=c=>{
