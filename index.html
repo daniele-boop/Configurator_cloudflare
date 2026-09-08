@@ -493,6 +493,8 @@
   .ctrlname{font-weight:600;font-size:13.5px}
   .ctrlcap{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
   .ctrlwarn{font-family:var(--mono);font-size:10px;color:var(--danger);border:1px solid var(--danger);border-radius:5px;padding:1px 5px;margin-left:6px;font-weight:400}
+  .ctrlswap{font-family:var(--mono);font-size:10px;color:var(--signal);border:1px solid var(--signal);border-radius:5px;padding:1px 5px;margin-left:6px;font-weight:400}
+  .ctrlnota{font-size:11.5px;color:var(--signal);margin-top:3px;line-height:1.35;max-width:52ch}
   .ctrlright{display:flex;align-items:center;gap:10px;flex:0 0 auto}
   .ctrlqty{width:56px;padding:6px 8px;font-size:12.5px;text-align:center}
   .ctrlprice{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
@@ -995,12 +997,12 @@
     // A7 8x sul sincrono, A8 16x sul sincrono). A3L e A4L fanno eccezione perche'
     // il loro totale e' fermato dal decodificatore, non dalle porte.
     controllers: [
-      { id:"hd_a3l", model:"HD-A3L", maxTotal:655360,  maxBase:8192,  maxHeight:3840, ports:1,  maxResPort:655360, k4:"SI" },
-      { id:"hd_a4l", model:"HD-A4L", maxTotal:655360,  maxBase:16384, maxHeight:8192, ports:2,  maxResPort:650000, k4:"SI" },
-      { id:"hd_a5l", model:"HD-A5L", maxTotal:1300000, maxBase:16384, maxHeight:8192, ports:2,  maxResPort:650000, k4:"SI" },
-      { id:"hd_a6l", model:"HD-A6L", maxTotal:2600000, maxBase:65536, maxHeight:8192, ports:4,  maxResPort:650000, k4:"SI" },
-      { id:"hd_a7",  model:"HD-A7",  maxTotal:5160000, maxBase:65536, maxHeight:8192, ports:8,  maxResPort:650000, k4:"-" },
-      { id:"hd_a8",  model:"HD-A8",  maxTotal:8294400, maxBase:65536, maxHeight:8192, ports:16, maxResPort:650000, k4:"-" },
+      { id:"hd_a3l", model:"HD-A3L", brand:"Huidu", maxTotal:655360,  maxBase:8192,  maxHeight:3840, ports:1,  maxResPort:655360, k4:"SI" },
+      { id:"hd_a4l", model:"HD-A4L", brand:"Huidu", maxTotal:655360,  maxBase:16384, maxHeight:8192, ports:2,  maxResPort:650000, k4:"SI" },
+      { id:"hd_a5l", model:"HD-A5L", brand:"Huidu", maxTotal:1300000, maxBase:16384, maxHeight:8192, ports:2,  maxResPort:650000, k4:"SI" },
+      { id:"hd_a6l", model:"HD-A6L", brand:"Huidu", maxTotal:2600000, maxBase:65536, maxHeight:8192, ports:4,  maxResPort:650000, k4:"SI" },
+      { id:"hd_a7",  model:"HD-A7", brand:"Huidu",  maxTotal:5160000, maxBase:65536, maxHeight:8192, ports:8,  maxResPort:650000, k4:"-" },
+      { id:"hd_a8",  model:"HD-A8", brand:"Huidu",  maxTotal:8294400, maxBase:65536, maxHeight:8192, ports:16, maxResPort:650000, k4:"-" },
 
       // ---- Novastar, dalle schede ufficiali (sezione Output di ciascuna) ----
       // Attenzione a cosa sono: le schede MSD e i controller MCTRL NON sono
@@ -1999,6 +2001,20 @@
       hint.className="ctrlhint";
       hint.innerHTML="Parete: <b>"+fmt(px.base)+"×"+fmt(px.h)+"</b> px · <b>"+fmt(px.base*px.h)+"</b> px totali";
     }
+    // La marca delle riceventi montate nei cabinet di questo prodotto: chi
+    // dichiara una sola marca ammessa ha quella, tutto il resto monta Huidu.
+    // Un controller di marca diversa si puo' scegliere, ma impone di cambiare
+    // le schede riceventi — e quel costo oggi non e' calcolabile.
+    const CTRL_NATIVA_DEFAULT="Huidu", COSTO_RECEIVING=40;
+    const marcheDich=(prod0&&Array.isArray(prod0.ctrlBrands))
+      ? prod0.ctrlBrands.map(x=>String(x||"").trim()).filter(Boolean) : [];
+    const nativa = marcheDich.length===1 ? marcheDich[0]
+                 : (marcheDich.length ? null : CTRL_NATIVA_DEFAULT);
+    const cambiaRiceventi=c=>{
+      if(!nativa) return false;
+      const b=String((c&&c.brand)||"").trim();
+      return !!b && b!==nativa;
+    };
     // ordina: compatibili (dal più piccolo che regge) poi non compatibili
     const withFit=ctrls.map(c=>({c,fit:ctrlFits(c,px)}));
     // A parita' di capacita' decide il prezzo, poi il numero di porte. Serve:
@@ -2007,7 +2023,13 @@
     // Chi non ha prezzo su Odoo va in fondo fra i pari: non e' il piu' economico,
     // e' uno di cui non sappiamo il costo.
     const costo = c => (Number(c.price) > 0 ? Number(c.price) : Infinity);
+    // Chi non impone il cambio delle riceventi viene prima, sempre: proporre
+    // per primo un controller che porta con se' un costo non conteggiato
+    // significa preselezionare la voce piu' cara facendola sembrare la piu'
+    // economica.
+    const swapN=c=>cambiaRiceventi(c)?1:0;
     const okList=withFit.filter(x=>x.fit).sort((a,b)=>
+      (swapN(a.c)-swapN(b.c)) ||
       ((a.c.maxTotal||0)-(b.c.maxTotal||0)) || (costo(a.c)-costo(b.c)) || ((a.c.ports||0)-(b.c.ports||0)));
     const koList=withFit.filter(x=>!x.fit).sort((a,b)=>(a.c.maxTotal||0)-(b.c.maxTotal||0));
 
@@ -2032,9 +2054,15 @@
       cb.addEventListener("click",()=>{ if(S.selCtrls[c.id]>0) delete S.selCtrls[c.id]; else S.selCtrls[c.id]=1; renderControllers(); });
       const info=document.createElement("div");info.className="ctrlinfo";
       const codeWarn=(!c.code)?' <span class="ctrlwarn">manca codice Odoo</span>':'';
+      const swap=cambiaRiceventi(c);
+      const swapWarn=swap?' <span class="ctrlswap">cambio riceventi</span>':'';
       const priceTxt=c.price>0?'<span class="ctrlprice">'+eur(c.price)+'</span>':'';
-      info.innerHTML='<div class="ctrlname">'+c.model+(px&&!fit?' <span class="ctrlwarn">non compatibile</span>':'')+codeWarn+'</div>'+
-                     '<div class="ctrlcap">'+capTxt(c)+'</div>';
+      info.innerHTML='<div class="ctrlname">'+c.model+(px&&!fit?' <span class="ctrlwarn">non compatibile</span>':'')+codeWarn+swapWarn+'</div>'+
+                     '<div class="ctrlcap">'+capTxt(c)+'</div>'+
+                     (swap?'<div class="ctrlnota">I cabinet di questo prodotto montano riceventi '+nativa+
+                       '. Per usare un '+(c.brand||'')+' vanno sostituite: '+eur(COSTO_RECEIVING)+
+                       ' a scheda, numero di schede per cabinet non ancora a catalogo. '+
+                       '<b>Costo non compreso nel preventivo.</b></div>':'');
       const right=document.createElement("div");right.className="ctrlright";
       if(sel){
         const q=document.createElement("input");q.type="number";q.min="1";q.step="1";q.className="ctrlqty";q.value=S.selCtrls[c.id];
