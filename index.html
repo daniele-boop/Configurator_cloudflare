@@ -2051,7 +2051,8 @@
       const cb=document.createElement("button");
       cb.className="ctrlpick"+(sel?" on":"");
       cb.textContent=sel?"✓ Nel preventivo":"+ Aggiungi";
-      cb.addEventListener("click",()=>{ if(S.selCtrls[c.id]>0) delete S.selCtrls[c.id]; else S.selCtrls[c.id]=1; renderControllers(); });
+      // Scelta, non somma: un altro controller sostituisce quello di prima.
+      cb.addEventListener("click",()=>{ S.selCtrls = (S.selCtrls[c.id]>0) ? {} : { [c.id]: 1 }; renderControllers(); });
       const info=document.createElement("div");info.className="ctrlinfo";
       const codeWarn=(!c.code)?' <span class="ctrlwarn">manca codice Odoo</span>':'';
       const swap=cambiaRiceventi(c);
