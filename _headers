@@ -6,11 +6,13 @@
 # dei pixel, che restava a 1154×769 con la correzione già online.
 # "no-cache" non vuol dire "non salvare": vuol dire "prima di riusarlo chiedi
 # al server se è ancora quello giusto".
+# ATTENZIONE: qui vanno i percorsi ESATTI, uno per file. Cloudflare Pages non
+# applica le regole scritte come "/*.js" o "/*.html": la riga viene accettata
+# senza errori ma non ha effetto, e il file resta con il max-age=14400 di
+# default — quattro ore. Verificato sul sito il 9 settembre 2026.
 /
   Cache-Control: no-cache
-/*.html
-  Cache-Control: no-cache
-/*.js
+/index.html
   Cache-Control: no-cache
 
 # Le risposte delle API non vanno mai in cache: catalogo e prezzi dipendono da
