@@ -35,8 +35,11 @@ export async function onRequestPost({ request, env }) {
   try { offer = await request.json(); }
   catch { return json({ ok: false, error: "JSON non valido" }, 400, headers); }
 
+  // due modalità: multi-schermo (offer.screens) oppure singolo (offer.lines)
+  const screens = (Array.isArray(offer.screens) && offer.screens.length) ? offer.screens : null;
   const lines = Array.isArray(offer.lines) ? offer.lines : [];
-  if (!lines.length) return json({ ok: false, error: "Nessuna riga nell'offerta" }, 400, headers);
+  const allLines = screens ? screens.reduce((a, s) => a.concat(Array.isArray(s.lines) ? s.lines : []), []) : lines;
+  if (!allLines.length) return json({ ok: false, error: "Nessuna riga nell'offerta" }, 400, headers);
 
   const { kw } = odooClient(env);
 
@@ -51,7 +54,7 @@ export async function onRequestPost({ request, env }) {
 
     // 2) risolve TUTTI i codici in una sola query (meno sottorichieste, più veloce)
     const codes = [];
-    for (const l of lines) {
+    for (const l of allLines) {
       const c = (l.code || "").trim();
       if (!c) return json({ ok: false, error: "Riga senza codice Odoo: " + (l.label || "(senza etichetta)") }, 422, headers);
       if (!codes.includes(c)) codes.push(c);
@@ -67,34 +70,57 @@ export async function onRequestPost({ request, env }) {
       return json({ ok: false, error: "Codici non trovati in Odoo: " + missing.join(", ") }, 422, headers);
     }
 
-    // 3) righe: prima la RIGA SEZIONE, poi i prodotti.
-    //    Il prezzo NON viene forzato: lo calcola Odoo dal listino.
+    // 3) righe dell'ordine. Il prezzo NON viene forzato: lo calcola Odoo dal listino.
+    //    - multi-schermo: una RIGA SEZIONE per schermo, poi i suoi prodotti
+    //      (quantità = qty riga × n. schermi), con eventuale sconto sulle righe.
+    //    - singolo: comportamento invariato (una sezione + prodotti).
     const orderLines = [];
-    const sectionText = (offer.section || "").trim();
-    if (sectionText) {
-      orderLines.push([0, 0, { display_type: "line_section", name: sectionText }]);
-    }
-    for (const l of lines) {
-      orderLines.push([0, 0, { product_id: byCode[(l.code || "").trim()], product_uom_qty: l.qty }]);
+    let note = "";
+    let summary = "";
+
+    if (screens) {
+      screens.forEach((s, idx) => {
+        const secText = (s.section || "").trim() ||
+          ("Schermo" + (s.size ? " " + s.size.w + "×" + s.size.h + " mm" : ""));
+        if (idx === 0) summary = secText;
+        orderLines.push([0, 0, { display_type: "line_section", name: secText }]);
+        const scr = Math.max(1, Number(s.qty) || 1);
+        const disc = Math.min(90, Math.max(0, Number(s.discount) || 0));
+        for (const l of (Array.isArray(s.lines) ? s.lines : [])) {
+          const v = { product_id: byCode[(l.code || "").trim()], product_uom_qty: (Number(l.qty) || 0) * scr };
+          if (disc > 0) v.discount = disc;
+          orderLines.push([0, 0, v]);
+        }
+        if (typeof s.previewPng === "string" && s.previewPng.startsWith("data:image")) {
+          note += `<p><b>${secText}</b><br/><img src="${s.previewPng}" alt="Schema schermo" style="max-width:100%;height:auto;"/></p>`;
+        }
+      });
+      if (screens.length > 1) summary = `Offerta ${screens.length} schermi LED`;
+    } else {
+      const sectionText = (offer.section || "").trim();
+      if (sectionText) orderLines.push([0, 0, { display_type: "line_section", name: sectionText }]);
+      const disc = Math.min(90, Math.max(0, Number(offer.discount) || 0));
+      for (const l of lines) {
+        const v = { product_id: byCode[(l.code || "").trim()], product_uom_qty: l.qty };
+        if (disc > 0) v.discount = disc;
+        orderLines.push([0, 0, v]);
+      }
+      summary = sectionText ||
+        (`Configuratore parete LED — ${offer.product || ""} · ${offer.size ? offer.size.w + "×" + offer.size.h + " mm" : ""}` +
+         (offer.resolution ? ` · ${offer.resolution.label}` : ""));
+      if (typeof offer.previewPng === "string" && offer.previewPng.startsWith("data:image")) {
+        note += `<p><b>Schema tecnico (vista piatta)</b><br/><img src="${offer.previewPng}" alt="Schema parete LED" style="max-width:100%;height:auto;"/></p>`;
+      }
+      if (typeof offer.wall3dPng === "string" && offer.wall3dPng.startsWith("data:image")) {
+        note += `<p><b>Vista 3D</b><br/><img src="${offer.wall3dPng}" alt="Vista 3D parete LED" style="max-width:100%;height:auto;"/></p>`;
+      }
+      if (typeof offer.mockupPng === "string" && offer.mockupPng.startsWith("data:image")) {
+        note += `<p><b>Mockup ambientato</b><br/><img src="${offer.mockupPng}" alt="Mockup parete LED" style="max-width:100%;height:auto;"/></p>`;
+      }
     }
 
     // 4) crea la quotation in bozza
-    const summary = sectionText ||
-      (`Configuratore parete LED — ${offer.product || ""} · ${offer.size ? offer.size.w + "×" + offer.size.h + " mm" : ""}` +
-       (offer.resolution ? ` · ${offer.resolution.label}` : ""));
-
     const orderRef = (offer.object && offer.object.trim()) ? offer.object.trim() : summary;
-
-    let note = "";
-    if (typeof offer.previewPng === "string" && offer.previewPng.startsWith("data:image")) {
-      note += `<p><b>Schema tecnico (vista piatta)</b><br/><img src="${offer.previewPng}" alt="Schema parete LED" style="max-width:100%;height:auto;"/></p>`;
-    }
-    if (typeof offer.wall3dPng === "string" && offer.wall3dPng.startsWith("data:image")) {
-      note += `<p><b>Vista 3D</b><br/><img src="${offer.wall3dPng}" alt="Vista 3D parete LED" style="max-width:100%;height:auto;"/></p>`;
-    }
-    if (typeof offer.mockupPng === "string" && offer.mockupPng.startsWith("data:image")) {
-      note += `<p><b>Mockup ambientato</b><br/><img src="${offer.mockupPng}" alt="Mockup parete LED" style="max-width:100%;height:auto;"/></p>`;
-    }
 
     const orderVals = {
       partner_id: partnerId,
@@ -135,8 +161,8 @@ export async function onRequestPost({ request, env }) {
         attachErrors.push(label + ":" + String(e.message || e).slice(0, 160));
       }
     };
-    await attach(offer.sheetItaPng, "ITA");
-    await attach(offer.sheetEngPng, "ENG");
+    await attach(offer.sheetItaPng, "ITA", { optional: true });
+    await attach(offer.sheetEngPng, "ENG", { optional: true });
     // istantanea 3D: allegata solo se presente (la vista 3D è opzionale)
     await attach(offer.wall3dPng, "3D", { prefix: "Parete", body: "Vista 3D della parete", optional: true });
     await attach(offer.mockupPng, "MOCKUP", { prefix: "Mockup", body: "Mockup ambientato", optional: true });
