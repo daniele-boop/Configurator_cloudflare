@@ -75,7 +75,11 @@
   .adminbtn svg{width:13px;height:13px}
 
   .grid{display:grid;grid-template-columns:400px 1fr;gap:26px;align-items:start}
-  /* (la card non si allarga piu': 3D e Mockup si aprono sopra la pagina) */
+  /* Mockup a tutta larghezza: SOLO la card anteprima si estende oltre la sua colonna,
+     senza toccare le card sotto (metriche, alternative, distinta) né le altre viste. */
+  .previewcard.mockwide{width:calc(400px + 100% + 26px);margin-left:calc(-400px - 26px)}
+  @media(max-width:880px){ .previewcard.mockwide{width:100%;margin-left:0} }
+  .previewcard.mockwide .stagemock{height:auto;max-height:none;aspect-ratio:16/9;min-height:0}
   @media(max-width:880px){.grid{grid-template-columns:1fr}}
 
   .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));
@@ -138,20 +142,6 @@
       var(--panel-2);
     border:1px solid var(--line-soft);border-radius:12px;min-height:360px;
     display:flex;align-items:center;justify-content:center;padding:10px;overflow:hidden}
-  .stage[hidden]{display:none}
-  /* 3D e Mockup si aprono SOPRA la pagina, non dentro. Da chiusi non
-     occupano nulla; da aperti prendono tutta la finestra, e la rotellina
-     del trackpad non li incontra più mentre si scorre la pagina. */
-  .stage3d:not([hidden]){position:fixed;inset:0;z-index:60;margin:0;
-    height:auto;min-height:0;max-height:none;border:none;border-radius:0}
-  body.viewopen{overflow:hidden}
-  .viewclose{position:absolute;top:14px;right:14px;z-index:40;display:flex;align-items:center;gap:8px;
-    border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.94);color:#0f1622;
-    font-family:var(--mono);font-size:12px;padding:9px 13px;cursor:pointer}
-  .viewclose:hover{background:#fff}
-  .stage3d > .viewseg{position:absolute;top:13px;left:50%;transform:translateX(-50%);z-index:40;
-    background:rgba(255,255,255,.94);box-shadow:0 2px 10px rgba(0,0,0,.10)}
-
   .stage svg{max-width:100%;height:auto;display:block}
   @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .stage svg.anim{animation:fadein .28s ease}
@@ -210,41 +200,6 @@
   .bomrow .ct{margin-left:auto;font-family:var(--mono);font-size:14px;font-weight:600;white-space:nowrap}
   .bomrow .ct small{color:var(--muted);font-weight:400}
   .bomrow .sub{font-family:var(--mono);font-size:12.5px;color:var(--muted);min-width:78px;text-align:right}
-  /* flightcase & accessori */
-  .fcrow2{display:flex;align-items:center;gap:11px;padding:9px 4px;border-top:1px solid var(--line-soft)}
-  .fcrow2:first-of-type{border-top:none}
-  .fcrow2 .nm{font-size:13px}
-  .fcrow2 .nm small{color:var(--muted);display:block;font-size:11.5px;font-family:var(--mono)}
-  .fcrow2 .ct{margin-left:auto;font-family:var(--mono);font-size:14px;font-weight:600;white-space:nowrap}
-  .fcrow2 .sub{font-family:var(--mono);font-size:12.5px;color:var(--muted);min-width:78px;text-align:right}
-  .fcnote{margin-top:10px;padding:9px 11px;border-radius:9px;background:var(--line-soft);font-size:12.5px;line-height:1.5}
-  .fcnote.bad{background:#3a2a2c;color:#f3c9cd}
-  .fcnote .w{margin-top:6px;color:var(--muted);font-size:12px}
-  .acchdr{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);margin:14px 0 8px}
-  .opt{display:flex;align-items:center;gap:11px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;cursor:pointer}
-  .opt.on{border-color:var(--accent)}
-  .opt input{width:auto;flex:0 0 auto}
-  .opt .tx{display:flex;flex-direction:column;gap:2px;min-width:0}
-  .opt .tx b{font-size:13px;font-weight:600}
-  .opt .tx span{font-size:11.5px;color:var(--muted)}
-  .opt .pr{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:2px}
-  .opt .pr b{font-family:var(--mono);font-size:13.5px}
-  .opt .pr span{font-family:var(--mono);font-size:11px;color:var(--muted)}
-  /* admin: casse e accessori */
-  .fcarow{display:grid;grid-template-columns:1fr 74px 132px 92px 74px 26px;gap:8px;align-items:center;margin-bottom:7px}
-  .fcarow input{padding:8px;font-size:12.5px}
-  .fcarow select{padding:8px;font-size:12.5px}
-  .fcarow .rm{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:16px;line-height:1}
-  .fcarow .rm:hover{color:var(--danger)}
-  .acarow{display:grid;grid-template-columns:1fr 132px 168px 74px 92px 74px 26px;gap:8px;align-items:center;margin-bottom:7px}
-  .acarow input,.acarow select{padding:8px;font-size:12.5px}
-  .acarow .rm{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:16px;line-height:1}
-  .fitsrow{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0 0 11px 2px}
-  .fitsrow span.lb{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
-  .fitsrow label{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer}
-  .fitsrow label input{width:auto}
-  .fcflag{display:flex;align-items:center;gap:7px;font-size:12.5px;margin-bottom:10px;cursor:pointer}
-  .fcflag input{width:auto}
   .bomtot{display:flex;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--mono);font-size:13px}
   .bomtot b{font-size:15px}
   .strategy{font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-top:10px;line-height:1.55}
@@ -271,9 +226,6 @@
   .overlay.show{display:flex}
   .modal{width:100%;max-width:700px;background:linear-gradient(180deg,var(--panel),var(--panel-2));
     border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
-  /* il pannello prodotti ha tabelle a dieci colonne: 700 px non bastano */
-  .modal.wide{max-width:min(1320px,calc(100vw - 48px))}
-  @media(max-width:900px){ .overlay{padding:20px 10px} }
   .modal h2{font-size:18px;margin:0 0 4px}
   .modal .sub{color:var(--muted);font-size:13px;margin:0 0 20px}
   .modal .x{float:right;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;margin:-6px -6px 0 0}
@@ -290,28 +242,8 @@
   .btn.danger:hover{background:rgba(232,105,95,.12)}
   .err{color:var(--danger);font-family:var(--mono);font-size:12px;margin-top:10px;min-height:16px}
 
-  .prod{border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:10px;background:var(--panel-2)}
-  /* Quindici prodotti aperti tutti insieme facevano una pagina lunga come un
-     lenzuolo. Ora ognuno sta in una riga e si apre quello che serve. */
-  .prod .pbody{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
-  .prod.open .pbody{display:block}
-  .ptoggle{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:12px;
-    width:22px;height:22px;flex:0 0 auto;line-height:1;transition:transform .15s ease}
-  .prod.open .ptoggle{transform:rotate(90deg)}
-  .psum{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);cursor:pointer;
-    white-space:nowrap;flex:0 0 auto}
-  .prod .phead .pdot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
-  .cabcard .cabbody{display:none}
-  .cabcard.open .cabbody{display:block}
-  .cabcard .cabcard-head{margin-bottom:0;cursor:pointer}
-  .cabcard.open .cabcard-head{margin-bottom:11px}
-  .cabsum{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin-left:auto;
-    margin-right:8px;white-space:nowrap}
-  .prodbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-  .prodbar input{max-width:340px;min-width:240px}
-  .prodbar .found{font-family:var(--mono);font-size:11.5px;color:var(--muted-2)}
-  .prod .phead{display:flex;gap:10px;align-items:center;margin-bottom:0}
-  .prod .pbody .pmod{margin-bottom:12px}
+  .prod{border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:14px;background:var(--panel-2)}
+  .prod .phead{display:flex;gap:10px;align-items:center;margin-bottom:12px}
   .prod .phead > input{flex:1;font-family:var(--disp);font-size:16px;font-weight:700;color:var(--ink);
     background:var(--panel);border:2.5px solid var(--ink)}
   .prod .phead > input:focus{border-color:#37c3d1;box-shadow:0 0 0 3px rgba(55,195,209,.30)}
@@ -342,11 +274,8 @@
   .viewseg button.on{background:var(--signal-bg,rgba(55,195,209,.14));color:#0d7c88;font-weight:700}
   html[data-theme="light"] .viewseg button.on{background:rgba(55,195,209,.16);color:#0d7c88}
   .stage3d{position:relative;padding:0;overflow:hidden}
-  /* a schermo intero la vista prende tutto: niente pagina che si muove sotto */
-  .stage3d:fullscreen{height:100vh;max-height:none;border-radius:0;border:none}
-  .stage3d:fullscreen canvas{height:100%}
   /* il mockup ha bisogno di più spazio verticale per lavorare sulla foto ambientata */
-  .stagemock{min-height:380px;height:min(72vh,860px);max-height:none}
+  .stagemock{min-height:720px;height:82vh;max-height:1000px}
   .stage3d #c3d{width:100%;height:100%;display:block;cursor:grab}
   .stage3d #c3d.locked{cursor:default}.stage3d #c3d.panning{cursor:move}
   .stage3d #c3d:active{cursor:grabbing}.stage3d #c3d.locked:active{cursor:default}
@@ -388,9 +317,7 @@
   .stagemock #mockbg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;transform-origin:center center}
   .stagemock #cmock{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
   .stagemock #cmock.locked{cursor:default}.stagemock #cmock.panning{cursor:move}
-  /* la barra in basso a sinistra è alta ~36px: gli strumenti le stanno sopra */
-  .stagemock .d3tools{bottom:58px}
-  .mockphototools{left:12px !important;right:auto !important;bottom:58px}
+  .mockphototools{left:12px !important;right:auto !important;bottom:12px}
   .mockscenes{position:absolute;left:12px;top:10px;display:flex;gap:6px;flex-wrap:wrap;max-width:64%;background:rgba(255,255,255,.86);padding:6px;border-radius:9px}
   .mockscenes button{font-family:var(--mono);font-size:11px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;background:#fff;color:#0f1622;cursor:pointer}
   .mockscenes button.on{border-color:var(--teal);background:rgba(55,195,209,.15);color:#0d7c88;font-weight:700}
@@ -414,11 +341,11 @@
 
   .resblock{border:1px dashed var(--line);border-radius:10px;padding:12px;margin-bottom:11px}
   .resblock .reshdr{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);margin-bottom:10px}
-  .resrow{display:grid;grid-template-columns:1fr 92px 92px auto 26px;gap:8px;align-items:center;margin-bottom:7px}
+  .resrow{display:grid;grid-template-columns:1fr 96px 26px;gap:8px;align-items:center;margin-bottom:7px}
   .resrow input{padding:8px;font-size:12.5px}
   .resrow .rm{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:16px;line-height:1}
   .resrow .rm:hover{color:var(--danger)}
-  .resadd{display:grid;grid-template-columns:1fr 92px 92px auto;gap:8px;margin-top:9px}
+  .resadd{display:grid;grid-template-columns:1fr 96px auto;gap:8px;margin-top:9px}
   .resadd input{padding:8px;font-size:12.5px}
   .resempty{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin-bottom:8px}
   .pdesc{margin:2px 0 12px}
@@ -449,6 +376,27 @@
   .odoostatus{font-family:var(--mono);font-size:11.5px;margin-top:9px;line-height:1.5}
   .odoostatus a{color:#37c3d1}
   .odoostatus.ok{color:var(--ok)} .odoostatus.err{color:var(--danger)} .odoostatus.wait{color:var(--muted)}
+  /* ---- carrello multi-schermo (usa le variabili di tema esistenti) ---- */
+  .cartadd{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .cartadd .fldc .lab{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-2);margin-bottom:5px}
+  .cartadd input{width:100%;padding:10px 12px;font-size:14px;font-family:var(--mono)}
+  .cartempty{font-family:var(--mono);font-size:12px;color:var(--muted-2);text-align:center;padding:22px 8px}
+  .cartrow{border:1px solid var(--line-soft);border-radius:12px;padding:11px 12px;background:var(--panel-2);margin-bottom:9px;display:grid;grid-template-columns:88px 1fr auto;gap:12px;align-items:center}
+  .cartrow .cthumb{width:88px;height:64px;background:#fff;border:1px solid var(--line);border-radius:7px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .cartrow .cthumb img{max-width:100%;max-height:100%;display:block}
+  .cartrow .cinfo .ct{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink)}
+  .cartrow .cinfo .cs{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;line-height:1.55}
+  .cartrow .cinfo .cprice{color:var(--price);font-weight:700}
+  .cartrow .cinfo .cold{color:var(--muted-2);text-decoration:line-through;font-size:10.5px}
+  .cartrow .cinfo .cdisc{color:var(--pct);font-weight:700}
+  .cartrow .cside{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  .cqedit{display:flex;align-items:center;gap:5px}
+  .cqedit button{width:25px;height:25px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);cursor:pointer;font-family:var(--mono);font-weight:700}
+  .cqedit span{font-family:var(--mono);font-size:13px;font-weight:700;min-width:20px;text-align:center}
+  .crm{font-family:var(--mono);font-size:10.5px;color:var(--danger);background:none;border:0;cursor:pointer;text-decoration:underline;padding:0}
+  .carttot{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;padding-top:12px;border-top:2px solid var(--line)}
+  .carttot .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+  .carttot .v{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--price)}
   .recall{padding-bottom:16px}
   .recallrow{display:flex;gap:8px;align-items:center}
   #syncPreview{margin-top:12px}
@@ -493,16 +441,12 @@
   .ctrlname{font-weight:600;font-size:13.5px}
   .ctrlcap{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
   .ctrlwarn{font-family:var(--mono);font-size:10px;color:var(--danger);border:1px solid var(--danger);border-radius:5px;padding:1px 5px;margin-left:6px;font-weight:400}
-  .ctrlswap{font-family:var(--mono);font-size:10px;color:var(--signal);border:1px solid var(--signal);border-radius:5px;padding:1px 5px;margin-left:6px;font-weight:400}
-  .ctrlnota{font-size:11.5px;color:var(--signal);margin-top:3px;line-height:1.35;max-width:52ch}
   .ctrlright{display:flex;align-items:center;gap:10px;flex:0 0 auto}
   .ctrlqty{width:56px;padding:6px 8px;font-size:12.5px;text-align:center}
   .ctrlprice{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
   .ctrlnone{font-family:var(--mono);font-size:12px;color:var(--muted);padding:6px 0}
 
-  #ctrlAdminList{overflow-x:auto;padding-bottom:6px}
-  .cadmrow,.cadmhead{min-width:1220px}
-  .cadmrow{display:grid;grid-template-columns:28px 1.1fr .8fr .85fr .75fr .75fr .55fr .85fr .5fr .75fr 1.15fr auto;gap:7px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:var(--panel-2)}
+  .cadmrow{display:grid;grid-template-columns:1.2fr .9fr .8fr .8fr .6fr .9fr .5fr .8fr 1fr auto;gap:7px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:var(--panel-2)}
   .movebtns{display:inline-flex;gap:3px;align-items:center}
   .movebtns .mv{width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;font-size:9px;line-height:1;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);color:var(--muted);cursor:pointer;transition:.12s}
   .movebtns .mv:hover:not(:disabled){border-color:#37c3d1;color:#37c3d1}
@@ -515,8 +459,8 @@
   .cadd-grid input{padding:8px;font-size:12.5px;width:100%}
   .ctrladd{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
   .add-title{font-family:var(--mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
-  .cadmhead{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);display:grid;grid-template-columns:28px 1.1fr .8fr .85fr .75fr .75fr .55fr .85fr .5fr .75fr 1.15fr auto;gap:7px;padding:0 9px 4px}
-  @media(max-width:760px){ .cadmrow,.cadmhead{grid-template-columns:1fr 1fr 1fr;min-width:0}.cadmhead{display:none} }
+  .cadmhead{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);display:grid;grid-template-columns:1.2fr .9fr .8fr .8fr .6fr .9fr .5fr .8fr 1fr auto;gap:7px;padding:0 9px 4px}
+  @media(max-width:760px){ .cadmrow,.cadmhead{grid-template-columns:1fr 1fr 1fr;}.cadmhead{display:none} }
 
   .adminsec{border-top:1px solid var(--line);margin-top:22px;padding-top:20px}
   .adminsec h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin:0 0 14px}
@@ -611,7 +555,6 @@
           <div class="empty"><b>Nessuna configurazione</b>Scegli un prodotto e inserisci base e altezza</div>
         </div>
         <div class="stage stage3d" id="stage3d" hidden>
-          <button class="viewclose" id="d3close">✕ Chiudi</button>
           <canvas id="c3d"></canvas>
           <div class="d3dims" id="d3dims"></div>
           <div class="d3lock" id="d3lock">● vista bloccata</div>
@@ -624,12 +567,10 @@
           <div class="d3bar">
             <button class="modtoggle" id="d3quote" aria-pressed="true">Quote: on</button>
             <button class="modtoggle" id="d3lockbtn" aria-pressed="false">🔓 Blocca vista</button>
-            <button class="modtoggle" id="d3full" aria-pressed="false">⤢ Schermo intero</button>
           </div>
           <div class="d3err" id="d3err" hidden>Motore 3D non caricato (rete assente). Torna a “Piatto”.</div>
         </div>
         <div class="stage stage3d stagemock warpon" id="stagemock" hidden>
-          <button class="viewclose" id="mClose">✕ Chiudi</button>
           <img id="mockbg" alt="sfondo mockup">
           <canvas id="cmock"></canvas>
           <div class="mockscenes" id="mockscenes"></div>
@@ -665,7 +606,6 @@
             <button class="modtoggle" id="mUpload">⬆ Foto ambiente</button>
             <button class="modtoggle" id="mLockbtn" aria-pressed="false">🔓 Blocca</button>
             <button class="modtoggle" id="mShot">📷 Scarica</button>
-            <button class="modtoggle" id="mFull" aria-pressed="false">⤢ Schermo intero</button>
             <input type="file" id="mockFile" accept="image/*" hidden>
             <input type="file" id="mockVidFile" accept="video/*" hidden>
           </div>
@@ -706,17 +646,6 @@
         <div class="strategy">Composizione predefinita: cabinet più grandi e uniformi possibile, per ridurre pezzi e costo.</div>
       </section>
 
-      <section class="card" id="fcCard" hidden>
-        <p class="eyebrow">Flightcase &amp; accessori</p>
-        <div id="fcList"></div>
-        <div class="fcnote" id="fcNote" hidden></div>
-        <div id="accBox" hidden>
-          <div class="acchdr">Accessori opzionali</div>
-          <div id="accList"></div>
-        </div>
-        <div class="strategy">Le casse dei rental entrano da sole nel conteggio: si sceglie la combinazione con meno casse e meno posti sprecati, arrotondando per eccesso. Le barre di sospensione si aggiungono spuntandole.</div>
-      </section>
-
       <section class="card" id="specCard" hidden>
         <p class="eyebrow">Specifiche &amp; preventivo</p>
         <div class="spec">
@@ -752,15 +681,31 @@
           <label for="odooObject">Oggetto preventivo</label>
           <input type="text" id="odooObject" placeholder="es. Fornitura parete LED — Cliente XYZ">
         </div>
+        <div class="cartadd">
+          <label class="fldc"><span class="lab">Sconto schermo (%)</span><input type="number" id="scrDisc" value="0" min="0" max="90" step="1"></label>
+          <label class="fldc"><span class="lab">Quantità schermi</span><input type="number" id="scrQty" value="1" min="1" step="1"></label>
+        </div>
         <div class="odoobar">
+          <button class="btn primary sm" id="cartAdd">+ Aggiungi al carrello</button>
           <button class="btn ghost sm" id="cfgSave">Salva configurazione (n° serie)</button>
           <button class="btn ghost sm" id="sheetIta">Scheda ITA</button>
           <button class="btn ghost sm" id="sheetEng">Scheda ENG</button>
           <button class="btn ghost sm" id="odooExport">Esporta offerta (JSON)</button>
-          <button class="btn primary sm" id="odooSend">Invia a Odoo</button>
+          <button class="btn ghost sm" id="odooSend">Invia solo questo a Odoo</button>
         </div>
         <div class="odoostatus" id="cfgStatus"></div>
         <div class="odoostatus" id="odooStatus"></div>
+      </section>
+
+      <section class="card" id="cartCard" hidden>
+        <p class="eyebrow">Offerta — schermi nel carrello</p>
+        <div id="cartList"></div>
+        <div class="carttot" id="cartTotRow" hidden><span class="k">Totale offerta</span><span class="v" id="cartTot">€ 0,00</span></div>
+        <div class="odoobar" id="cartBar" hidden>
+          <button class="btn ghost sm" id="cartClear">Svuota carrello</button>
+          <button class="btn primary sm" id="cartSend">Invia tutta l'offerta a Odoo →</button>
+        </div>
+        <div class="odoostatus" id="cartStatus"></div>
       </section>
     </div>
   </div>
@@ -797,14 +742,11 @@
       <div class="adminsec">
         <h3>Controller</h3>
         <p class="sub" style="margin:0 0 12px">Controller/processori per pilotare le pareti. Il configuratore propone quelli compatibili con i pixel della parete. Prezzo e <b>codice Odoo</b> (Riferimento interno) servono per il preventivo.</p>
-        <datalist id="brandList"><option value="Huidu"><option value="Novastar"></datalist>
         <div id="ctrlAdminList"></div>
-        <div class="odoostatus" id="ctrlMsg"></div>
         <div class="ctrladd">
           <div class="add-title">+ Aggiungi controller</div>
           <div class="cadd-grid">
             <div><label>Modello</label><input id="c-mod" placeholder="es. HD-A9"></div>
-            <div><label>Marca</label><input id="c-brand" list="brandList" placeholder="Huidu"></div>
             <div><label>Max px totali</label><input type="number" id="c-tot" placeholder="2600000"></div>
             <div><label>Max px base</label><input type="number" id="c-base" placeholder="16384"></div>
             <div><label>Max px alt.</label><input type="number" id="c-ht" placeholder="4096"></div>
@@ -812,16 +754,11 @@
             <div><label>Max res/porta</label><input type="number" id="c-rp" placeholder="655350"></div>
             <div><label>4K</label><input id="c-k4" placeholder="SI"></div>
             <div><label>Prezzo €</label><input type="number" id="c-price" placeholder="—"></div>
-            <div><label>Codice Odoo</label><input id="c-code" placeholder="CNTA3L"></div>
+            <div><label>Codice Odoo</label><input id="c-code" placeholder="—"></div>
           </div>
           <div class="rowbtns" style="margin-top:10px">
-            <button class="btn ghost sm" id="odooFill">Riempi da Odoo</button>
             <button class="btn ghost sm" id="addCtrl">Aggiungi controller</button>
             <button class="btn ghost sm" id="seedHuidu">Aggiungi modelli Huidu</button>
-            <span style="display:inline-flex;gap:7px;align-items:center;margin-left:8px">
-              <input id="c-import" placeholder="cerca su Odoo (es. controller)" style="max-width:220px">
-              <button class="btn ghost sm" id="importCtrl">Importa da Odoo</button>
-            </span>
           </div>
         </div>
       </div>
@@ -842,11 +779,11 @@
 
       <div class="adminsec">
         <h3>Sicurezza</h3>
-        <p class="sub" style="margin:0">La password non sta più nel catalogo — stava in chiaro e chiunque
-        poteva leggerla dall'indirizzo del catalogo. Adesso vive fra i Secret di Cloudflare: si cambia da
-        <b>Workers &amp; Pages → configurator-cloudflare → Settings → Variables and Secrets</b>, alla voce
-        <b>ADMIN_PASSWORD</b>. Il salvataggio non chiede più il token: entrando qui ricevi un permesso
-        firmato che vale otto ore.</p>
+        <div class="rowbtns">
+          <input id="newPw" type="password" placeholder="Nuova password" style="flex:1;min-width:180px">
+          <button class="btn ghost sm" id="changePw">Aggiorna password</button>
+        </div>
+        <div class="err" id="pwOk" style="color:var(--ok)"></div>
       </div>
 
       <div class="adminsec">
@@ -861,7 +798,7 @@
 
       <div class="adminsec">
         <h3>Pubblicazione catalogo</h3>
-        <p class="sub" style="margin:0 0 12px"><b>Salva sul sito</b> rende subito attive per tutti le modifiche, senza passare da GitHub. In alternativa puoi esportare <b>catalog.json</b> e caricarlo manualmente.</p>
+        <p class="sub" style="margin:0 0 12px"><b>Salva sul sito</b> rende subito attive per tutti le modifiche, senza passare da GitHub (richiede il token impostato su Cloudflare). In alternativa puoi esportare <b>catalog.json</b> e caricarlo manualmente.</p>
         <div class="rowbtns">
           <button class="btn primary sm" id="cloudSaveBtn">Salva sul sito (tutti)</button>
           <button class="btn ghost sm" id="exportBtn">Esporta catalog.json</button>
@@ -883,92 +820,10 @@
 (function(){
   "use strict";
   const $ = id => document.getElementById(id);
-
-  /* Ricerca su Odoo. Odoo sa nome, listino e costo di un articolo; NON sa i
-     limiti tecnici di un controller — pixel massimi, porte, 4K stanno sulla
-     scheda del produttore. Quelli restano da scrivere una volta. */
-  window.odooLookup = async function(body){
-    try{
-      const r = await fetch("/api/odoo-lookup", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify(body)
-      });
-      return await r.json();
-    }catch(e){ return {ok:false, error:"Odoo non raggiungibile."}; }
-  };
-  /* La marca si legge dal nome: NSE Controller HD-A3L è Huidu, VX600PRO
-     è Novastar. Se non si capisce si lascia vuota invece di indovinare. */
-  window.brandFromName = function(nome){
-    const t = String(nome||"").toLowerCase();
-    if(/\bhd-|huidu/.test(t)) return "Huidu";
-    if(/novastar|\bvx\d|\bmctrl/.test(t)) return "Novastar";
-    return "";
-  };
-
-  /* Aprendo 3D o Mockup la vista nasceva spesso sotto il bordo dello schermo,
-     con la sua barra degli strumenti fuori campo: sembrava che il
-     configuratore fosse scappato via. Qui la si porta sotto gli occhi, ma
-     solo quando serve davvero — se è già visibile non si muove niente. */
-  /* Aprendo o chiudendo una vista: si blocca lo scorrimento della pagina
-     sotto, e si avvisano i motori che lo spazio è cambiato. */
-  var segHome = null;
-  window.viewOpened = function(panel){
-    document.body.classList.add("viewopen");
-    var seg = document.getElementById("viewSeg");
-    if(seg && panel && seg.parentNode !== panel){
-      if(!segHome) segHome = seg.parentNode;
-      panel.appendChild(seg);
-    }
-    requestAnimationFrame(function(){ window.dispatchEvent(new Event("resize")); });
-  };
-  window.viewClosed = function(){
-    var m=document.getElementById("stagemock"), t=document.getElementById("stage3d");
-    var aperta = (m && !m.hidden) ? m : (t && !t.hidden) ? t : null;
-    var seg = document.getElementById("viewSeg");
-    if(aperta){ if(seg && seg.parentNode !== aperta) aperta.appendChild(seg); return; }
-    if(seg && segHome) segHome.insertBefore(seg, segHome.firstChild);
-    document.body.classList.remove("viewopen");
-  };
-  /* Esc chiude la vista aperta: è il gesto che tutti provano per primo. */
-  document.addEventListener("keydown", function(e){
-    if(e.key!=="Escape" || document.fullscreenElement) return;
-    var m=document.getElementById("stagemock"), t=document.getElementById("stage3d");
-    if(m && !m.hidden){ var b=document.getElementById("mClose"); b&&b.click(); return; }
-    if(t && !t.hidden){ var b2=document.getElementById("d3close"); b2&&b2.click(); }
-  });
-  /* La rotellina: un colpo di trackpad manda decine di eventi, e con un passo
-     fisso la vista schizzava via. Qui lo zoom segue quanto si è girato
-     davvero, con un tetto. */
-  window.wheelFactor = function(e){
-    var d = e.deltaY * (e.deltaMode===1 ? 16 : e.deltaMode===2 ? 400 : 1);
-    d = Math.max(-120, Math.min(120, d));
-    return Math.exp(d * 0.0016);
-  };
-
-  /* Schermo intero: durante una presentazione al cliente la pagina intorno
-     non serve, e il mockup vuole tutto lo spazio che c'è. */
-  window.toggleFullscreen = function(el, btn){
-    if(!el) return;
-    if(document.fullscreenElement){ document.exitFullscreen(); return; }
-    if(el.requestFullscreen) el.requestFullscreen().catch(function(){});
-  };
-  document.addEventListener("fullscreenchange", function(){
-    var dentro = !!document.fullscreenElement;
-    ["d3full","mFull"].forEach(function(id){
-      var b = document.getElementById(id); if(!b) return;
-      b.textContent = dentro ? "⤡ Esci" : "⤢ Schermo intero";
-      b.setAttribute("aria-pressed", dentro ? "true" : "false");
-    });
-    window.dispatchEvent(new Event("resize"));
-  });
   const STORE_KEY = "nseled_led_config_v2";
 
-  // Il biglietto d'ingresso al pannello: lo firma il server quando la password
-  // è giusta, vale otto ore e viaggia con i salvataggi. La password non sta
-  // più qui dentro né nel catalogo: sta fra i Secret di Cloudflare.
-  let BIGLIETTO = null;
-
   const DEFAULTS = {
+    password: "nseled2026",
     products: [
       { id:"p_std", name:"NSELED — Serie standard", modW:320, modH:160,
         resolutions:[{id:"s25",label:"P2.5",pitch:2.5},{id:"s39",label:"P3.9",pitch:3.9},{id:"s4",label:"P4",pitch:4}],
@@ -983,56 +838,13 @@
         {w:500,h:250,weight:4,power:65,modQty:2,prices:{r19:150,r25:120},codes:{r19:"OSO-250-P19",r25:"OSO-250-P25"}}
       ]}
     ],
-    // I sei player Huidu, dalle schede ufficiali (A3L V1.1, A4L V1.3, A5L V1.3,
-    // A6L V1.4, A7 e A8 V2.4), sezione Output di ciascuna.
-    //
-    // A7 e A8 dichiarano due capacita': ASINCRONO (contenuto sul player) e
-    // SINCRONO (sorgente HDMI dal vivo). Qui si tiene l'asincrono, che e' il
-    // modo in cui vendiamo ed e' il piu' basso dei due — cosi' il configuratore
-    // non promette niente che poi non regga. Gli altri quattro ne dichiarano
-    // una sola.
-    //
-    // maxResPort non e' scritto in nessuna scheda: si ricava. Dove la scheda da'
-    // porte e totale, il totale e' esattamente porte x 650.000 (A5L 2x, A6L 4x,
-    // A7 8x sul sincrono, A8 16x sul sincrono). A3L e A4L fanno eccezione perche'
-    // il loro totale e' fermato dal decodificatore, non dalle porte.
     controllers: [
-      { id:"hd_a3l", model:"HD-A3L", brand:"Huidu", maxTotal:655360,  maxBase:8192,  maxHeight:3840, ports:1,  maxResPort:655360, k4:"SI" },
-      { id:"hd_a4l", model:"HD-A4L", brand:"Huidu", maxTotal:655360,  maxBase:16384, maxHeight:8192, ports:2,  maxResPort:650000, k4:"SI" },
-      { id:"hd_a5l", model:"HD-A5L", brand:"Huidu", maxTotal:1300000, maxBase:16384, maxHeight:8192, ports:2,  maxResPort:650000, k4:"SI" },
-      { id:"hd_a6l", model:"HD-A6L", brand:"Huidu", maxTotal:2600000, maxBase:65536, maxHeight:8192, ports:4,  maxResPort:650000, k4:"SI" },
-      { id:"hd_a7",  model:"HD-A7", brand:"Huidu",  maxTotal:5160000, maxBase:65536, maxHeight:8192, ports:8,  maxResPort:650000, k4:"-" },
-      { id:"hd_a8",  model:"HD-A8", brand:"Huidu",  maxTotal:8294400, maxBase:65536, maxHeight:8192, ports:16, maxResPort:650000, k4:"-" },
-
-      // ---- Novastar, dalle schede ufficiali (sezione Output di ciascuna) ----
-      // Attenzione a cosa sono: le schede MSD e i controller MCTRL NON sono
-      // player. Non hanno memoria ne' decodifica: vogliono una sorgente (un PC,
-      // un media player). Gli Huidu qui sopra invece riproducono da soli. Se il
-      // configuratore propone un Novastar su una parete che deve funzionare
-      // sola, al cliente serve anche la sorgente — e quella non e' in offerta.
-      //
-      // I pixel per porta sono 650.000 su TUTTA la famiglia: e' la capacita' di
-      // una porta Gigabit a 8 bit e 60 Hz, ed e' scritta nero su bianco su ogni
-      // scheda (non ricavata, come e' stato per gli A7/A8). Due avvertenze che
-      // le schede dicono e che qui non modelliamo:
-      //   - a 10 o 12 bit la capacita' per porta si DIMEZZA (325.000);
-      //   - sotto i 60 Hz sale (il 700 Pro dichiara 1.319.444 px/porta a 30 Hz).
-      // Il valore qui e' quello a 8 bit / 60 Hz, cioe' il caso normale.
-      { id:"nv_msd300",   model:"Novastar MSD300",      brand:"Novastar", maxTotal:1300000, maxBase:3840, maxHeight:3840, ports:2,  maxResPort:650000, k4:"-" },
-      { id:"nv_mctrl300", model:"Novastar MCTRL300",    brand:"Novastar", maxTotal:1300000, maxBase:3840, maxHeight:3840, ports:2,  maxResPort:650000, k4:"-" },
-      { id:"nv_msd600",   model:"Novastar MSD600",      brand:"Novastar", maxTotal:2600000, maxBase:3840, maxHeight:3840, ports:4,  maxResPort:650000, k4:"-" },
-      // il 500 e' l'unico con l'altezza piu' bassa: 2560, non 3840
-      { id:"nv_mctrl500", model:"Novastar MCTRL500",    brand:"Novastar", maxTotal:2600000, maxBase:3840, maxHeight:2560, ports:4,  maxResPort:650000, k4:"-" },
-      { id:"nv_mctrl600", model:"Novastar MCTRL600",    brand:"Novastar", maxTotal:2600000, maxBase:3840, maxHeight:3840, ports:4,  maxResPort:650000, k4:"-" },
-      { id:"nv_mctrl660", model:"Novastar MCTRL660",    brand:"Novastar", maxTotal:2600000, maxBase:3840, maxHeight:3840, ports:4,  maxResPort:650000, k4:"-" },
-      { id:"nv_660pro",   model:"Novastar MCTRL660 PRO",brand:"Novastar", maxTotal:3900000, maxBase:3840, maxHeight:3840, ports:6,  maxResPort:650000, k4:"-" },
-      { id:"nv_mctrl700", model:"Novastar MCTRL700",    brand:"Novastar", maxTotal:3900000, maxBase:3840, maxHeight:3840, ports:6,  maxResPort:650000, k4:"-" },
-      { id:"nv_700pro",   model:"Novastar MCTRL700 Pro",brand:"Novastar", maxTotal:3900000, maxBase:3840, maxHeight:3840, ports:6,  maxResPort:650000, k4:"-" },
-      { id:"nv_r5",       model:"Novastar MCTRL R5",    brand:"Novastar", maxTotal:5200000, maxBase:3840, maxHeight:3840, ports:8,  maxResPort:650000, k4:"-" },
-      // Il 4K e' l'unico dove NON comandano le porte: 16 x 650.000 farebbero
-      // 10,4 milioni, ma l'ingresso si ferma prima — 8,8 milioni via DP/HDMI e
-      // 8,3 via DVI. Si tiene il piu' basso dei due, come sempre.
-      { id:"nv_4k",       model:"Novastar MCTRL4K",     brand:"Novastar", maxTotal:8300000, maxBase:7680, maxHeight:7680, ports:16, maxResPort:650000, k4:"SI" }
+      { id:"hd_a3l", model:"HD-A3L", maxTotal:655350,  maxBase:8192,  maxHeight:2560, ports:1, maxResPort:655350, k4:"SI" },
+      { id:"hd_a4l", model:"HD-A4L", maxTotal:655350,  maxBase:16384, maxHeight:4096, ports:2, maxResPort:655350, k4:"SI" },
+      { id:"hd_a5l", model:"HD-A5L", maxTotal:1300000, maxBase:16384, maxHeight:4096, ports:2, maxResPort:655350, k4:"SI" },
+      { id:"hd_a6l", model:"HD-A6L", maxTotal:2600000, maxBase:16384, maxHeight:4096, ports:4, maxResPort:576000, k4:"SI" },
+      { id:"hd_a7",  model:"HD-A7",  maxTotal:5160000, maxBase:15360, maxHeight:4096, ports:8, maxResPort:655350, k4:"-" },
+      { id:"hd_a8",  model:"HD-A8",  maxTotal:8294400, maxBase:16384, maxHeight:4096, ports:8, maxResPort:655350, k4:"-" }
     ]
   };
   const HUIDU_SEED = JSON.parse(JSON.stringify(DEFAULTS.controllers));
@@ -1074,40 +886,6 @@
     {k:"material",label:"Materiale",ph:"Alluminio"},
     {k:"videoInput",label:"Video input",ph:"HDMI"}
   ];
-  /* Flightcase di un prodotto rental. `fits` elenca le misure cabinet che la
-     cassa accetta ("500x500"); vuoto = va bene per tutte. */
-  function normFlightcases(fc){
-    if(!fc||typeof fc!=="object") return undefined;
-    const cases=(Array.isArray(fc.cases)?fc.cases:[]).filter(c=>c&&+c.capacity>0).map(c=>({
-      id:c.id||("fc_"+Math.random().toString(36).slice(2,9)),
-      label:String(c.label||"Flightcase"),
-      capacity:Math.floor(+c.capacity),
-      code:(typeof c.code==="string"&&c.code.trim()?c.code.trim():undefined),
-      price:(+c.price>0?+c.price:undefined),
-      fits:(Array.isArray(c.fits)?[...new Set(c.fits.map(x=>String(x).trim()).filter(Boolean))]:[])
-    }));
-    if(!cases.length) return undefined;
-    return { required: fc.required!==false,
-             note:(typeof fc.note==="string"&&fc.note.trim()?fc.note.trim():undefined), cases };
-  }
-  const ACC_RULES=["perWidth","perHeight","perColumn","perRow","perCabinet","perSqm","fixed"];
-  /* Accessori a regola: le barre di sospensione sono "una ogni 500 mm di
-     base" (1000 sul Trasparent rental). Quantità sempre per eccesso. */
-  function normAccessories(ac){
-    if(!ac||typeof ac!=="object") return undefined;
-    const items=(Array.isArray(ac.items)?ac.items:[]).filter(i=>i&&String(i.label||"").trim()).map(i=>({
-      id:i.id||("ac_"+Math.random().toString(36).slice(2,9)),
-      label:String(i.label).trim(),
-      code:(typeof i.code==="string"&&i.code.trim()?i.code.trim():undefined),
-      rule:(ACC_RULES.indexOf(i.rule)>=0?i.rule:"perCabinet"),
-      unit:(+i.unit>0?+i.unit:1),
-      price:(+i.price>0?+i.price:undefined),
-      required:(i.required===true?true:undefined),
-      note:(typeof i.note==="string"&&i.note.trim()?i.note.trim():undefined)
-    }));
-    if(!items.length) return undefined;
-    return { items };
-  }
   function normControllers(arr){
     if(!Array.isArray(arr)) return [];
     return arr.filter(c=>c&&(c.model||c.name)).map(c=>({
@@ -1119,14 +897,13 @@
       ports: (+c.ports>0?+c.ports:undefined),
       maxResPort: (+c.maxResPort>0?+c.maxResPort:(+c.resPort>0?+c.resPort:undefined)),
       k4: (typeof c.k4==="string"&&c.k4.trim()?c.k4.trim():undefined),
-      brand: (typeof c.brand==="string"&&c.brand.trim()?c.brand.trim():undefined),
-      active: (c.active===false ? false : undefined),   // assente = attivo
       price: (+c.price>0?+c.price:undefined),
       code: (typeof c.code==="string"&&c.code.trim()?c.code.trim():undefined)
     }));
   }
   function normalizeDB(j){
     return {
+      password: (typeof j.password==="string" && j.password) ? j.password : DEFAULTS.password,
       products: (Array.isArray(j.products)?j.products:[]).map(p=>{
         const cabs=(p.cabinets||[]).filter(c=>c.w>0&&c.h>0);
         let modW=(p.modW>0?p.modW:undefined), modH=(p.modH>0?p.modH:undefined);
@@ -1134,20 +911,15 @@
         return {
           id:p.id||("p_"+Math.random().toString(36).slice(2)),
           name:p.name||"Prodotto",
-          // marche di controller da proporre; vuoto o assente = tutte
-          ctrlBrands:(Array.isArray(p.ctrlBrands)&&p.ctrlBrands.length
-            ? [...new Set(p.ctrlBrands.map(b=>String(b).trim()).filter(Boolean))] : undefined),
           desc:(typeof p.desc==="string"?p.desc:undefined),
           selling:(typeof p.selling==="string"?p.selling:undefined),
           sellingEn:(typeof p.sellingEn==="string"?p.sellingEn:undefined),
           wPerSqm:(+p.wPerSqm>0?+p.wPerSqm:undefined),
           modD:(+p.modD>0?+p.modD:undefined),
           tech:normTech(p.tech),
-          flightcases:normFlightcases(p.flightcases),
-          accessories:normAccessories(p.accessories),
           photo:(typeof p.photo==="string"&&p.photo.slice(0,11)==="data:image/"?p.photo:undefined),
           modW, modH,
-          resolutions:(Array.isArray(p.resolutions)?p.resolutions:[]).filter(r=>r&&r.pitch>0).map(r=>({id:r.id||rid(),label:(r.label||("P"+r.pitch)),pitch:r.pitch,pitchH:(+r.pitchH>0?+r.pitchH:undefined)})),
+          resolutions:(Array.isArray(p.resolutions)?p.resolutions:[]).filter(r=>r&&r.pitch>0).map(r=>({id:r.id||rid(),label:(r.label||("P"+r.pitch)),pitch:r.pitch})),
           cabinets:cabs.map(c=>({
             w:c.w,h:c.h,
             weight:(c.weight>0?c.weight:undefined),
@@ -1167,7 +939,7 @@
   }
 
   // stato: le selezioni sono COMPOSIZIONI {total, counts}
-  const S = { productId:null, reqW:null, reqH:null, selWc:null, selHc:null, pitch:0, pitchV:0, showModules:true, rot:false, selCtrls:{}, accSel:[] };
+  const S = { productId:null, reqW:null, reqH:null, selWc:null, selHc:null, pitch:0, showModules:true, rot:false, selCtrls:{} };
   const R169 = 16/9;
 
   const HUES=[265,190,330,150,95,300,45,220];  // famiglia colore per larghezza
@@ -1310,49 +1082,6 @@
   function compFromTotal(eng,total){ return {total, counts: eng.decompose(total)}; }
   function expand(counts){ const a=[]; Object.keys(counts).map(Number).sort((x,y)=>y-x).forEach(k=>{ for(let i=0;i<counts[k];i++)a.push(k); }); return a; }
 
-  /* I pixel di un asse: la SOMMA dei pixel di ogni cabinet, non la divisione
-     del totale in millimetri per il passo.
-     Ogni cabinet porta un numero intero di pixel deciso dall'hardware, e la
-     parete ne ha la somma. Dividendo i millimetri usciva un numero che non
-     esiste: su 3000 mm a P2,6 dava 1154 dove i pixel sono 1152, perché "P2,6"
-     è l'etichetta commerciale di un passo che in realtà è 2,604 (500 mm ÷ 192
-     px). E l'errore cambia segno a seconda del passo: su P3,91 dava 767 dove
-     ce ne sono 768.
-     È il numero che l'integratore usa per impostare i contenuti sul player,
-     quindi vale la pena che sia quello vero. Sommare cabinet per cabinet, e
-     non moltiplicare, fa tornare il conto anche sulle pareti composte da
-     misure diverse. */
-  function pixelAsse(misure, passo, modulo){
-    if(!(passo>0) || !misure || !misure.length) return 0;
-    // Il conto si chiude sul MODULO quando lo conosciamo. Il modulo e' la
-    // piastrella LED: e' lui a portare un numero intero di pixel deciso
-    // dall'hardware, e cabinet e parete sono suoi multipli. Arrotondando li'
-    // l'approssimazione dell'etichetta resta dentro i 250 mm del modulo,
-    // invece di crescere con la misura: sullo stesso muro 3000x2000 a P2,6
-    // veniva 1152 componendolo con cabinet da 500 e 1155 con cabinet da 1000.
-    if(modulo>0){
-      const pxMod=Math.round(modulo/passo);
-      return misure.reduce((s,mm)=>s+pxMod*Math.round(mm/modulo), 0);
-    }
-    return misure.reduce((s,mm)=>s+Math.round(mm/passo), 0);
-  }
-
-  /* Il modulo non e' scritto a catalogo per tutti i prodotti: l'Indoor Serie
-     500 ha i moduli contati (96) ma non la loro misura, e senza quella il
-     conto ripiegava sul cabinet da un metro e tornava a sbagliare (1155 al
-     posto di 1152). Quando manca lo si deduce dal cabinet piu' piccolo del
-     prodotto: un cabinet e' fatto di moduli interi, quindi la sua misura e'
-     comunque un multiplo del modulo, e arrotondare su 250 o 500 mm sbaglia
-     molto meno che arrotondare su 1000. Resta meglio scriverlo a catalogo:
-     finisce anche nella scheda tecnica. */
-  function unitaModulo(p, asse){
-    if(!p) return 0;
-    const m = asse==="h" ? p.modH : p.modW;
-    if(m>0) return m;
-    const misure=(p.cabinets||[]).map(c=>asse==="h"?c.h:c.w).filter(v=>v>0);
-    return misure.length ? Math.min.apply(null, misure) : 0;
-  }
-
   function rawProduct(){ return DB.products.find(p=>p.id===S.productId) || DB.products[0]; }
   // Vista del prodotto usata dal configuratore. Con S.rot attivo TUTTI i cabinet sono ruotati
   // di 90° (mai orientamenti misti): cambiano solo le dimensioni, non prezzi né codici Odoo.
@@ -1363,99 +1092,6 @@
     r.cabinets=(p.cabinets||[]).map(c=>Object.assign({},c,{w:c.h,h:c.w}));
     if(p.modW>0&&p.modH>0){ r.modW=p.modH; r.modH=p.modW; }
     return r;
-  }
-  /* Riempimento delle casse. Con tagli fissi (10 posti, 8 posti) non si
-     divide il numero di cabinet: si cerca la combinazione con MENO CASSE e,
-     a parità, meno posti sprecati. 26 cabinet fanno 10+8+8, non tre da 10. */
-  function packCases(cases,n){
-    const usable=(cases||[]).filter(c=>c.capacity>0);
-    if(!usable.length||!(n>0)) return null;
-    const best=new Array(n+1).fill(null);
-    best[0]={count:0,slots:0,use:{}};
-    for(let i=1;i<=n;i++){
-      for(const c of usable){
-        const cap=Math.floor(c.capacity);
-        const prev=best[Math.max(0,i-cap)];
-        if(!prev) continue;
-        const cand={count:prev.count+1,slots:prev.slots+cap,use:Object.assign({},prev.use)};
-        cand.use[c.id]=(cand.use[c.id]||0)+1;
-        if(!best[i]||cand.count<best[i].count||(cand.count===best[i].count&&cand.slots<best[i].slots)) best[i]=cand;
-      }
-    }
-    return best[n];
-  }
-  const caseLabel=c=>new RegExp("(^|\\D)"+c.capacity+"(\\D|$)").test(c.label||"")?c.label:(c.label+" ("+c.capacity+" posti)");
-  /* Righe flightcase per la parete, raggruppate per misura cabinet. */
-  function flightcaseLines(product,cols,rows){
-    const cfg=product&&product.flightcases;
-    if(!cfg||!(cfg.cases||[]).length) return {lines:[],warnings:[],required:false,note:""};
-    const cw={};cols.forEach(w=>cw[w]=(cw[w]||0)+1);
-    const rh={};rows.forEach(h=>rh[h]=(rh[h]||0)+1);
-    const counts={};
-    Object.keys(cw).forEach(w=>Object.keys(rh).forEach(h=>{
-      const q=cw[w]*rh[h]; if(q) counts[w+"x"+h]=(counts[w+"x"+h]||0)+q;
-    }));
-    const byId={};cfg.cases.forEach(c=>byId[c.id]=c);
-    const lines=[],warnings=[];
-    Object.keys(counts).forEach(size=>{
-      const n=counts[size];
-      const fitting=cfg.cases.filter(c=>!(c.fits||[]).length||c.fits.indexOf(size)>=0);
-      if(!fitting.length){ warnings.push("Nessuna cassa per i cabinet "+size.replace("x","\u00d7")+" mm: va configurata in Amministrazione."); return; }
-      const packed=packCases(fitting,n); if(!packed) return;
-      Object.keys(packed.use).forEach(id=>{
-        const c=byId[id]; const ex=lines.find(l=>l.refId===id);
-        if(ex){ ex.qty+=packed.use[id]; return; }
-        lines.push({kind:"flightcase",refId:id,label:caseLabel(c),code:c.code||"",
-          capacity:c.capacity,qty:packed.use[id],price_unit:c.price||0});
-      });
-      if(packed.slots>n) warnings.push(n+" cabinet "+size.replace("x","\u00d7")+" mm entrano in "+packed.count+
-        (packed.count===1?" cassa da ":" casse da ")+packed.slots+" posti: restano "+(packed.slots-n)+" posti liberi.");
-    });
-    return {lines,warnings,required:cfg.required!==false,note:cfg.note||""};
-  }
-  function accessoryQty(item,ctx){
-    const u=Number(item.unit)||1;
-    switch(item.rule){
-      case "perWidth":   return Math.ceil((ctx.totalW||0)/u);
-      case "perHeight":  return Math.ceil((ctx.totalH||0)/u);
-      case "perColumn":  return Math.ceil((ctx.cols||0)/u);
-      case "perRow":     return Math.ceil((ctx.rows||0)/u);
-      case "perCabinet": return Math.ceil((ctx.cabinets||0)/u);
-      case "perSqm":     return Math.ceil((ctx.area||0)/u);
-      case "fixed":      return Math.max(1,Math.round(u));
-      default:           return 0;
-    }
-  }
-  const RULE_TEXT={
-    perWidth:u=>"una ogni "+u+" mm di base",
-    perHeight:u=>"uno ogni "+u+" mm di altezza",
-    perColumn:u=>"uno ogni "+u+" colonn"+(u===1?"a":"e"),
-    perRow:u=>"uno ogni "+u+" rig"+(u===1?"a":"he"),
-    perCabinet:u=>"uno ogni "+u+" cabinet",
-    perSqm:u=>"uno ogni "+u+" m\u00b2",
-    fixed:u=>"quantit\u00e0 fissa"
-  };
-  const ruleText=it=>(RULE_TEXT[it.rule]||(()=>""))(Number(it.unit)||1);
-  /* Gli accessori obbligatori entrano sempre, gli opzionali solo se spuntati. */
-  function accessoryLines(product,ctx,selectedOptional){
-    const cfg=product&&product.accessories;
-    if(!cfg||!(cfg.items||[]).length) return {lines:[],optional:[]};
-    const sel=selectedOptional||[];
-    const lines=[],optional=[];
-    cfg.items.forEach(it=>{
-      const qty=accessoryQty(it,ctx);
-      if(!it.required) optional.push(Object.assign({qty},it));
-      if(!it.required&&sel.indexOf(it.id)<0) return;
-      if(!(qty>0)) return;
-      lines.push({kind:"accessory",refId:it.id,label:it.label,code:it.code||"",qty,
-        price_unit:it.price||0,required:!!it.required,hint:ruleText(it)});
-    });
-    return {lines,optional};
-  }
-  /* Contesto della parete corrente per le regole accessorio. */
-  function wallCtx(cols,rows,totalW,totalH){
-    return {totalW,totalH,cols:cols.length,rows:rows.length,
-      cabinets:cols.length*rows.length,area:(totalW*totalH)/1e6};
   }
   function priceOf(cab){
     if(S.res && cab.prices && cab.prices[S.res.id]>0) return cab.prices[S.res.id];
@@ -1546,10 +1182,7 @@
     const area=(totalW*totalH)/1e6;
     const anyP=p.wPerSqm>0; const pAvg=anyP?p.wPerSqm*area:0;
     const pitch=S.res?S.res.pitch:0;
-    // Il pixel non è sempre quadrato: sul Trasparent 3,91-7,82 il passo
-    // verticale è il doppio, e l'altezza va contata con quello.
-    const pitchV=(S.res&&S.res.pitchH>0)?S.res.pitchH:pitch;
-    const px=pixelAsse(cols, pitch, unitaModulo(p,"w")), py=pixelAsse(rows, pitchV, unitaModulo(p,"h"));
+    const px=pitch>0?Math.round(totalW/pitch):0, py=pitch>0?Math.round(totalH/pitch):0;
     const totPx=px*py;
     const img=wallPreviewPng();
     const img3d=(window.__wall3d && window.__wall3d.snapshot) ? window.__wall3d.snapshot() : null;
@@ -1571,7 +1204,7 @@
     R(T.usage, TV(t.usage));
     R(T.size, fmt(totalW)+" × "+fmt(totalH));
     R(T.surface, num(area,2));
-    if(pitch>0) R(T.pitch, (pitchV!==pitch?(String(pitch).replace(".",",")+" × "+String(pitchV).replace(".",",")):String(pitch).replace(".",","))+(S.res.label?" · "+S.res.label:""));
+    if(pitch>0) R(T.pitch, String(pitch).replace(".",",")+(S.res.label?" · "+S.res.label:""));
     R(T.moduleSize+" B×H"+(p.modD>0?"×D":"")+" "+T.moduleU, (p.modW&&p.modH)?(p.modW+"×"+p.modH+(p.modD>0?"×"+p.modD:"")):undefined);
     R(T.modules, (nMx&&nMy)?(nMx+"×"+nMy+" ("+(nMx*nMy)+")"):undefined);
     R(T.cabinets, cnt+" ("+cols.length+"×"+rows.length+")");
@@ -1581,7 +1214,7 @@
     R(T.ledPix, TV(t.ledType));
     R(T.hz, TV(t.hz));
     R(T.angle, TV(t.angle));
-    if(pitch>0) R(T.distance, "~"+String(Math.max(pitch,pitchV)).replace(".",","));
+    if(pitch>0) R(T.distance, "~"+String(pitch).replace(".",","));
     R(T.nit, TV(t.nit));
     if(anyP) R(T.cons, p.wPerSqm+" · "+num(pAvg/1000,2)+" kW");
     if(anyW) R(T.weight, Math.round(kgSqm)+" · "+fmt(Math.round(wSum)));
@@ -1606,7 +1239,7 @@
     const icons=[];
     const IC=(svg,lab,val)=>{ if(val) icons.push('<div class="ic"><div class="icsvg">'+svg+'</div><div class="ict"><b>'+lab+'</b><span>'+val+'</span></div></div>'); };
     IC(ic.dim,T.icDim,fmt(totalW)+"×"+fmt(totalH)+" mm");
-    IC(ic.pitch,T.icPitch,pitch>0?((pitchV!==pitch?String(pitch).replace(".",",")+" × "+String(pitchV).replace(".",","):String(pitch).replace(".",","))+" mm"):"");
+    IC(ic.pitch,T.icPitch,pitch>0?(String(pitch).replace(".",",")+" mm"):"");
     IC(ic.lum,T.icLum,t.nit?(t.nit+" NIT"):"");
     IC(ic.cons,T.icCons,anyP?(num(pAvg/1000,2)+" kW"):"");
     IC(ic.peso,T.icWeight,anyW?(fmt(Math.round(wSum))+" Kg"):"");
@@ -1696,40 +1329,14 @@
       else imgs.forEach(i=>{ if(!i.complete){ i.addEventListener("load",()=>{ if(--pending<=0) done(); }); i.addEventListener("error",()=>{ if(--pending<=0) done(); }); } });
     });
   }
-  /* Quante porte servono ALMENO. È un minimo, non il numero esatto: le porte
-     pilotano gruppi di cabinet attaccati fra loro, e una spartizione reale può
-     averne bisogno di qualcuna in più. Come minimo basta però a bocciare: se
-     non bastano nemmeno nel caso più fortunato, quel player non ce la fa.
-     Un player regge un totale di pixel, ma li fa
-     uscire da più porte e ogni porta ha un tetto suo: l'HD-A6L dichiara
-     2.600.000 px, però ha 4 porte da 576.000, quindi il tetto vero è
-     2.304.000 — meno di quello sulla scheda. Zero = il dato non c'è a
-     catalogo, e allora non si conclude niente. */
-  function porteServono(c,px){
-    if(!c || !(c.maxResPort>0) || !px || !(px.base>0) || !(px.h>0)) return 0;
-    return Math.ceil((px.base*px.h)/c.maxResPort);
-  }
   function ctrlFits(c,px){
     if(!px) return false;
-    // Senza nessun limite scritto non si può affermare che regga la parete:
-    // prima passava per compatibile con qualsiasi cosa.
-    if(!(c.maxTotal>0) && !(c.maxBase>0) && !(c.maxHeight>0)) return false;
     const tot=px.base*px.h;
-    if(c.maxTotal && tot>c.maxTotal) return false;
-    if(c.maxBase && px.base>c.maxBase) return false;
-    if(c.maxHeight && px.h>c.maxHeight) return false;
-    // Il conto sulle porte si fa solo dove il catalogo dice quante sono e
-    // quanto porta ognuna: dove il dato manca si resta al comportamento di
-    // prima, invece di bocciare un controller che magari va benissimo.
-    const n=porteServono(c,px);
-    if(n && c.ports>0 && n>c.ports) return false;
-    return true;
+    return (!c.maxTotal || tot<=c.maxTotal) && (!c.maxBase || px.base<=c.maxBase) && (!c.maxHeight || px.h<=c.maxHeight);
   }
   function currentPx(){
     if(!(S.pitch>0)||!S.selWc||!S.selHc) return null;
-    const pv=S.pitchV>0?S.pitchV:S.pitch;
-    const p=currentProduct();
-    return { base:pixelAsse(expand(S.selWc.counts), S.pitch, unitaModulo(p,"w")), h:pixelAsse(expand(S.selHc.counts), pv, unitaModulo(p,"h")) };
+    return { base:Math.round(S.selWc.total/S.pitch), h:Math.round(S.selHc.total/S.pitch) };
   }
   function buildOffer(){
     const p=currentProduct(); if(!p||!S.selWc||!S.selHc) return null;
@@ -1753,17 +1360,6 @@
       const line={code,label:"Controller "+ctrl.model,qty,price_unit:Number((price||0).toFixed(2)),kind:"controller"};
       lines.push(line); controllers.push(line);
     });
-    // casse e accessori: stessa distinta che si vede a schermo
-    const cols2=cols, rows2=rows;
-    const fcRes=flightcaseLines(p,cols2,rows2);
-    const accRes=accessoryLines(p,wallCtx(cols2,rows2,S.selWc.total,S.selHc.total),S.accSel);
-    fcRes.lines.concat(accRes.lines).forEach(l=>{
-      if(!l.code) codeOk=false;
-      const price=l.price_unit||0; if(price>0) totalPrice+=price*l.qty; else priceOk=false;
-      lines.push({code:l.code||"",label:l.label,qty:l.qty,
-        price_unit:Number(price.toFixed(2)),kind:l.kind});
-    });
-
     const p2=currentProduct();
     const objInput=$("odooObject"); const object=(objInput&&objInput.value.trim())||"";
     const sizeStr=S.selWc.total+"×"+S.selHc.total+" mm";
@@ -1772,7 +1368,7 @@
     // testo per la riga sezione in cima all'offerta
     const sectionText=[baseDesc||p.name, pitchStr, "dim. "+sizeStr].filter(Boolean).join(" · ");
     return { product:p.name, object, product_desc:baseDesc, section:sectionText,
-      resolution:S.res?{label:S.res.label,pitch:S.res.pitch,pitchH:(S.res.pitchH>0?S.res.pitchH:S.res.pitch)}:null,
+      resolution:S.res?{label:S.res.label,pitch:S.res.pitch}:null,
       size:{w:S.selWc.total,h:S.selHc.total},
       lines, controllers, totals:{cabinets:totalCab,price:Number(totalPrice.toFixed(2))},
       complete:{price:priceOk,code:codeOk}, generated_at:new Date().toISOString() };
@@ -1833,7 +1429,7 @@
     sel.innerHTML="";
     const none=document.createElement("option"); none.value=""; none.textContent="— nessuna"; sel.appendChild(none);
     const res=(p&&Array.isArray(p.resolutions))?p.resolutions:[];
-    res.forEach(r=>{ const o=document.createElement("option"); o.value=r.id; o.dataset.label=r.label||("P"+r.pitch); o.textContent=(r.label||("P"+r.pitch))+" · pitch "+String(r.pitch).replace(".",",")+((r.pitchH>0&&r.pitchH!==r.pitch)?(" × "+String(r.pitchH).replace(".",",")):"")+" mm"; sel.appendChild(o); });
+    res.forEach(r=>{ const o=document.createElement("option"); o.value=r.id; o.dataset.label=r.label||("P"+r.pitch); o.textContent=(r.label||("P"+r.pitch))+" · pitch "+String(r.pitch).replace(".",",")+" mm"; sel.appendChild(o); });
     if([...sel.options].some(o=>o.value===prev)) sel.value=prev;
     else sel.value = res.length ? res[0].id : "";   // predefinita: prima risoluzione del modello
   }
@@ -1864,12 +1460,11 @@
     const p0=currentProduct();
     S.res = (selVal && p0 && Array.isArray(p0.resolutions)) ? (p0.resolutions.find(r=>r.id===selVal)||null) : null;
     S.pitch = S.res ? S.res.pitch : 0;
-    S.pitchV = S.res ? ((S.res.pitchH>0)?S.res.pitchH:S.res.pitch) : 0;
     S.pitchLabel = S.res ? S.res.label : "";
 
     const p=currentProduct();
     const has = p && p.cabinets.length && S.reqW!==null && S.reqH!==null;
-    ["resultCard","bomCard","fcCard","metrics","specCard","altCard","ctrlCard","salesCard","offerCard"].forEach(id=>$(id).hidden=!has);
+    ["resultCard","bomCard","metrics","specCard","altCard","ctrlCard","salesCard","offerCard"].forEach(id=>$(id).hidden=!has);
     const hasMod = p && p.modW>0 && p.modH>0;
     $("modToggle").hidden = !(has && hasMod);
     if(has && hasMod){ $("modToggle").setAttribute("aria-pressed", S.showModules?"true":"false"); $("modToggle").textContent = "Moduli: "+(S.showModules?"on":"off"); }
@@ -1919,21 +1514,17 @@
     renderRatioSuggest(eW,eH,totalW,totalH);
     renderAltWalls(p,eW,eH,S.reqW,S.reqH);
     renderControllers();
-    renderExtras(p,cols,rows,totalW,totalH);
     renderSales(p,cols,rows,totalW,totalH);
     // il numero di serie resta valido finché la configurazione non cambia
     const sig=cfgSignature();
     if(S.serial){ if(!S.serialSig){ S.serialSig=sig; } else if(S.serialSig!==sig){ S.serial=null; S.serialSig=null; if($("cfgStatus")){ $("cfgStatus").className="odoostatus"; $("cfgStatus").innerHTML=""; } } }
   }
-  function cfgSignature(){ return S.productId+"|"+S.reqW+"x"+S.reqH+"|"+(S.res?S.res.id:"")+"|"+(S.selWc?S.selWc.total:"")+"x"+(S.selHc?S.selHc.total:"")+"|"+Object.keys(S.selCtrls||{}).sort().map(k=>k+":"+S.selCtrls[k]).join(",")+"|"+(S.accSel||[]).slice().sort().join(","); }
+  function cfgSignature(){ return S.productId+"|"+S.reqW+"x"+S.reqH+"|"+(S.res?S.res.id:"")+"|"+(S.selWc?S.selWc.total:"")+"x"+(S.selHc?S.selHc.total:"")+"|"+Object.keys(S.selCtrls||{}).sort().map(k=>k+":"+S.selCtrls[k]).join(","); }
 
   function renderSales(product,cols,rows,totalW,totalH){
     const grid=$("salesGrid"); grid.innerHTML="";
     const pitch=S.res?S.res.pitch:0;
-    // Il pixel non è sempre quadrato: sul Trasparent 3,91-7,82 il passo
-    // verticale è il doppio, e l'altezza va contata con quello.
-    const pitchV=(S.res&&S.res.pitchH>0)?S.res.pitchH:pitch;
-    const px=pixelAsse(cols, pitch, unitaModulo(product,"w")), py=pixelAsse(rows, pitchV, unitaModulo(product,"h"));
+    const px=pitch>0?Math.round(totalW/pitch):0, py=pitch>0?Math.round(totalH/pitch):0;
     const totPx=px*py;
     const area=(totalW*totalH)/1e6; // m²
     // potenza (media, da W/m² prodotto) e peso totale
@@ -1949,7 +1540,7 @@
       b.innerHTML='<div class="sk">'+k+'</div><div class="sv">'+v+'</div>'+(sub?'<div class="ssub">'+sub+'</div>':''); return b; };
     // distanza di visione
     if(pitch>0){
-      const dMin=Math.max(pitch,pitchV), dOpt=dMin*3; // comanda l'asse più grossolano; comfort fino a ~3x
+      const dMin=pitch, dOpt=pitch*3; // min ~ pitch in m; comfort fino a ~3x (regola pratica)
       grid.appendChild(card("Distanza di visione", "da ~"+dMin.toString().replace(".",",")+" m",
         "nitida da "+dMin.toString().replace(".",",")+" m · resa ottimale "+dMin.toString().replace(".",",")+"–"+dOpt.toFixed(0)+" m"));
     }
@@ -1984,12 +1575,7 @@
 
   function renderControllers(){
     const card=$("ctrlCard"), hint=$("ctrlHint"), host=$("ctrlList");
-    // solo le marche ammesse dal prodotto; nessuna scelta = tutte
-    const prod0=currentProduct();
-    const allow=(prod0&&Array.isArray(prod0.ctrlBrands)&&prod0.ctrlBrands.length)?prod0.ctrlBrands:null;
-    const ctrls=(DB.controllers||[])
-      .filter(c=>c.active!==false)
-      .filter(c=>!allow||allow.includes((c.brand||"").trim()));
+    const ctrls=(DB.controllers||[]);
     if(!ctrls.length){ card.hidden=true; return; }
     card.hidden=false; host.innerHTML="";
     const px=currentPx();
@@ -2001,46 +1587,16 @@
       hint.className="ctrlhint";
       hint.innerHTML="Parete: <b>"+fmt(px.base)+"×"+fmt(px.h)+"</b> px · <b>"+fmt(px.base*px.h)+"</b> px totali";
     }
-    // La marca delle riceventi montate nei cabinet di questo prodotto: chi
-    // dichiara una sola marca ammessa ha quella, tutto il resto monta Huidu.
-    // Un controller di marca diversa si puo' scegliere, ma impone di cambiare
-    // le schede riceventi — e quel costo oggi non e' calcolabile.
-    const CTRL_NATIVA_DEFAULT="Huidu", COSTO_RECEIVING=40;
-    const marcheDich=(prod0&&Array.isArray(prod0.ctrlBrands))
-      ? prod0.ctrlBrands.map(x=>String(x||"").trim()).filter(Boolean) : [];
-    const nativa = marcheDich.length===1 ? marcheDich[0]
-                 : (marcheDich.length ? null : CTRL_NATIVA_DEFAULT);
-    const cambiaRiceventi=c=>{
-      if(!nativa) return false;
-      const b=String((c&&c.brand)||"").trim();
-      return !!b && b!==nativa;
-    };
     // ordina: compatibili (dal più piccolo che regge) poi non compatibili
     const withFit=ctrls.map(c=>({c,fit:ctrlFits(c,px)}));
-    // A parita' di capacita' decide il prezzo, poi il numero di porte. Serve:
-    // MSD600, MCTRL500, MCTRL600 e MCTRL660 dichiarano tutti 2.600.000 pixel, e
-    // senza questo l'ordine fra loro sarebbe quello con cui capitano a catalogo.
-    // Chi non ha prezzo su Odoo va in fondo fra i pari: non e' il piu' economico,
-    // e' uno di cui non sappiamo il costo.
-    const costo = c => (Number(c.price) > 0 ? Number(c.price) : Infinity);
-    // Chi non impone il cambio delle riceventi viene prima, sempre: proporre
-    // per primo un controller che porta con se' un costo non conteggiato
-    // significa preselezionare la voce piu' cara facendola sembrare la piu'
-    // economica.
-    const swapN=c=>cambiaRiceventi(c)?1:0;
-    const okList=withFit.filter(x=>x.fit).sort((a,b)=>
-      (swapN(a.c)-swapN(b.c)) ||
-      ((a.c.maxTotal||0)-(b.c.maxTotal||0)) || (costo(a.c)-costo(b.c)) || ((a.c.ports||0)-(b.c.ports||0)));
+    const okList=withFit.filter(x=>x.fit).sort((a,b)=>(a.c.maxTotal||0)-(b.c.maxTotal||0));
     const koList=withFit.filter(x=>!x.fit).sort((a,b)=>(a.c.maxTotal||0)-(b.c.maxTotal||0));
 
     const capTxt=c=>{
       const bits=[];
-      if(c.brand) bits.push(c.brand);
       if(c.maxTotal) bits.push(fmt(c.maxTotal)+" px");
       if(c.maxBase&&c.maxHeight) bits.push(fmt(c.maxBase)+"×"+fmt(c.maxHeight));
       if(c.ports) bits.push(c.ports+" porte");
-      const np=porteServono(c,px);
-      if(np) bits.push("almeno "+np+(np===1?" porta":" porte"));
       if(c.k4&&c.k4!=="-") bits.push("4K "+c.k4);
       return bits.join(" · ");
     };
@@ -2051,19 +1607,12 @@
       const cb=document.createElement("button");
       cb.className="ctrlpick"+(sel?" on":"");
       cb.textContent=sel?"✓ Nel preventivo":"+ Aggiungi";
-      // Scelta, non somma: un altro controller sostituisce quello di prima.
-      cb.addEventListener("click",()=>{ S.selCtrls = (S.selCtrls[c.id]>0) ? {} : { [c.id]: 1 }; renderControllers(); });
+      cb.addEventListener("click",()=>{ if(S.selCtrls[c.id]>0) delete S.selCtrls[c.id]; else S.selCtrls[c.id]=1; renderControllers(); });
       const info=document.createElement("div");info.className="ctrlinfo";
       const codeWarn=(!c.code)?' <span class="ctrlwarn">manca codice Odoo</span>':'';
-      const swap=cambiaRiceventi(c);
-      const swapWarn=swap?' <span class="ctrlswap">cambio riceventi</span>':'';
       const priceTxt=c.price>0?'<span class="ctrlprice">'+eur(c.price)+'</span>':'';
-      info.innerHTML='<div class="ctrlname">'+c.model+(px&&!fit?' <span class="ctrlwarn">non compatibile</span>':'')+codeWarn+swapWarn+'</div>'+
-                     '<div class="ctrlcap">'+capTxt(c)+'</div>'+
-                     (swap?'<div class="ctrlnota">I cabinet di questo prodotto montano riceventi '+nativa+
-                       '. Per usare un '+(c.brand||'')+' vanno sostituite: '+eur(COSTO_RECEIVING)+
-                       ' a scheda, numero di schede per cabinet non ancora a catalogo. '+
-                       '<b>Costo non compreso nel preventivo.</b></div>':'');
+      info.innerHTML='<div class="ctrlname">'+c.model+(px&&!fit?' <span class="ctrlwarn">non compatibile</span>':'')+codeWarn+'</div>'+
+                     '<div class="ctrlcap">'+capTxt(c)+'</div>';
       const right=document.createElement("div");right.className="ctrlright";
       if(sel){
         const q=document.createElement("input");q.type="number";q.min="1";q.step="1";q.className="ctrlqty";q.value=S.selCtrls[c.id];
@@ -2223,7 +1772,7 @@
     $("mSize").innerHTML=fmt(totalW)+" × "+fmt(totalH)+' <small>mm</small>';
     $("mArea").innerHTML=((totalW*totalH)/1e6).toFixed(2).replace(".",",")+' <small>m²</small>';
     $("mMods").innerHTML=(cols.length*rows.length)+' <small>· '+cols.length+"×"+rows.length+"</small>";
-    if(S.pitch>0){ const pv=S.pitchV>0?S.pitchV:S.pitch; const px=pixelAsse(cols,S.pitch,unitaModulo(product,"w")),py=pixelAsse(rows,pv,unitaModulo(product,"h"));
+    if(S.pitch>0){ const px=Math.round(totalW/S.pitch),py=Math.round(totalH/S.pitch);
       $("mRes").innerHTML=fmt(px)+"×"+fmt(py)+' <small>· '+(S.pitchLabel?S.pitchLabel+" · ":"")+((px*py)/1e6).toFixed(2).replace(".",",")+" Mpx</small>"; }
     else $("mRes").innerHTML='<small>—</small>';
 
@@ -2271,74 +1820,6 @@
       $("pModules").hidden=!(anyMod&&modPart);
       $("tPrice").innerHTML = anyPr ? eur(prSum) : '<small>—</small>';
       $("pPrice").hidden=!(anyPr&&prPart);
-    }
-  }
-
-  /* Casse e accessori della parete corrente. Le casse sono obbligatorie sui
-     rental e si contano da sole; le barre restano una scelta. */
-  function renderExtras(product,cols,rows,totalW,totalH){
-    const fc=flightcaseLines(product,cols,rows);
-    const ctx=wallCtx(cols,rows,totalW,totalH);
-    const acc=accessoryLines(product,ctx,S.accSel);
-    S.fc=fc; S.acc=acc;
-
-    const nulla=!fc.lines.length&&!fc.warnings.length&&!acc.lines.length&&!acc.optional.length;
-    $("fcCard").hidden=nulla;
-    if(nulla) return;
-
-    const list=$("fcList"); list.innerHTML="";
-    let sub=0;
-    fc.lines.concat(acc.lines).forEach(l=>{
-      sub+=(l.price_unit||0)*l.qty;
-      const row=document.createElement("div"); row.className="fcrow2";
-      const extra=(l.kind==="flightcase")
-        ? (l.capacity+" posti"+(l.code?" \u00b7 "+l.code:""))
-        : ((l.hint||"")+(l.code?" \u00b7 "+l.code:""));
-      row.innerHTML='<span class="nm">'+escHtml(l.label)+'<small>'+escHtml(extra)+'</small></span>'+
-        '<span class="ct">'+l.qty+' <small>pz</small></span>'+
-        '<span class="sub">'+(l.price_unit>0?eur(l.price_unit*l.qty):"\u2014")+'</span>';
-      list.appendChild(row);
-    });
-    if(sub>0){
-      const tot=document.createElement("div"); tot.className="bomtot";
-      tot.innerHTML='<span>Totale casse e accessori</span><b>'+eur(sub)+'</b>';
-      list.appendChild(tot);
-    }
-
-    const nb=$("fcNote");
-    nb.hidden=!fc.lines.length&&!fc.warnings.length;
-    if(!nb.hidden){
-      const casse=fc.lines.reduce((a,l)=>a+l.qty,0);
-      const posti=fc.lines.reduce((a,l)=>a+l.qty*l.capacity,0);
-      nb.className="fcnote"+((fc.warnings.length&&!fc.lines.length)?" bad":"");
-      nb.innerHTML=(fc.lines.length
-          ? "<b>"+casse+" flightcase</b> per "+posti+" posti \u2014 "+
-            (fc.required?"obbligatori, gi\u00e0 inclusi nel preventivo":"inclusi nel preventivo")+
-            (fc.note?". "+escHtml(fc.note):".")
-          : "")+
-        (fc.warnings.length?'<div class="w">'+fc.warnings.map(escHtml).join("<br>")+"</div>":"");
-    }
-
-    $("accBox").hidden=!acc.optional.length;
-    if(acc.optional.length){
-      const host=$("accList"); host.innerHTML="";
-      acc.optional.forEach(it=>{
-        const on=S.accSel.indexOf(it.id)>=0;
-        const lab=document.createElement("label");
-        lab.className="opt"+(on?" on":"");
-        lab.innerHTML='<input type="checkbox"'+(on?" checked":"")+'>'+
-          '<div class="tx"><b>'+escHtml(it.label)+'</b><span>'+escHtml(ruleText(it))+
-          " \u00b7 "+it.qty+" pz su questa parete"+(it.note?" \u00b7 "+escHtml(it.note):"")+'</span></div>'+
-          '<div class="pr"><b>'+((it.price>0)?eur(it.price*it.qty):"\u2014")+'</b><span>'+
-          ((it.price>0)?eur(it.price)+" cad.":"prezzo mancante")+'</span></div>';
-        lab.querySelector("input").addEventListener("change",e=>{
-          S.accSel = e.target.checked
-            ? S.accSel.concat([it.id])
-            : S.accSel.filter(x=>x!==it.id);
-          render();
-        });
-        host.appendChild(lab);
-      });
     }
   }
 
@@ -2454,31 +1935,16 @@
 
   // ================= AMMINISTRAZIONE =================
   const overlay=$("overlay");
-  function openAdmin(){ overlay.classList.add("show"); document.querySelector(".overlay .modal").classList.remove("wide"); $("lockView").classList.remove("hidden"); $("panelView").classList.add("hidden"); $("pwInput").value=""; $("pwErr").textContent=""; setTimeout(()=>$("pwInput").focus(),50); }
+  function openAdmin(){ overlay.classList.add("show"); $("lockView").classList.remove("hidden"); $("panelView").classList.add("hidden"); $("pwInput").value=""; $("pwErr").textContent=""; setTimeout(()=>$("pwInput").focus(),50); }
   function closeAdmin(){ overlay.classList.remove("show"); }
   $("openAdmin").addEventListener("click",openAdmin);
   $("closeAdmin").addEventListener("click",closeAdmin);
   overlay.addEventListener("click",e=>{ if(e.target===overlay) closeAdmin(); });
 
   let draft=null; let draftControllers=null; let draftBackgrounds=null;
-  async function tryEnter(){
-    const b=$("pwEnter"); if(b.disabled) return;
-    b.disabled=true; const eti=b.textContent; b.textContent="…"; $("pwErr").textContent="";
-    try{
-      const r=await fetch("/api/admin-login",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({password:$("pwInput").value})});
-      const d=await r.json().catch(()=>({}));
-      if(!r.ok||!d.ok){ $("pwErr").textContent=d.error||"Password errata."; return; }
-      BIGLIETTO=d.ticket;
-      $("pwInput").value="";
-      draft=JSON.parse(JSON.stringify(DB.products));
-      draftControllers=JSON.parse(JSON.stringify(DB.controllers||[]));
-      draftBackgrounds=JSON.parse(JSON.stringify(DB.backgrounds||[]));
-      $("lockView").classList.add("hidden"); $("panelView").classList.remove("hidden");
-      document.querySelector(".overlay .modal").classList.add("wide");
-      renderProdList(); renderCtrlAdmin(); renderBgAdmin();
-    }catch(err){ $("pwErr").textContent="Server non raggiungibile."; }
-    finally{ b.disabled=false; b.textContent=eti; }
+  function tryEnter(){
+    if($("pwInput").value===DB.password){ draft=JSON.parse(JSON.stringify(DB.products)); draftControllers=JSON.parse(JSON.stringify(DB.controllers||[])); draftBackgrounds=JSON.parse(JSON.stringify(DB.backgrounds||[])); $("lockView").classList.add("hidden"); $("panelView").classList.remove("hidden"); renderProdList(); renderCtrlAdmin(); renderBgAdmin(); }
+    else { $("pwErr").textContent="Password errata."; }
   }
   $("pwEnter").addEventListener("click",tryEnter);
   $("pwInput").addEventListener("keydown",e=>{ if(e.key==="Enter") tryEnter(); });
@@ -2548,195 +2014,8 @@
     dn.addEventListener("click",()=>{ if(idx<arr.length-1){ const t=arr[idx+1];arr[idx+1]=arr[idx];arr[idx]=t; rerender(); } });
     wrap.appendChild(up);wrap.appendChild(dn);return wrap;
   }
-  // aperti/chiusi si ricordano fra un ridisegno e l'altro: la lista si
-  // ricostruisce a ogni modifica, e richiudersi tutto a ogni tasto è insopportabile
-  const apertiProd = new Set(), apertiCab = new Set();
-  let filtroProd = "";
-
-  /* Casse del prodotto. La capienza è un taglio fisso, non un divisore:
-     per questo si spunta a quali misure di cabinet una cassa serve. */
-  function flightcaseAdmin(p){
-    const sec=document.createElement("div"); sec.className="resblock";
-    const hd=document.createElement("div"); hd.className="reshdr";
-    hd.textContent="Flightcase \u2014 nome, posti, codice Odoo, prezzo, misure cabinet che accetta";
-    sec.appendChild(hd);
-
-    if(!p.flightcases) p.flightcases={required:true,cases:[]};
-    if(!Array.isArray(p.flightcases.cases)) p.flightcases.cases=[];
-    const cfg=p.flightcases;
-    const misure=[...new Set((p.cabinets||[]).map(c=>c.w+"x"+c.h))];
-
-    const flag=document.createElement("label"); flag.className="fcflag";
-    const fcb=document.createElement("input"); fcb.type="checkbox"; fcb.checked=cfg.required!==false;
-    fcb.addEventListener("change",()=>{ cfg.required=fcb.checked; });
-    flag.appendChild(fcb);
-    flag.appendChild(document.createTextNode("Obbligatorie: entrano nel preventivo senza chiedere (i rental si vendono con le loro casse)"));
-    sec.appendChild(flag);
-
-    if(!cfg.cases.length){ const e=document.createElement("div"); e.className="resempty";
-      e.textContent="Nessuna cassa \u2014 aggiungila qui sotto. Senza casse il prodotto non ne conta nessuna."; sec.appendChild(e); }
-
-    cfg.cases.forEach((c,ci)=>{
-      if(!c.id) c.id="fc_"+Math.random().toString(36).slice(2,9);
-      const row=document.createElement("div"); row.className="fcarow";
-      const nome=document.createElement("input"); nome.type="text"; nome.placeholder="es. Flightcase 8 posti"; nome.value=c.label||"";
-      nome.addEventListener("input",()=>c.label=nome.value);
-      const cap=document.createElement("input"); cap.type="number"; cap.min="1"; cap.step="1"; cap.placeholder="posti"; if(c.capacity>0)cap.value=c.capacity;
-      cap.addEventListener("input",()=>c.capacity=numOrUndef(cap.value));
-      const cod=document.createElement("input"); cod.type="text"; cod.placeholder="codice Odoo"; cod.value=c.code||"";
-      cod.addEventListener("input",()=>c.code=(cod.value.trim()||undefined));
-      const pr=document.createElement("input"); pr.type="number"; pr.min="0"; pr.step="any"; pr.placeholder="\u20ac"; if(c.price>0)pr.value=c.price;
-      pr.addEventListener("input",()=>c.price=numOrUndef(pr.value));
-      const od=document.createElement("button"); od.type="button"; od.className="btn ghost sm"; od.textContent="Odoo";
-      od.title="Legge nome e listino da Odoo usando il codice qui accanto";
-      od.addEventListener("click",async ()=>{
-        const codice=cod.value.trim();
-        if(!codice){ ctrlMsg("Scrivi prima il codice Odoo della cassa.","err"); return; }
-        od.disabled=true; od.textContent="\u2026";
-        const r=await window.odooLookup({code:codice});
-        od.disabled=false; od.textContent="Odoo";
-        if(!r.ok){ ctrlMsg(r.error||"Ricerca non riuscita.","err"); return; }
-        if(r.found&&r.item){
-          if(!nome.value.trim()){ nome.value=r.item.name||""; c.label=nome.value; }
-          if(r.item.price>0){ pr.value=r.item.price; c.price=r.item.price; }
-          ctrlMsg("Da Odoo: "+r.item.name+" \u2014 "+r.item.price+" \u20ac.","ok");
-        } else ctrlMsg(r.message||"Non trovato su Odoo.","err");
-      });
-      const rm=document.createElement("button"); rm.className="rm"; rm.textContent="\u00d7"; rm.title="Rimuovi";
-      rm.addEventListener("click",()=>{ cfg.cases.splice(ci,1); renderProdList(); });
-      row.append(nome,cap,cod,pr,od,rm);
-      sec.appendChild(row);
-
-      if(misure.length){
-        const fits=document.createElement("div"); fits.className="fitsrow";
-        const lb=document.createElement("span"); lb.className="lb"; lb.textContent="accetta:";
-        fits.appendChild(lb);
-        if(!Array.isArray(c.fits)) c.fits=[];
-        const nota=document.createElement("span"); nota.className="lb";
-        const agg=()=>{ nota.textContent=c.fits.length?"":"(nessuna spunta = tutte)"; };
-        misure.forEach(m=>{
-          const l=document.createElement("label");
-          const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=c.fits.indexOf(m)>=0;
-          cb.addEventListener("change",()=>{
-            c.fits = cb.checked ? [...new Set(c.fits.concat([m]))] : c.fits.filter(x=>x!==m);
-            agg();
-          });
-          l.appendChild(cb); l.appendChild(document.createTextNode(m.replace("x","\u00d7")));
-          fits.appendChild(l);
-        });
-        fits.appendChild(nota); agg();
-        sec.appendChild(fits);
-      }
-    });
-
-    const add=document.createElement("button"); add.type="button"; add.className="btn ghost sm"; add.textContent="+ Flightcase";
-    add.addEventListener("click",()=>{
-      cfg.cases.push({id:"fc_"+Math.random().toString(36).slice(2,9),label:"",capacity:undefined,fits:[]});
-      renderProdList();
-    });
-    sec.appendChild(add);
-    return sec;
-  }
-
-  /* Accessori a regola: la barra di sospensione è "una ogni 500 mm di base"
-     \u2014 1000 sul Trasparent rental. Lasciata non obbligatoria diventa una
-     spunta per il commerciale. */
-  function accessoryAdmin(p){
-    const sec=document.createElement("div"); sec.className="resblock";
-    const hd=document.createElement("div"); hd.className="reshdr";
-    hd.textContent="Accessori \u2014 barre di sospensione e simili: nome, codice, regola, passo, prezzo";
-    sec.appendChild(hd);
-
-    if(!p.accessories) p.accessories={items:[]};
-    if(!Array.isArray(p.accessories.items)) p.accessories.items=[];
-    const items=p.accessories.items;
-
-    if(!items.length){ const e=document.createElement("div"); e.className="resempty";
-      e.textContent="Nessun accessorio."; sec.appendChild(e); }
-
-    const REGOLE=[["perWidth","ogni N mm di base"],["perHeight","ogni N mm di altezza"],
-      ["perColumn","ogni N colonne"],["perRow","ogni N righe"],["perCabinet","ogni N cabinet"],
-      ["perSqm","ogni N m\u00b2"],["fixed","quantit\u00e0 fissa"]];
-
-    items.forEach((it,ii)=>{
-      if(!it.id) it.id="ac_"+Math.random().toString(36).slice(2,9);
-      const row=document.createElement("div"); row.className="acarow";
-      const nome=document.createElement("input"); nome.type="text"; nome.placeholder="es. Barra di sospensione 500 mm"; nome.value=it.label||"";
-      nome.addEventListener("input",()=>it.label=nome.value);
-      const cod=document.createElement("input"); cod.type="text"; cod.placeholder="codice Odoo"; cod.value=it.code||"";
-      cod.addEventListener("input",()=>it.code=(cod.value.trim()||undefined));
-      const reg=document.createElement("select");
-      REGOLE.forEach(([v,t])=>{ const o=document.createElement("option"); o.value=v; o.textContent=t; reg.appendChild(o); });
-      reg.value=it.rule||"perWidth";
-      reg.addEventListener("change",()=>it.rule=reg.value);
-      const un=document.createElement("input"); un.type="number"; un.min="0"; un.step="any"; un.placeholder="N"; if(it.unit>0)un.value=it.unit;
-      un.addEventListener("input",()=>it.unit=numOrUndef(un.value));
-      const pr=document.createElement("input"); pr.type="number"; pr.min="0"; pr.step="any"; pr.placeholder="\u20ac"; if(it.price>0)pr.value=it.price;
-      pr.addEventListener("input",()=>it.price=numOrUndef(pr.value));
-      const od=document.createElement("button"); od.type="button"; od.className="btn ghost sm"; od.textContent="Odoo";
-      od.addEventListener("click",async ()=>{
-        const codice=cod.value.trim();
-        if(!codice){ ctrlMsg("Scrivi prima il codice Odoo dell'accessorio.","err"); return; }
-        od.disabled=true; od.textContent="\u2026";
-        const r=await window.odooLookup({code:codice});
-        od.disabled=false; od.textContent="Odoo";
-        if(!r.ok){ ctrlMsg(r.error||"Ricerca non riuscita.","err"); return; }
-        if(r.found&&r.item){
-          if(!nome.value.trim()){ nome.value=r.item.name||""; it.label=nome.value; }
-          if(r.item.price>0){ pr.value=r.item.price; it.price=r.item.price; }
-          ctrlMsg("Da Odoo: "+r.item.name+" \u2014 "+r.item.price+" \u20ac.","ok");
-        } else ctrlMsg(r.message||"Non trovato su Odoo.","err");
-      });
-      const rm=document.createElement("button"); rm.className="rm"; rm.textContent="\u00d7"; rm.title="Rimuovi";
-      rm.addEventListener("click",()=>{ items.splice(ii,1); renderProdList(); });
-      row.append(nome,cod,reg,un,pr,od,rm);
-      sec.appendChild(row);
-
-      const obb=document.createElement("label"); obb.className="fcflag";
-      const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=it.required===true;
-      cb.addEventListener("change",()=>it.required=(cb.checked?true:undefined));
-      obb.appendChild(cb);
-      obb.appendChild(document.createTextNode("Obbligatorio (senza spunta resta una scelta del commerciale)"));
-      sec.appendChild(obb);
-    });
-
-    const add=document.createElement("button"); add.type="button"; add.className="btn ghost sm"; add.textContent="+ Accessorio";
-    add.addEventListener("click",()=>{
-      items.push({id:"ac_"+Math.random().toString(36).slice(2,9),label:"",rule:"perWidth",unit:500});
-      renderProdList();
-    });
-    sec.appendChild(add);
-    return sec;
-  }
-
   function renderProdList(){
     const host=$("prodList");host.innerHTML="";
-    // barra di ricerca
-    const bar=document.createElement("div"); bar.className="prodbar";
-    const cerca=document.createElement("input");
-    cerca.type="search"; cerca.placeholder="Cerca prodotto, misura cabinet o codice Odoo";
-    cerca.value=filtroProd;
-    const trovati=document.createElement("span"); trovati.className="found";
-    const apri=document.createElement("button"); apri.type="button"; apri.className="btn ghost sm"; apri.textContent="Apri tutti";
-    const chiudi=document.createElement("button"); chiudi.type="button"; chiudi.className="btn ghost sm"; chiudi.textContent="Chiudi tutti";
-    apri.addEventListener("click",()=>{ draft.forEach(x=>apertiProd.add(x.id)); renderProdList(); });
-    chiudi.addEventListener("click",()=>{ apertiProd.clear(); apertiCab.clear(); renderProdList(); });
-    bar.append(cerca,apri,chiudi,trovati);
-    host.appendChild(bar);
-
-    const q=filtroProd.trim().toLowerCase();
-    const combacia = pr => {
-      if(!q) return true;
-      const pezzi=[pr.name||"", pr.desc||""];
-      (pr.resolutions||[]).forEach(r=>pezzi.push(r.label||""));
-      (pr.cabinets||[]).forEach(c=>{
-        pezzi.push(c.w+"x"+c.h, c.w+"×"+c.h);
-        if(c.code) pezzi.push(c.code);
-        Object.values(c.codes||{}).forEach(v=>v&&pezzi.push(v));
-      });
-      return pezzi.join(" ").toLowerCase().includes(q);
-    };
-    let visti=0;
     draft.forEach((p,pi)=>{
       const box=document.createElement("div");box.className="prod";
       const head=document.createElement("div");head.className="phead";
@@ -2752,22 +2031,7 @@
       pmod.appendChild(mwl);pmod.appendChild(mw);pmod.appendChild(mtimes);pmod.appendChild(mh);pmod.appendChild(mmm);
       const del=document.createElement("button");del.className="btn danger sm";del.textContent="Elimina";
       del.addEventListener("click",()=>{ draft.splice(pi,1); renderProdList(); });
-
-      const tog=document.createElement("button");tog.type="button";tog.className="ptoggle";tog.textContent="▸";
-      tog.title="Apri o chiudi la scheda";
-      const dot=document.createElement("span");dot.className="pdot";
-      dot.style.background=(p.cabinets&&p.cabinets[0]) ? (p.cabinets[0].color||autoHex(p,p.cabinets[0].w,p.cabinets[0].h)) : "var(--line)";
-      const nCod=(p.cabinets||[]).reduce((a,c)=>a+Object.values(c.codes||{}).filter(Boolean).length+(c.code?1:0),0);
-      const sum=document.createElement("span");sum.className="psum";
-      sum.textContent=(p.cabinets||[]).length+" cabinet · "+(p.resolutions||[]).length+" risoluzioni"+(nCod?" · "+nCod+" codici":"");
-      const apriChiudi=()=>{ if(apertiProd.has(p.id)) apertiProd.delete(p.id); else apertiProd.add(p.id);
-        box.classList.toggle("open"); };
-      tog.addEventListener("click",apriChiudi);
-      sum.addEventListener("click",apriChiudi);
-
-      head.appendChild(tog);head.appendChild(dot);head.appendChild(nm);head.appendChild(sum);head.appendChild(del);
-      box.appendChild(head);
-      box.appendChild(pmod);   // finisce nel corpo: a riga chiusa non serve
+      head.appendChild(nm);head.appendChild(pmod);head.appendChild(del);box.appendChild(head);
 
       // --- descrizione per il preventivo Odoo ---
       const dwrap=document.createElement("div");dwrap.className="pdesc";
@@ -2798,44 +2062,6 @@
       if(p.sellingEn)staE.value=p.sellingEn;
       staE.addEventListener("input",()=>p.sellingEn=(staE.value||undefined));
       swrapE.appendChild(slE);swrapE.appendChild(staE);box.appendChild(swrapE);
-
-      // --- quali marche di controller proporre su questo prodotto ---
-      // I rental montano solo Novastar: senza questo filtro il configuratore
-      // proponeva anche gli Huidu, che su quelle pareti non si usano.
-      const brands=[...new Set((draftControllers||[]).map(c=>(c.brand||"").trim()).filter(Boolean))].sort();
-      if(brands.length){
-        const bsec=document.createElement("div");bsec.className="resblock";
-        const bh=document.createElement("div");bh.className="reshdr";
-        bh.textContent="Controller da proporre — marche";
-        bsec.appendChild(bh);
-        const brow=document.createElement("div");
-        brow.style.cssText="display:flex;flex-wrap:wrap;gap:8px;align-items:center";
-        const hint=document.createElement("span");
-        hint.style.cssText="font-size:12px;color:var(--muted-2)";
-        const refresh=()=>{ const cur=Array.isArray(p.ctrlBrands)?p.ctrlBrands:[];
-          hint.textContent = cur.length ? "gli altri non vengono proposti su questo prodotto"
-                                        : "nessuna scelta: si propongono tutte";
-        };
-        brands.forEach(b=>{
-          const lb=document.createElement("label");
-          lb.style.cssText="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer";
-          const cb=document.createElement("input");cb.type="checkbox";cb.style.width="auto";
-          cb.checked=Array.isArray(p.ctrlBrands)&&p.ctrlBrands.includes(b);
-          cb.addEventListener("change",()=>{
-            const cur=Array.isArray(p.ctrlBrands)?p.ctrlBrands.slice():[];
-            const next=cb.checked?[...new Set(cur.concat([b]))]:cur.filter(x=>x!==b);
-            p.ctrlBrands = next.length ? next : undefined;
-            refresh();
-          });
-          lb.appendChild(cb);lb.appendChild(document.createTextNode(b));brow.appendChild(lb);
-        });
-        brow.appendChild(hint); refresh();
-        bsec.appendChild(brow); box.appendChild(bsec);
-      }
-
-      // --- flightcase e accessori (rental) ---
-      box.appendChild(flightcaseAdmin(p));
-      box.appendChild(accessoryAdmin(p));
 
       // --- scheda tecnica: campi tecnici + foto prodotto ---
       const tsec=document.createElement("div");tsec.className="techsec";
@@ -2870,30 +2096,24 @@
       // --- risoluzioni del modello ---
       if(!Array.isArray(p.resolutions)) p.resolutions=[];
       const rb=document.createElement("div");rb.className="resblock";
-      const rh2=document.createElement("div");rh2.className="reshdr";rh2.textContent="Risoluzioni disponibili — nome, passo orizzontale, passo verticale (solo se il pixel è rettangolare)";
+      const rh2=document.createElement("div");rh2.className="reshdr";rh2.textContent="Risoluzioni disponibili (nome + pixel pitch mm)";
       rb.appendChild(rh2);
       if(!p.resolutions.length){ const e=document.createElement("div");e.className="resempty";e.textContent="Nessuna risoluzione — aggiungine una qui sotto.";rb.appendChild(e); }
       p.resolutions.forEach((r,ri)=>{
         const row=document.createElement("div");row.className="resrow";
         const ln=document.createElement("input");ln.type="text";ln.placeholder="es. P2.5";ln.value=r.label||"";ln.addEventListener("input",()=>r.label=ln.value);
         const lp=document.createElement("input");lp.type="number";lp.min="0";lp.step="any";lp.placeholder="pitch mm";if(r.pitch>0)lp.value=r.pitch;lp.addEventListener("input",()=>r.pitch=numOrUndef(lp.value));
-        const lv=document.createElement("input");lv.type="number";lv.min="0";lv.step="any";lv.placeholder="vert. mm";
-        lv.title="Passo verticale. Si compila solo dove il pixel è rettangolare, come il Trasparent 3,91-7,82. Vuoto = pixel quadrato.";
-        if(r.pitchH>0)lv.value=r.pitchH;lv.addEventListener("input",()=>r.pitchH=numOrUndef(lv.value));
         const rm=document.createElement("button");rm.className="rm";rm.textContent="×";rm.title="Rimuovi";rm.addEventListener("click",()=>{ p.resolutions.splice(ri,1); renderProdList(); });
-        row.appendChild(ln);row.appendChild(lp);row.appendChild(lv);row.appendChild(moveControl(p.resolutions,ri,renderProdList));row.appendChild(rm);rb.appendChild(row);
+        row.appendChild(ln);row.appendChild(lp);row.appendChild(moveControl(p.resolutions,ri,renderProdList));row.appendChild(rm);rb.appendChild(row);
       });
       const radd=document.createElement("div");radd.className="resadd";
       const nl=document.createElement("input");nl.type="text";nl.placeholder="Nome (es. P4)";
       const np=document.createElement("input");np.type="number";np.min="0";np.step="any";np.placeholder="pitch mm";
-      const nv=document.createElement("input");nv.type="number";nv.min="0";nv.step="any";nv.placeholder="vert. mm";
-      nv.title="Passo verticale, solo se il pixel è rettangolare. Vuoto = quadrato.";
       const nb=document.createElement("button");nb.className="btn ghost sm";nb.textContent="+ Risoluzione";
-      const addRes=()=>{ const pitch=numOrUndef(np.value); const pitchH=numOrUndef(nv.value); const label=nl.value.trim()||(pitch?("P"+pitch):""); if(pitch>0){ p.resolutions.push(pitchH>0?{id:rid(),label,pitch,pitchH}:{id:rid(),label,pitch}); renderProdList(); } };
+      const addRes=()=>{ const pitch=numOrUndef(np.value); const label=nl.value.trim()||(pitch?("P"+pitch):""); if(pitch>0){ p.resolutions.push({id:rid(),label,pitch}); renderProdList(); } };
       nb.addEventListener("click",addRes);
       np.addEventListener("keydown",e=>{ if(e.key==="Enter") addRes(); });
-      nv.addEventListener("keydown",e=>{ if(e.key==="Enter") addRes(); });
-      radd.appendChild(nl);radd.appendChild(np);radd.appendChild(nv);radd.appendChild(nb);rb.appendChild(radd);
+      radd.appendChild(nl);radd.appendChild(np);radd.appendChild(nb);rb.appendChild(radd);
       box.appendChild(rb);
 
       p.cabinets.forEach((c,ci)=>{
@@ -2903,24 +2123,9 @@
         const dim=document.createElement("span");dim.className="cdim";dim.textContent=c.w+"×"+c.h+" mm";
         const rm=document.createElement("button");rm.className="rm";rm.textContent="×";rm.title="Rimuovi cabinet";
         rm.addEventListener("click",()=>{ p.cabinets.splice(ci,1); renderProdList(); });
-        const chiave=p.id+"|"+c.w+"x"+c.h;
-        const cs=document.createElement("span");cs.className="cabsum";
-        const nP=Object.values(c.prices||{}).filter(v=>v>0).length;
-        cs.textContent=[(c.weight>0?c.weight+" kg":null),(c.modQty>0?c.modQty+" moduli":null),
-                        (nP?nP+" prezzi":"nessun prezzo")].filter(Boolean).join(" · ");
-        ch.appendChild(dot);ch.appendChild(dim);ch.appendChild(cs);
-        ch.appendChild(moveControl(p.cabinets,ci,renderProdList));ch.appendChild(rm);
-        ch.addEventListener("click",e=>{
-          if(e.target.closest("button")) return;      // i tasti sposta/rimuovi fanno il loro
-          if(apertiCab.has(chiave)) apertiCab.delete(chiave); else apertiCab.add(chiave);
-          card.classList.toggle("open");
-        });
+        ch.appendChild(dot);ch.appendChild(dim);ch.appendChild(moveControl(p.cabinets,ci,renderProdList));ch.appendChild(rm);
         const grid=optionalGrid(c); grid.appendChild(mkColorField(c,p,dot));
-        const cbody=document.createElement("div"); cbody.className="cabbody";
-        cbody.appendChild(grid); cbody.appendChild(priceBlock(c,p));
-        card.appendChild(ch); card.appendChild(cbody);
-        if(apertiCab.has(chiave)) card.classList.add("open");
-        box.appendChild(card);
+        card.appendChild(ch); card.appendChild(grid); card.appendChild(priceBlock(c,p)); box.appendChild(card);
       });
 
       const addCard=document.createElement("div");addCard.className="cabcard";
@@ -2931,7 +2136,7 @@
       const ih=document.createElement("input");ih.type="number";ih.min="1";ih.placeholder="alt.";
       aw.appendChild(iw);aw.appendChild(tx);aw.appendChild(ih);
       const cap=document.createElement("span");cap.className="cdim";cap.style.color="var(--muted-2)";cap.style.fontSize="12px";cap.textContent="nuovo cabinet";
-      ah.appendChild(aw);ah.appendChild(cap);addCard.appendChild(ah);addCard.classList.add("open");
+      ah.appendChild(aw);ah.appendChild(cap);addCard.appendChild(ah);
       const tmp={}; addCard.appendChild(optionalGrid(tmp)); addCard.appendChild(priceBlock(tmp,p));
       const foot=document.createElement("div");foot.className="cabcard-foot";
       const ab=document.createElement("button");ab.className="btn ghost sm";ab.textContent="+ Aggiungi cabinet";
@@ -2939,72 +2144,25 @@
         if(w>0&&h>0&&!p.cabinets.some(c=>c.w===w&&c.h===h)){ p.cabinets.push(Object.assign({w,h},tmp)); renderProdList(); } });
       foot.appendChild(ab);addCard.appendChild(foot);
       box.appendChild(addCard);
-
-      // tutto quello che sta sotto la testata finisce nel corpo richiudibile
-      const body=document.createElement("div"); body.className="pbody";
-      while(head.nextSibling) body.appendChild(head.nextSibling);
-      box.appendChild(body);
-      if(apertiProd.has(p.id) || (q && combacia(p))) box.classList.add("open");
-
-      if(!combacia(p)){ return; }
-      visti++;
       host.appendChild(box);
     });
-
-    trovati.textContent = q ? (visti+" di "+draft.length) : (draft.length+" prodotti");
-    let t=null;
-    cerca.addEventListener("input",()=>{
-      clearTimeout(t);
-      const v=cerca.value;
-      t=setTimeout(()=>{ filtroProd=v; renderProdList();
-        const c2=$("prodList").querySelector('input[type=search]');
-        if(c2){ c2.focus(); c2.setSelectionRange(v.length,v.length); }
-      },220);
-    });
-  }
-
-  let ctrlMsgTimer=null;
-  function ctrlMsg(testo,tipo){
-    const el=$("ctrlMsg"); if(!el) return;
-    el.className="odoostatus "+(tipo||"");
-    el.textContent=testo||"";
-    clearTimeout(ctrlMsgTimer);
-    if(testo) ctrlMsgTimer=setTimeout(()=>{ el.textContent=""; el.className="odoostatus"; }, 9000);
   }
 
   function renderCtrlAdmin(){
     const host=$("ctrlAdminList"); if(!host) return; host.innerHTML="";
     if(!Array.isArray(draftControllers)) draftControllers=[];
-    const nota=document.createElement("div");
-    nota.className="sub"; nota.style.cssText="margin:0 0 10px;font-size:12px";
-    nota.innerHTML='Il pulsante <b>Odoo</b> accanto al codice riempie modello, prezzo e marca. '+
-      'I limiti tecnici — pixel massimi, base, altezza, porte, 4K — su Odoo non ci sono: '+
-      'stanno sulla scheda del produttore e vanno scritti a mano una volta. '+
-      'La casella a sinistra accende e spegne: uno spento resta in elenco ma non viene proposto, '+
-      'e finché non ha nessun limite scritto non risulta compatibile con niente.';
-    host.appendChild(nota);
-
     if(!draftControllers.length){
       const e=document.createElement("div");e.className="resempty";e.textContent="Nessun controller — aggiungine uno qui sotto oppure carica i modelli Huidu.";host.appendChild(e);
     } else {
       const head=document.createElement("div");head.className="cadmhead";
-      head.innerHTML="<span></span><span>Modello</span><span>Marca</span><span>Max px tot.</span><span>Max base</span><span>Max alt.</span><span>Porte</span><span>Res/porta</span><span>4K</span><span>Prezzo</span><span>Cod. Odoo</span><span></span>";
+      head.innerHTML="<span>Modello</span><span>Max px tot.</span><span>Max base</span><span>Max alt.</span><span>Porte</span><span>Res/porta</span><span>4K</span><span>Prezzo</span><span>Cod. Odoo</span><span></span>";
       host.appendChild(head);
     }
     const num=(obj,key,ph)=>{ const i=document.createElement("input");i.type="number";i.min="0";i.step="any";i.placeholder=ph||"";if(obj[key]>0)i.value=obj[key];i.addEventListener("input",()=>obj[key]=numOrUndef(i.value));return i; };
     const txt=(obj,key,ph)=>{ const i=document.createElement("input");i.type="text";i.placeholder=ph||"";if(obj[key])i.value=obj[key];i.addEventListener("input",()=>obj[key]=(i.value.trim()||undefined));return i; };
     draftControllers.forEach((c,ci)=>{
       const row=document.createElement("div");row.className="cadmrow";
-      if(c.active===false) row.style.opacity=".5";
-      const att=document.createElement("label");
-      att.style.cssText="display:flex;align-items:center;justify-content:center;cursor:pointer";
-      att.title=c.active===false?"Spento: non viene proposto":"Acceso: viene proposto";
-      const cb=document.createElement("input");cb.type="checkbox";cb.style.width="auto";
-      cb.checked=c.active!==false;
-      cb.addEventListener("change",()=>{ c.active = cb.checked ? undefined : false; renderCtrlAdmin(); });
-      att.appendChild(cb); row.appendChild(att);
       row.appendChild(txt(c,"model","Modello"));
-      const br=txt(c,"brand","Huidu"); br.setAttribute("list","brandList"); row.appendChild(br);
       row.appendChild(num(c,"maxTotal","px tot"));
       row.appendChild(num(c,"maxBase","base"));
       row.appendChild(num(c,"maxHeight","alt"));
@@ -3012,33 +2170,7 @@
       row.appendChild(num(c,"maxResPort","res/porta"));
       row.appendChild(txt(c,"k4","4K"));
       row.appendChild(num(c,"price","€"));
-      const cod=document.createElement("div");
-      cod.style.cssText="display:flex;gap:5px;align-items:center;min-width:0";
-      const ci2=txt(c,"code","codice Odoo"); ci2.style.minWidth="0";
-      const go=document.createElement("button");
-      go.type="button"; go.className="btn ghost sm"; go.textContent="Odoo";
-      go.title="Cerca questo codice su Odoo e riempi modello, prezzo e marca";
-      go.style.cssText="padding:6px 8px;flex:0 0 auto;font-size:11px";
-      go.addEventListener("click",async()=>{
-        const codice=(c.code||"").trim();
-        if(!codice){ ctrlMsg("Scrivi prima il codice dell'articolo.","err"); return; }
-        go.disabled=true; go.textContent="…";
-        const r=await window.odooLookup({code:codice});
-        go.disabled=false; go.textContent="Odoo";
-        if(!r.ok){ ctrlMsg(r.error||"Ricerca non riuscita.","err"); return; }
-        if(r.found && r.item){
-          c.model=r.item.name||c.model;
-          if(r.item.price>0) c.price=r.item.price;
-          if(!c.brand) c.brand=window.brandFromName(r.item.name);
-          renderCtrlAdmin();
-          ctrlMsg("Da Odoo: "+r.item.name+" — "+r.item.price+" €. Controlla i limiti tecnici.","ok");
-          return;
-        }
-        ctrlMsg((r.message||"Non trovato.")+((r.items||[]).length
-          ? " Vicini: "+r.items.slice(0,6).map(x=>x.code).join(", ") : ""),"err");
-      });
-      cod.appendChild(ci2); cod.appendChild(go);
-      row.appendChild(cod);
+      row.appendChild(txt(c,"code","codice Odoo"));
       const rm=document.createElement("button");rm.className="rm";rm.textContent="×";rm.title="Rimuovi";
       rm.addEventListener("click",()=>{ draftControllers.splice(ci,1); renderCtrlAdmin(); });
       const acts=document.createElement("div");acts.className="cadmacts";
@@ -3049,67 +2181,14 @@
   }
 
   $("addProd").addEventListener("click",()=>{ const name=$("newProdName").value.trim(); if(!name) return; draft.push({id:"p_"+Date.now().toString(36),name,resolutions:[],cabinets:[]}); $("newProdName").value=""; renderProdList(); });
-  /* Importazione in blocco: si porta dentro tutto quello che Odoo ha e che
-     qui manca, SPENTO. I limiti tecnici Odoo non li ha, quindi un modello
-     appena importato non è ancora proponibile: si accende dopo averli
-     scritti. Meglio così che vederselo comparire in offerta a vuoto. */
-  $("importCtrl") && $("importCtrl").addEventListener("click", async ()=>{
-    const q=($("c-import").value||"").trim() || "controller";
-    const b=$("importCtrl"); b.disabled=true; b.textContent="Cerco…";
-    const r=await window.odooLookup({q});
-    b.disabled=false; b.textContent="Importa da Odoo";
-    if(!r.ok){ ctrlMsg(r.error||"Ricerca non riuscita.","err"); return; }
-    const trovati=(r.items||[]).filter(x=>x.code);
-    if(!trovati.length){ ctrlMsg('Su Odoo non c\'è nulla che somigli a "'+q+'".',"err"); return; }
-    if(!Array.isArray(draftControllers)) draftControllers=[];
-    const gia=new Set(draftControllers.map(c=>(c.code||"").trim().toLowerCase()));
-    let nuovi=0;
-    trovati.forEach(it=>{
-      if(gia.has(it.code.toLowerCase())) return;
-      draftControllers.push({
-        id:"c_"+Math.random().toString(36).slice(2,9),
-        model:it.name||it.code, code:it.code,
-        brand:window.brandFromName(it.name)||undefined,
-        price:(it.price>0?it.price:undefined),
-        active:false
-      });
-      gia.add(it.code.toLowerCase()); nuovi++;
-    });
-    renderCtrlAdmin();
-    ctrlMsg(nuovi
-      ? "Importati "+nuovi+" controller, spenti. Scrivi i limiti tecnici e accendi quelli che ti servono. Poi Salva."
-      : "Su Odoo non c'era niente di nuovo: i "+trovati.length+" trovati ci sono già.",
-      nuovi?"ok":"wait");
-  });
-
-  $("odooFill") && $("odooFill").addEventListener("click", async ()=>{
-    const codice=$("c-code").value.trim();
-    if(!codice){ ctrlMsg("Scrivi il codice dell'articolo nel campo Codice Odoo.","err"); return; }
-    const b=$("odooFill"); b.disabled=true; b.textContent="Cerco…";
-    let r=await window.odooLookup({code:codice});
-    if(r.ok && !r.found && !(r.items||[]).length) r=await window.odooLookup({q:codice});
-    b.disabled=false; b.textContent="Riempi da Odoo";
-    if(!r.ok){ ctrlMsg(r.error||"Ricerca non riuscita.","err"); return; }
-    if(r.found && r.item){
-      $("c-mod").value=r.item.name||"";
-      if(r.item.price>0) $("c-price").value=r.item.price;
-      const m=$("c-brand"); if(m && !m.value) m.value=window.brandFromName(r.item.name);
-      ctrlMsg("Da Odoo: "+r.item.name+" — "+r.item.price+" €. Restano i limiti tecnici: pixel massimi, base, altezza.","ok");
-      return;
-    }
-    const vicini=(r.items||[]).slice(0,8).map(x=>x.code+" · "+x.name).join(" | ");
-    ctrlMsg((r.message||"Non trovato.")+(vicini?"  Forse: "+vicini:""),"err");
-  });
-
   $("addCtrl").addEventListener("click",()=>{
     const model=$("c-mod").value.trim();
     const maxTotal=numOrUndef($("c-tot").value), maxBase=numOrUndef($("c-base").value), maxHeight=numOrUndef($("c-ht").value);
     if(!model||!maxTotal||!maxBase||!maxHeight){ alert("Inserisci almeno: Modello, Max px totali, base e altezza."); return; }
     draftControllers.push({ id:"c_"+Date.now().toString(36), model, maxTotal, maxBase, maxHeight,
       ports:numOrUndef($("c-ports").value), maxResPort:numOrUndef($("c-rp").value),
-      k4:($("c-k4").value.trim()||undefined), brand:(($("c-brand")&&$("c-brand").value.trim())||undefined),
-      price:numOrUndef($("c-price").value), code:($("c-code").value.trim()||undefined) });
-    ["c-mod","c-brand","c-tot","c-base","c-ht","c-ports","c-rp","c-k4","c-price","c-code"].forEach(id=>{ if($(id)) $(id).value=""; });
+      k4:($("c-k4").value.trim()||undefined), price:numOrUndef($("c-price").value), code:($("c-code").value.trim()||undefined) });
+    ["c-mod","c-tot","c-base","c-ht","c-ports","c-rp","c-k4","c-price","c-code"].forEach(id=>$(id).value="");
     renderCtrlAdmin();
   });
   $("seedHuidu").addEventListener("click",()=>{
@@ -3158,21 +2237,23 @@
   $("panelClose").addEventListener("click",closeAdmin);
 
   $("exportBtn").addEventListener("click",()=>{
-    const data=JSON.stringify({products:draft||DB.products, controllers:draftControllers||DB.controllers||[], backgrounds:draftBackgrounds||DB.backgrounds||[]},null,2);
+    const data=JSON.stringify({password:DB.password, products:draft||DB.products, controllers:draftControllers||DB.controllers||[], backgrounds:draftBackgrounds||DB.backgrounds||[]},null,2);
     const blob=new Blob([data],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="catalog.json";a.click();URL.revokeObjectURL(a.href);
   });
   $("importBtn").addEventListener("click",()=>$("importFile").click());
   $("cloudSaveBtn").addEventListener("click",async ()=>{
     const msg=$("cloudSaveMsg");
-    if(!BIGLIETTO){ msg.className="odoostatus err"; msg.textContent="Sessione scaduta: richiudi e riapri il pannello."; return; }
+    const token=prompt("Token di salvataggio (impostato su Cloudflare come ADMIN_TOKEN):");
+    if(token===null) return;
+    if(!token.trim()){ msg.className="odoostatus err"; msg.textContent="Token mancante."; return; }
     const products=(draft||DB.products).filter(p=>p.name.trim());
     const controllers=normControllers(draftControllers||DB.controllers||[]);
     const backgrounds=(draftBackgrounds||DB.backgrounds||[]).filter(b=>b&&b.img);
-    const catalog={ products, controllers, backgrounds };
+    const catalog={ password:DB.password, products, controllers, backgrounds };
     msg.className="odoostatus wait"; msg.textContent="Salvataggio sul sito in corso…";
     try{
-      const r=await fetch("/api/save-catalog",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ticket:BIGLIETTO,catalog})});
+      const r=await fetch("/api/save-catalog",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:token.trim(),catalog})});
       const d=await r.json().catch(()=>({}));
       if(r.ok&&d.ok){
         // applica subito anche in locale, così pannello e pagina restano allineati
@@ -3210,16 +2291,6 @@
           slots.push({ code:c.code.trim(), label:p.name+" · "+c.w+"×"+c.h+" (prezzo unico)",
             get:()=>c.price, set:v=>{c.price=v;} });
         }
-      });
-    });
-    (prods||[]).forEach(p=>{
-      ((p.flightcases&&p.flightcases.cases)||[]).forEach(c=>{
-        if((c.code||"").trim()) slots.push({ code:c.code.trim(), label:p.name+" \u00b7 "+(c.label||"flightcase"),
-          get:()=>c.price, set:v=>{c.price=v;} });
-      });
-      ((p.accessories&&p.accessories.items)||[]).forEach(it=>{
-        if((it.code||"").trim()) slots.push({ code:it.code.trim(), label:p.name+" \u00b7 "+(it.label||"accessorio"),
-          get:()=>it.price, set:v=>{it.price=v;} });
       });
     });
     const ctrls=draftControllers||DB.controllers||[];
@@ -3271,6 +2342,7 @@
       draft=norm.products;
       draftControllers=norm.controllers;
       draftBackgrounds=norm.backgrounds||[];
+      if(typeof obj.password==="string"&&obj.password){ DB.password=obj.password; }
       try{
         renderProdList(); renderCtrlAdmin(); renderBgAdmin();
       }catch(err){
@@ -3322,7 +2394,6 @@
       productId:S.productId, reqW:S.reqW, reqH:S.reqH,
       resId:S.res?S.res.id:null,
       selWc:S.selWc, selHc:S.selHc, selCtrls:S.selCtrls||{},
-      accSel:(S.accSel||[]).slice(),
       rot:!!S.rot,
       object:($("odooObject")&&$("odooObject").value.trim())||"",
       product:JSON.parse(JSON.stringify(rawProduct())),
@@ -3374,6 +2445,97 @@
       else setOdoo("err","Errore Odoo: "+((data&&data.error)||("HTTP "+res.status))+".");
     }catch(err){ setOdoo("err","Connettore non raggiungibile: verifica di aver pubblicato la function odoo-quote."); }
   });
+
+  /* ================= CARRELLO MULTI-SCHERMO =================
+     "Aggiungi al carrello" cattura la configurazione corrente (righe, disegno,
+     sconto, quantità) e la mette in una lista. "Invia tutta l'offerta" crea UN
+     solo preventivo Odoo con una sezione per schermo. La configurazione a monte
+     e l'invio singolo restano invariati. */
+  let CART=[];
+  function fmtEur(n){ return "€ "+Number(n||0).toLocaleString("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function setCart(cls,html){ const el=$("cartStatus"); if(!el) return; el.className="odoostatus "+cls; el.innerHTML=html; }
+  function screenLabel(it){
+    const n=it.qty, base=(it.product_desc&&it.product_desc.trim())||it.product||"Schermo LED";
+    return "N."+n+" "+(n>1?"Schermi":"Schermo")+" "+base+" — "+it.size.w+"×"+it.size.h+" mm"+(it.resolution?(" · "+it.resolution.label):"");
+  }
+  function renderCart(){
+    const host=$("cartList"); if(!host) return;
+    if(!CART.length){ host.innerHTML='<div class="cartempty">Nessuno schermo nel carrello.<br>Configura una parete e premi «+ Aggiungi al carrello».</div>';
+      $("cartTotRow").hidden=true; $("cartBar").hidden=true; return; }
+    let html="", grand=0;
+    CART.forEach((it,i)=>{
+      const line=it.unitPrice*(1-it.disc/100)*it.qty; grand+=line;
+      const net=it.unitPrice*(1-it.disc/100);
+      const sub=it.size.w+"×"+it.size.h+" mm · "+it.nCab+" cabinet"+(it.ctrlName?(" · "+it.ctrlName):"");
+      const priceHtml = it.disc>0
+        ? '<span class="cold">'+fmtEur(it.unitPrice)+'</span> <span class="cdisc">−'+it.disc+'%</span> → <span class="cprice">'+fmtEur(net)+'</span>'
+        : '<span class="cprice">'+fmtEur(net)+'</span>';
+      const qtyHtml = it.qty>1 ? (' × '+it.qty+' = <span class="cprice">'+fmtEur(line)+'</span>') : '';
+      html+='<div class="cartrow"><div class="cthumb">'+(it.previewPng?'<img src="'+it.previewPng+'" alt="">':'')+'</div>'+
+        '<div class="cinfo"><div class="ct">'+(it.product||"Schermo")+'</div>'+
+        '<div class="cs">'+sub+'<br>'+priceHtml+qtyHtml+'</div></div>'+
+        '<div class="cside"><div class="cqedit"><button data-cq="'+i+'" data-d="-1">−</button><span>'+it.qty+'</span><button data-cq="'+i+'" data-d="1">+</button></div>'+
+        '<button class="crm" data-crm="'+i+'">rimuovi</button></div></div>';
+    });
+    host.innerHTML=html;
+    $("cartTot").textContent=fmtEur(grand);
+    $("cartTotRow").hidden=false; $("cartBar").hidden=false;
+  }
+  // eventi delegati su +/- e rimuovi
+  $("cartList").addEventListener("click",e=>{
+    const q=e.target.getAttribute("data-cq"); const r=e.target.getAttribute("data-crm");
+    if(q!==null){ const i=+q,d=+e.target.getAttribute("data-d"); CART[i].qty=Math.max(1,CART[i].qty+d); renderCart(); }
+    else if(r!==null){ CART.splice(+r,1); renderCart(); if(!CART.length) $("cartCard").hidden=true; }
+  });
+
+  $("cartAdd").addEventListener("click",()=>{
+    const off=buildOffer();
+    if(!off){ setCart("err","Configura prima una parete (prodotto e misura)."); return; }
+    const disc=Math.min(90,Math.max(0,parseInt(($("scrDisc")&&$("scrDisc").value)||"0",10)||0));
+    const qty=Math.max(1,parseInt(($("scrQty")&&$("scrQty").value)||"1",10)||1);
+    const ctrlName=(off.controllers&&off.controllers.length)?off.controllers.map(c=>c.label.replace(/^Controller\s*/,"")).join(", "):"";
+    const item={
+      product:off.product, product_desc:off.product_desc, size:off.size, resolution:off.resolution,
+      lines:off.lines, unitPrice:off.totals.price, nCab:off.totals.cabinets,
+      ctrlName, disc, qty, complete:off.complete,
+      previewPng: wallPreviewPng()
+    };
+    CART.push(item);
+    if($("scrDisc")) $("scrDisc").value=0; if($("scrQty")) $("scrQty").value=1;
+    $("cartCard").hidden=false;
+    renderCart();
+    setCart("ok","Schermo aggiunto al carrello ("+CART.length+").");
+    $("cartCard").scrollIntoView({behavior:"smooth",block:"nearest"});
+  });
+
+  $("cartClear").addEventListener("click",()=>{ CART=[]; renderCart(); $("cartCard").hidden=true; });
+
+  $("cartSend").addEventListener("click",async ()=>{
+    if(!CART.length){ setCart("err","Il carrello è vuoto."); return; }
+    // verifica codici Odoo su tutte le righe
+    const incomplete=CART.some(it=>!it.complete.code);
+    if(incomplete){ setCart("err","Alcuni cabinet non hanno il codice Odoo: compilali nel pannello Amministrazione prima di inviare."); return; }
+    setCart("wait","Invio dell'offerta a Odoo…");
+    try{
+      const screens=CART.map(it=>({
+        section: screenLabel(it),
+        qty: it.qty,
+        discount: it.disc,
+        lines: it.lines,
+        previewPng: it.previewPng,
+        size: it.size, product: it.product, resolution: it.resolution
+      }));
+      const payload={ screens, object:(($("odooObject")&&$("odooObject").value.trim())||""), serial:S.serial||null };
+      const res=await fetch(ODOO_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const data=await res.json().catch(()=>({}));
+      if(res.ok && data.ok){
+        setCart("ok","Offerta creata in Odoo"+(data.name?(" — "+data.name):"")+(data.url?(' · <a href="'+data.url+'" target="_blank" rel="noopener">apri</a>'):"")+" · "+CART.length+" schermi");
+      } else {
+        setCart("err","Errore Odoo: "+((data&&data.error)||("HTTP "+res.status))+".");
+      }
+    }catch(err){ setCart("err","Connettore non raggiungibile: verifica di aver pubblicato la function odoo-quote."); }
+  });
+
   document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeAdmin(); });
 
   function updateSourceNote(){
@@ -3418,7 +2580,6 @@
       if(Array.isArray(snap.controllers)){ if(!Array.isArray(DB.controllers)) DB.controllers=[]; snap.controllers.forEach(sc=>{ const i=DB.controllers.findIndex(c=>c.id===sc.id); if(i>=0) DB.controllers[i]=sc; else DB.controllers.push(sc); }); }
       S.productId=snap.productId; S.reqW=snap.reqW; S.reqH=snap.reqH;
       S.selWc=snap.selWc; S.selHc=snap.selHc; S.selCtrls=snap.selCtrls||{};
-      S.accSel=Array.isArray(snap.accSel)?snap.accSel.slice():[];
       S.rot=!!snap.rot;
       S.serial=snap.serial||id; S.serialSig=null;
       S.selKey=S.productId+"|"+S.reqW+"x"+S.reqH; // preserva la composizione salvata
@@ -3566,7 +2727,7 @@
         else{rot.y+=dx*0.008;rot.x+=dy*0.008;rot.x=Math.max(-1.3,Math.min(1.3,rot.x));}
         px=e.clientX;py=e.clientY;apply();
       });
-      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();dist*=window.wheelFactor(e);dist=Math.max(maxDim*0.3,Math.min(maxDim*6,dist));apply();},{passive:false});
+      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();dist*=(e.deltaY>0?1.08:0.93);dist=Math.max(maxDim*0.3,Math.min(maxDim*6,dist));apply();},{passive:false});
       cv.addEventListener("touchstart",function(e){if(locked)return;if(e.touches.length===1){drag=true;px=e.touches[0].clientX;py=e.touches[0].clientY;}},{passive:true});
       cv.addEventListener("touchmove",function(e){if(locked||!drag||e.touches.length!==1)return;var t=e.touches[0],dx=t.clientX-px,dy=t.clientY-py;if(mode==="pan"){var k=dist/stage3d.clientHeight*0.9;pan.x+=dx*k;pan.y-=dy*k;}else{rot.y+=dx*0.008;rot.x+=dy*0.008;rot.x=Math.max(-1.3,Math.min(1.3,rot.x));}px=t.clientX;py=t.clientY;apply();},{passive:true});
       cv.addEventListener("touchend",function(){drag=false;});
@@ -3589,7 +2750,6 @@
     function show(){
       $("view3d").classList.add("on");$("viewFlat").classList.remove("on");
       $("stage").hidden=true; $("stage3d").hidden=false; visible=true;
-      window.viewOpened($("stage3d"));
       loadThree(function(ok){
         if(!ok){$("d3err").hidden=false;$("c3d").style.display="none";return;}
         $("d3err").hidden=true; $("c3d").style.display="block";
@@ -3601,13 +2761,10 @@
     function flat(){
       $("viewFlat").classList.add("on");$("view3d").classList.remove("on");
       $("stage3d").hidden=true; $("stage").hidden=false; visible=false;
-      window.viewClosed();
     }
 
     $("view3d").addEventListener("click",show);
     $("viewFlat").addEventListener("click",flat);
-    var bf=$("d3full"); bf&&bf.addEventListener("click",function(){ window.toggleFullscreen($("stage3d")); });
-    var bc=$("d3close"); bc&&bc.addEventListener("click",flat);
     window.addEventListener("resize",resize);
 
     // API usata da render()
@@ -3803,7 +2960,7 @@
       cv.addEventListener("touchstart",function(e){if(locked||e.touches.length!==1)return;if(ledMove){ld=true;lpx=e.touches[0].clientX;lpy=e.touches[0].clientY;}else if(photoMove){ld="photo";lpx=e.touches[0].clientX;lpy=e.touches[0].clientY;}},{passive:true});
       cv.addEventListener("touchmove",function(e){if(!ld||e.touches.length!==1)return;var t=e.touches[0];if(ld==="photo"){ph.x+=t.clientX-lpx;ph.y+=t.clientY-lpy;applyPhoto();}else{translateAll(t.clientX-lpx,t.clientY-lpy);}lpx=t.clientX;lpy=t.clientY;},{passive:true});
       cv.addEventListener("touchend",function(){ld=false;});
-      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();scaleAll(1/window.wheelFactor(e));},{passive:false});
+      cv.addEventListener("wheel",function(e){if(locked)return;e.preventDefault();scaleAll(e.deltaY>0?1/1.06:1.06);},{passive:false});
 
       // foto
       $("mpZin").addEventListener("click",function(){ph.scale=Math.min(6,ph.scale*1.12);applyPhoto();});
@@ -3878,22 +3035,16 @@
     function show(){
       $("viewMock").classList.add("on"); $("viewFlat").classList.remove("on"); $("view3d").classList.remove("on");
       $("stage").hidden=true; $("stage3d").hidden=true; $("stagemock").hidden=false; visible=true;
-      window.viewOpened($("stagemock"));
+      var pc=previewCard(); if(pc) pc.classList.add("mockwide");
       if(!ready)initEngine();
       if(dirty){build();dirty=false;}
       refreshScenes();
       // la larghezza è cambiata: ricalcola canvas e ricostruisci la posa
       requestAnimationFrame(function(){ fit(); if(dst){initDst();} draw(); });
     }
-    function hide(){
-      $("stagemock").hidden=true; visible=false;
-      var t=$("stage3d"); if(!t || t.hidden) $("stage").hidden=false;
-      window.viewClosed();
-    }
+    function hide(){ $("stagemock").hidden=true; visible=false; var pc=previewCard(); if(pc) pc.classList.remove("mockwide"); }
 
     $("viewMock").addEventListener("click",show);
-    var mf=$("mFull"); mf&&mf.addEventListener("click",function(){ window.toggleFullscreen($("stagemock")); });
-    var mc=$("mClose"); mc&&mc.addEventListener("click",function(){ $("viewMock").classList.remove("on"); $("viewFlat").classList.add("on"); hide(); });
     var vf=$("viewFlat"), v3=$("view3d");
     vf&&vf.addEventListener("click",function(){$("viewMock").classList.remove("on");hide();});
     v3&&v3.addEventListener("click",function(){$("viewMock").classList.remove("on");hide();});
