@@ -468,6 +468,31 @@
   .carttot{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;padding-top:12px;border-top:2px solid var(--line)}
   .carttot .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
   .carttot .v{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--price)}
+  /* ---- Importa risoluzioni da Odoo (pannello) ---- */
+  .pimp{margin:10px 0 4px;padding:11px 12px;border:1px dashed var(--line);border-radius:12px;background:var(--panel-2)}
+  .pimp>label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-2);margin-bottom:7px}
+  .pimprow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .pimpin{flex:0 0 180px;padding:8px 10px;font-family:var(--mono);font-size:13px}
+  .pimpprev{margin-top:10px}
+  .pimpmsg{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .pimpmsg.err{color:var(--danger)}
+  .pimpres{margin:8px 0;border:1px solid var(--line-soft);border-radius:10px;padding:8px 10px;background:var(--panel)}
+  .pimprh{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px}
+  .pimptbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+  .pimptbl th{text-align:left;color:var(--muted-2);font-weight:600;font-size:10.5px;text-transform:uppercase;padding:2px 6px}
+  .pimptbl td{padding:3px 6px;border-top:1px solid var(--line-soft);color:var(--ink)}
+  .pimptbl code{font-size:11px;color:var(--muted)}
+  .pimptag{font-family:var(--mono);font-size:9.5px;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+  .pimptag.new{background:rgba(15,122,72,.14);color:var(--price)}
+  .pimptag.exist{background:var(--panel-2);color:var(--muted-2);border:1px solid var(--line-soft)}
+  .pimptag.warn{background:rgba(154,98,6,.15);color:var(--pct)}
+  .pimpsec{margin-top:8px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .pimpsec.err{color:var(--danger)}
+  .pimpsec ul{margin:4px 0 0;padding-left:16px}
+  .pimpsec code{font-size:11px}
+  .pimpbar{display:flex;gap:8px;margin-top:10px}
+  .pimpbanner{font-family:var(--mono);font-size:12px;padding:9px 12px;border-radius:10px;margin-bottom:10px}
+  .pimpbanner.ok{background:rgba(15,122,72,.12);color:var(--price);border:1px solid rgba(15,122,72,.3)}
   .vtag{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--muted-2);background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;padding:2px 7px;margin-left:9px;vertical-align:middle;letter-spacing:.02em;white-space:nowrap}
   .cartfab{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;align-items:center;gap:7px;background:var(--price);color:#fff;border:0;border-radius:999px;padding:11px 17px;font-family:var(--mono);font-size:13px;font-weight:700;box-shadow:0 6px 22px rgba(0,0,0,.22);cursor:pointer}
   .cartfab b{font-size:15px}
@@ -2753,6 +2778,92 @@
     return sec;
   }
 
+  /* ===== IMPORTA RISOLUZIONI DA ODOO =====
+     Dato un prefisso codice (es. LWI15) legge gli articoli da Odoo (odooLookup),
+     scarta moduli/ricambi, ricava pitch e misura DAL NOME, mappa solo i cabinet
+     gia' presenti nel prodotto, segnala duplicati/conflitti, mostra un'anteprima
+     e con un ok aggiunge le risoluzioni mancanti coi prezzi e i codici Odoo. */
+  function odEsc(x){ return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function odImpParse(items){
+    var kept=[], skipped=[];
+    (items||[]).forEach(function(it){
+      var code=(it.code||"").trim(), name=(it.name||"").trim(), price=Number(it.price)||0;
+      if(!code) return;
+      if(/^(MOD|CAL|SPARE)/i.test(code) || /\b(modul|spare|ricambio)/i.test(name)){ skipped.push({code:code,reason:"modulo/ricambio"}); return; }
+      var mp=name.match(/P\s*([0-9]+(?:[.,][0-9]+)?)/i);
+      var md=name.match(/([0-9]+)\s*[x×]\s*([0-9]+(?:[.,][0-9]+)?)/);
+      if(!mp){ skipped.push({code:code,reason:"pitch non rilevato dal nome"}); return; }
+      if(!md){ skipped.push({code:code,reason:"misura non rilevata dal nome"}); return; }
+      var pitchStr=mp[1].replace('.',','); var pitch=parseFloat(mp[1].replace(',','.'));
+      var w=parseInt(md[1],10); var h=parseFloat(md[2].replace(',','.'));
+      var gob=/gob/i.test(code)||/gob/i.test(name);
+      kept.push({code:code,name:name,price:price,pitch:pitch,pitchStr:pitchStr,gob:gob,w:w,h:h});
+    });
+    return {kept:kept, skipped:skipped};
+  }
+  function odImpPlan(p, items){
+    var pr=odImpParse(items), kept=pr.kept, skipped=pr.skipped, conflicts=[];
+    var byCode={}; kept.forEach(function(r){ (byCode[r.code]=byCode[r.code]||[]).push(r); });
+    var blocked={};
+    Object.keys(byCode).forEach(function(c){
+      var arr=byCode[c], prices=arr.map(function(x){return x.price;}).filter(function(v,i,a){return a.indexOf(v)===i;});
+      if(prices.length>1){ blocked[c]=true; conflicts.push({code:c, detail:"codice duplicato su Odoo con prezzi diversi ("+prices.map(fmtEur).join(" / ")+") — sistemalo su Odoo"}); }
+    });
+    var resMap={};
+    kept.forEach(function(r){
+      if(blocked[r.code]) return;
+      var key=(r.gob?"G":"")+r.pitch.toFixed(4), res=resMap[key];
+      if(!res){
+        var ex=(p.resolutions||[]).find(function(e){ return Math.abs((e.pitch||0)-r.pitch)<0.0005 && (String(e.label||"").toUpperCase().indexOf("GOB")>=0)===r.gob; });
+        res={key:key, pitch:r.pitch, gob:r.gob, label: ex?ex.label:((r.gob?"GOB ":"")+"P"+r.pitchStr), resId: ex?ex.id:rid(), isNew: !ex, rows:[]};
+        resMap[key]=res;
+      }
+      var cab=(p.cabinets||[]).find(function(c){ return c.w===r.w && c.h===r.h; });
+      if(!cab){ skipped.push({code:r.code,reason:"cabinet "+r.w+"×"+r.h+" non presente nel prodotto"}); return; }
+      var dup=res.rows.find(function(x){ return x.cab===cab; });
+      if(dup){ if(dup.code!==r.code||dup.price!==r.price){ conflicts.push({code:r.code, detail:"piu' articoli per "+r.w+"×"+r.h+" a "+res.label}); } return; }
+      res.rows.push({cab:cab, w:r.w, h:r.h, price:r.price, code:r.code, overwrite: !!(cab.prices&&cab.prices[res.resId]!=null)});
+    });
+    var resolutions=Object.keys(resMap).map(function(k){return resMap[k];}).filter(function(r){return r.rows.length;});
+    return {resolutions:resolutions, skipped:skipped, conflicts:conflicts};
+  }
+  function odImpApply(p, plan){
+    var nRes=0, nPr=0;
+    plan.resolutions.forEach(function(res){
+      if(res.isNew){ p.resolutions=p.resolutions||[]; p.resolutions.push({id:res.resId, label:res.label, pitch:res.pitch}); nRes++; }
+      res.rows.forEach(function(row){ row.cab.prices=row.cab.prices||{}; row.cab.codes=row.cab.codes||{}; row.cab.prices[res.resId]=row.price; row.cab.codes[res.resId]=row.code; nPr++; });
+    });
+    return {nRes:nRes, nPr:nPr};
+  }
+  function odImpRender(p, plan, host){
+    host.hidden=false;
+    if(!plan.resolutions.length && !plan.skipped.length && !plan.conflicts.length){ host.innerHTML='<div class="pimpmsg">Nessun articolo trovato per quel prefisso.</div>'; return; }
+    var h='';
+    plan.resolutions.forEach(function(res){
+      h+='<div class="pimpres"><div class="pimprh">'+odEsc(res.label)+' <span class="pimptag '+(res.isNew?'new':'exist')+'">'+(res.isNew?'nuova risoluzione':'risoluzione esistente')+'</span></div>';
+      h+='<table class="pimptbl"><tr><th>Cabinet</th><th>Prezzo</th><th>Codice Odoo</th></tr>';
+      res.rows.forEach(function(row){ h+='<tr><td>'+row.w+'×'+row.h+'</td><td>'+fmtEur(row.price)+(row.overwrite?' <span class="pimptag warn">sovrascrive</span>':'')+'</td><td><code>'+odEsc(row.code)+'</code></td></tr>'; });
+      h+='</table></div>';
+    });
+    if(plan.conflicts.length){ h+='<div class="pimpsec err"><b>Da sistemare su Odoo ('+plan.conflicts.length+')</b><ul>'; plan.conflicts.forEach(function(c){ h+='<li><code>'+odEsc(c.code)+'</code> — '+odEsc(c.detail)+'</li>'; }); h+='</ul></div>'; }
+    if(plan.skipped.length){ h+='<div class="pimpsec"><b>Ignorati ('+plan.skipped.length+')</b><ul>'; plan.skipped.forEach(function(sk){ h+='<li><code>'+odEsc(sk.code)+'</code> — '+odEsc(sk.reason)+'</li>'; }); h+='</ul></div>'; }
+    var canApply=plan.resolutions.length>0;
+    h+='<div class="pimpbar">'+(canApply?'<button type="button" class="btn primary sm" data-imp="go">Aggiungi al catalogo</button>':'')+'<button type="button" class="btn ghost sm" data-imp="close">Chiudi</button></div>';
+    host.innerHTML=h;
+    var goBtn=host.querySelector('[data-imp="go"]');
+    if(goBtn){ goBtn.addEventListener('click', function(){ var r=odImpApply(p, plan); apertiProd.add(p.id); renderProdList(); var pl=$("prodList"); if(pl){ var b=document.createElement('div'); b.className='pimpbanner ok'; b.textContent='Aggiunte '+r.nRes+' risoluzioni e '+r.nPr+' prezzi a «'+p.name+' ». Premi « Salva sul sito » per renderle attive per tutti.'; pl.insertBefore(b, pl.children[1]||null); b.scrollIntoView({behavior:"smooth",block:"nearest"}); } }); }
+    var clBtn=host.querySelector('[data-imp="close"]');
+    if(clBtn){ clBtn.addEventListener('click', function(){ host.hidden=true; host.innerHTML=''; }); }
+  }
+  async function odImpSearch(p, prefix, host, btn){
+    if(!prefix){ host.hidden=false; host.innerHTML='<div class="pimpmsg err">Scrivi un prefisso codice, es. LWI15.</div>'; return; }
+    btn.disabled=true; var old=btn.textContent; btn.textContent='Cerco su Odoo…';
+    var res=await window.odooLookup({q:prefix});
+    btn.disabled=false; btn.textContent=old;
+    if(!res || res.ok===false){ host.hidden=false; host.innerHTML='<div class="pimpmsg err">'+odEsc((res&&res.error)||'Odoo non raggiungibile.')+'</div>'; return; }
+    odImpRender(p, odImpPlan(p, res.items||[]), host);
+  }
+
   function renderProdList(){
     const host=$("prodList");host.innerHTML="";
     // barra di ricerca
@@ -2819,6 +2930,16 @@
       const di=document.createElement("input");di.type="text";di.placeholder="es. Schermo ledwall da esterno";if(p.desc)di.value=p.desc;
       di.addEventListener("input",()=>p.desc=(di.value||undefined));
       dwrap.appendChild(dl);dwrap.appendChild(di);box.appendChild(dwrap);
+
+      // --- Importa risoluzioni da Odoo (per prodotto) ---
+      var iwrap=document.createElement("div"); iwrap.className="pimp";
+      var ilab=document.createElement("label"); ilab.textContent="Importa risoluzioni da Odoo (per prefisso codice)";
+      var irow=document.createElement("div"); irow.className="pimprow";
+      var iin=document.createElement("input"); iin.type="text"; iin.placeholder="es. LWI15"; iin.className="pimpin";
+      var ibtn=document.createElement("button"); ibtn.type="button"; ibtn.className="btn ghost sm"; ibtn.textContent="Cerca su Odoo";
+      var iprev=document.createElement("div"); iprev.className="pimpprev"; iprev.hidden=true;
+      irow.appendChild(iin); irow.appendChild(ibtn); iwrap.appendChild(ilab); iwrap.appendChild(irow); iwrap.appendChild(iprev); box.appendChild(iwrap);
+      (function(pp,inp,prev,button){ button.addEventListener("click",function(){ odImpSearch(pp, inp.value.trim(), prev, button); }); inp.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); button.click(); } }); })(p, iin, iprev, ibtn);
 
       // --- consumo medio per metro quadro (W/m²) a livello prodotto ---
       const cwrap=document.createElement("div");cwrap.className="pdesc pwsq";
