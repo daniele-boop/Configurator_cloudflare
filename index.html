@@ -1922,7 +1922,7 @@
   let STOCK={}, STOCK_PROD=null, STOCK_LOADING=false;
   function resInStock(p,r){
     let has=false, allok=true;
-    (p.cabinets||[]).forEach(c=>{ const code=c.codes&&c.codes[r.id]; if(code){ has=true; if(!(STOCK[code]>0)) allok=false; } });
+    (p.cabinets||[]).forEach(c=>{ const code=c.codes&&c.codes[r.id]; if(code && (code in STOCK)){ has=true; if(!(STOCK[code]>0)) allok=false; } });
     return has&&allok;
   }
   function decoratePitchStock(){
