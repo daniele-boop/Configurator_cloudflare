@@ -465,6 +465,8 @@
   .cqedit button{width:25px;height:25px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);cursor:pointer;font-family:var(--mono);font-weight:700}
   .cqedit span{font-family:var(--mono);font-size:13px;font-weight:700;min-width:20px;text-align:center}
   .crm{font-family:var(--mono);font-size:10.5px;color:var(--danger);background:none;border:0;cursor:pointer;text-decoration:underline;padding:0}
+  .cedit{font-family:var(--mono);font-size:10.5px;color:var(--price);background:none;border:0;cursor:pointer;text-decoration:underline;padding:0}
+  #cartAdd.editing{background:var(--pct);border-color:var(--pct);color:#fff}
   .carttot{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;padding-top:12px;border-top:2px solid var(--line)}
   .carttot .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
   .carttot .v{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--price)}
@@ -3557,8 +3559,40 @@
      solo preventivo Odoo con una sezione per schermo. La configurazione a monte
      e l'invio singolo restano invariati. */
   let CART=[];
+  let editIndex=null;
+  const CART_ADD_LABEL="+ Aggiungi al carrello";
   function fmtEur(n){ return "€ "+Number(n||0).toLocaleString("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function setCart(cls,html){ const el=$("cartStatus"); if(!el) return; el.className="odoostatus "+cls; el.innerHTML=html; }
+  function setEditMode(i){
+    editIndex=(i==null?null:i);
+    const b=$("cartAdd"); if(b){ b.textContent=(editIndex==null?CART_ADD_LABEL:("✓ Aggiorna schermo "+(editIndex+1)+" nel carrello")); b.classList.toggle("editing", editIndex!=null); }
+  }
+  function cartRestore(snap){
+    if(!snap) return;
+    S.productId=snap.productId; S.reqW=snap.reqW; S.reqH=snap.reqH;
+    S.selWc=snap.selWc; S.selHc=snap.selHc; S.selCtrls=snap.selCtrls||{};
+    S.accSel=Array.isArray(snap.accSel)?snap.accSel.slice():[];
+    S.rot=!!snap.rot;
+    S.selKey=S.productId+"|"+S.reqW+"x"+S.reqH;
+    if($("inBase")) $("inBase").value=S.reqW||""; if($("inHeight")) $("inHeight").value=S.reqH||"";
+    fillProductSelect(); if($("inProduct")) $("inProduct").value=S.productId;
+    fillPitchSelect(); if(snap.resId && $("inPitch")) $("inPitch").value=snap.resId;
+    if(snap.object!=null && $("odooObject")) $("odooObject").value=snap.object;
+    render();
+  }
+  function cancelEdit(){ setEditMode(null); const el=$("cartStatus"); if(el){ el.className="odoostatus"; el.innerHTML=""; } }
+  function cartEdit(i){
+    const it=CART[i]; if(!it) return;
+    if(!it.snap){ setCart("err","Questo schermo è stato aggiunto con una versione precedente: rimuovilo e ricrealo per poterlo modificare."); return; }
+    cartRestore(it.snap);
+    if($("scrDisc")) $("scrDisc").value=(it.disc||0);
+    if($("scrQty")) $("scrQty").value=(it.qty||1);
+    setEditMode(i);
+    if($("cartCard")) $("cartCard").hidden=false;
+    setCart("wait","Stai modificando lo schermo "+(i+1)+": cambia ciò che serve e premi « Aggiorna schermo "+(i+1)+" ». <a href=\"#\" data-editcancel=\"1\">annulla</a>");
+    const cs=$("cartStatus"); const cx=cs&&cs.querySelector('[data-editcancel]'); if(cx) cx.addEventListener('click',function(e){ e.preventDefault(); cancelEdit(); });
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
   function screenLabel(it){
     const n=it.qty, base=(it.product_desc&&it.product_desc.trim())||it.product||"Schermo LED";
     return "N."+n+" "+(n>1?"Schermi":"Schermo")+" "+base+" — "+it.size.w+"×"+it.size.h+" mm"+(it.resolution?(" · "+it.resolution.label):"");
@@ -3580,7 +3614,7 @@
         '<div class="cinfo"><div class="ct">'+(it.product||"Schermo")+'</div>'+
         '<div class="cs">'+sub+'<br>'+priceHtml+qtyHtml+'</div></div>'+
         '<div class="cside"><div class="cqedit"><button data-cq="'+i+'" data-d="-1">−</button><span>'+it.qty+'</span><button data-cq="'+i+'" data-d="1">+</button></div>'+
-        '<button class="crm" data-crm="'+i+'">rimuovi</button></div></div>';
+        '<button class="cedit" data-edit="'+i+'">modifica</button> <button class="crm" data-crm="'+i+'">rimuovi</button></div></div>';
     });
     host.innerHTML=html;
     $("cartTot").textContent=fmtEur(grand);
@@ -3589,9 +3623,10 @@
   }
   // eventi delegati su +/- e rimuovi
   $("cartList").addEventListener("click",e=>{
-    const q=e.target.getAttribute("data-cq"); const r=e.target.getAttribute("data-crm");
+    const q=e.target.getAttribute("data-cq"); const r=e.target.getAttribute("data-crm"); const ed=e.target.getAttribute("data-edit");
     if(q!==null){ const i=+q,d=+e.target.getAttribute("data-d"); CART[i].qty=Math.max(1,CART[i].qty+d); renderCart(); }
-    else if(r!==null){ CART.splice(+r,1); renderCart(); if(!CART.length) $("cartCard").hidden=true; }
+    else if(ed!==null){ cartEdit(+ed); }
+    else if(r!==null){ const ri=+r; CART.splice(ri,1); if(editIndex!=null){ if(ri===editIndex) setEditMode(null); else if(ri<editIndex) editIndex--; } renderCart(); if(!CART.length) $("cartCard").hidden=true; }
   });
 
   $("cartAdd").addEventListener("click",()=>{
@@ -3600,12 +3635,29 @@
     const disc=Math.min(90,Math.max(0,parseInt(($("scrDisc")&&$("scrDisc").value)||"0",10)||0));
     const qty=Math.max(1,parseInt(($("scrQty")&&$("scrQty").value)||"1",10)||1);
     const ctrlName=(off.controllers&&off.controllers.length)?off.controllers.map(c=>c.label.replace(/^Controller\s*/,"")).join(", "):"";
+    const snap={
+      productId:S.productId, reqW:S.reqW, reqH:S.reqH, resId:S.res?S.res.id:null,
+      selWc:S.selWc?JSON.parse(JSON.stringify(S.selWc)):null,
+      selHc:S.selHc?JSON.parse(JSON.stringify(S.selHc)):null,
+      selCtrls:JSON.parse(JSON.stringify(S.selCtrls||{})),
+      accSel:(S.accSel||[]).slice(), rot:!!S.rot,
+      object:(($("odooObject")&&$("odooObject").value.trim())||"")
+    };
     const item={
       product:off.product, product_desc:off.product_desc, size:off.size, resolution:off.resolution,
       lines:off.lines, unitPrice:off.totals.price, nCab:off.totals.cabinets,
       ctrlName, disc, qty, complete:off.complete,
-      previewPng: wallPreviewPng()
+      previewPng: wallPreviewPng(), snap:snap
     };
+    if(editIndex!=null && CART[editIndex]){
+      const idx=editIndex; CART[idx]=item; setEditMode(null);
+      if($("scrDisc")) $("scrDisc").value=0; if($("scrQty")) $("scrQty").value=1;
+      if($("cartCard")) $("cartCard").hidden=false;
+      renderCart();
+      setCart("ok","Schermo "+(idx+1)+" aggiornato nel carrello.");
+      window.scrollTo({top:0,behavior:"smooth"});
+      return;
+    }
     CART.push(item);
     if($("scrDisc")) $("scrDisc").value=0; if($("scrQty")) $("scrQty").value=1;
     $("cartCard").hidden=false;
@@ -3614,7 +3666,7 @@
     window.scrollTo({top:0,behavior:"smooth"});
   });
 
-  $("cartClear").addEventListener("click",()=>{ CART=[]; renderCart(); $("cartCard").hidden=true; });
+  $("cartClear").addEventListener("click",()=>{ CART=[]; setEditMode(null); renderCart(); $("cartCard").hidden=true; });
 
   $("cartSend").addEventListener("click",async ()=>{
     if(!CART.length){ setCart("err","Il carrello è vuoto."); return; }
