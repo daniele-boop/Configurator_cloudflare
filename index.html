@@ -490,7 +490,9 @@
   .pimpsec.err{color:var(--danger)}
   .pimpsec ul{margin:4px 0 0;padding-left:16px}
   .pimpsec code{font-size:11px}
-  .pimpbar{display:flex;gap:8px;margin-top:10px}
+  .pimpchk{cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .pimpchk input{width:15px;height:15px;cursor:pointer;accent-color:var(--price)}
+  .pimpbar{display:flex;gap:8px;margin-top:10px;align-items:center}
   .pimpbanner{font-family:var(--mono);font-size:12px;padding:9px 12px;border-radius:10px;margin-bottom:10px}
   .pimpbanner.ok{background:rgba(15,122,72,.12);color:var(--price);border:1px solid rgba(15,122,72,.3)}
   .vtag{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--muted-2);background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;padding:2px 7px;margin-left:9px;vertical-align:middle;letter-spacing:.02em;white-space:nowrap}
@@ -2825,11 +2827,13 @@
       res.rows.push({cab:cab, w:r.w, h:r.h, price:r.price, code:r.code, overwrite: !!(cab.prices&&cab.prices[res.resId]!=null)});
     });
     var resolutions=Object.keys(resMap).map(function(k){return resMap[k];}).filter(function(r){return r.rows.length;});
+    // "gemello": stessa pitch ma GOB diverso (probabile doppione GOB / non-GOB su Odoo)
+    resolutions.forEach(function(a){ a.twin=resolutions.some(function(b){ return b!==a && Math.abs(b.pitch-a.pitch)<0.0005 && b.gob!==a.gob; }); });
     return {resolutions:resolutions, skipped:skipped, conflicts:conflicts};
   }
-  function odImpApply(p, plan){
+  function odImpApply(p, resolutions){
     var nRes=0, nPr=0;
-    plan.resolutions.forEach(function(res){
+    resolutions.forEach(function(res){
       if(res.isNew){ p.resolutions=p.resolutions||[]; p.resolutions.push({id:res.resId, label:res.label, pitch:res.pitch}); nRes++; }
       res.rows.forEach(function(row){ row.cab.prices=row.cab.prices||{}; row.cab.codes=row.cab.codes||{}; row.cab.prices[res.resId]=row.price; row.cab.codes[res.resId]=row.code; nPr++; });
     });
@@ -2839,8 +2843,12 @@
     host.hidden=false;
     if(!plan.resolutions.length && !plan.skipped.length && !plan.conflicts.length){ host.innerHTML='<div class="pimpmsg">Nessun articolo trovato per quel prefisso.</div>'; return; }
     var h='';
-    plan.resolutions.forEach(function(res){
-      h+='<div class="pimpres"><div class="pimprh">'+odEsc(res.label)+' <span class="pimptag '+(res.isNew?'new':'exist')+'">'+(res.isNew?'nuova risoluzione':'risoluzione esistente')+'</span></div>';
+    plan.resolutions.forEach(function(res,idx){
+      // deseleziona di default un probabile doppione: NUOVA + non-GOB + ha un gemello GOB
+      var dubbia = res.isNew && res.twin && !res.gob;
+      var checked = dubbia ? '' : ' checked';
+      h+='<div class="pimpres"><div class="pimprh"><label class="pimpchk"><input type="checkbox" data-res="'+idx+'"'+checked+'> '+odEsc(res.label)+'</label> <span class="pimptag '+(res.isNew?'new':'exist')+'">'+(res.isNew?'nuova risoluzione':'risoluzione esistente')+'</span>'+(dubbia?' <span class="pimptag warn">probabile doppione non-GOB</span>':'')+'</div>';
+      if(dubbia) h+='<div class="pimpsec err" style="margin:2px 0 6px">Stesso prezzo e stessi cabinet della versione GOB: di solito NON va importata. L’ho lasciata deselezionata.</div>';
       h+='<table class="pimptbl"><tr><th>Cabinet</th><th>Prezzo</th><th>Codice Odoo</th></tr>';
       res.rows.forEach(function(row){ h+='<tr><td>'+row.w+'×'+row.h+'</td><td>'+fmtEur(row.price)+(row.overwrite?' <span class="pimptag warn">sovrascrive</span>':'')+'</td><td><code>'+odEsc(row.code)+'</code></td></tr>'; });
       h+='</table></div>';
@@ -2848,10 +2856,14 @@
     if(plan.conflicts.length){ h+='<div class="pimpsec err"><b>Da sistemare su Odoo ('+plan.conflicts.length+')</b><ul>'; plan.conflicts.forEach(function(c){ h+='<li><code>'+odEsc(c.code)+'</code> — '+odEsc(c.detail)+'</li>'; }); h+='</ul></div>'; }
     if(plan.skipped.length){ h+='<div class="pimpsec"><b>Ignorati ('+plan.skipped.length+')</b><ul>'; plan.skipped.forEach(function(sk){ h+='<li><code>'+odEsc(sk.code)+'</code> — '+odEsc(sk.reason)+'</li>'; }); h+='</ul></div>'; }
     var canApply=plan.resolutions.length>0;
-    h+='<div class="pimpbar">'+(canApply?'<button type="button" class="btn primary sm" data-imp="go">Aggiungi al catalogo</button>':'')+'<button type="button" class="btn ghost sm" data-imp="close">Chiudi</button></div>';
+    h+='<div class="pimpbar">'+(canApply?'<button type="button" class="btn primary sm" data-imp="go">Aggiungi le selezionate</button>':'')+'<button type="button" class="btn ghost sm" data-imp="close">Chiudi</button></div>';
     host.innerHTML=h;
     var goBtn=host.querySelector('[data-imp="go"]');
-    if(goBtn){ goBtn.addEventListener('click', function(){ var r=odImpApply(p, plan); apertiProd.add(p.id); renderProdList(); var pl=$("prodList"); if(pl){ var b=document.createElement('div'); b.className='pimpbanner ok'; b.textContent='Aggiunte '+r.nRes+' risoluzioni e '+r.nPr+' prezzi a «'+p.name+' ». Premi « Salva sul sito » per renderle attive per tutti.'; pl.insertBefore(b, pl.children[1]||null); b.scrollIntoView({behavior:"smooth",block:"nearest"}); } }); }
+    if(goBtn){ goBtn.addEventListener('click', function(){
+      var sel=[]; Array.prototype.forEach.call(host.querySelectorAll('input[data-res]'), function(cb){ if(cb.checked) sel.push(plan.resolutions[+cb.getAttribute('data-res')]); });
+      if(!sel.length){ var w=host.querySelector('.pimpbar'); if(w){ var m=document.createElement('span'); m.className='pimpmsg err'; m.textContent='Seleziona almeno una risoluzione.'; w.appendChild(m); } return; }
+      var r=odImpApply(p, sel); apertiProd.add(p.id); renderProdList(); var pl=$("prodList"); if(pl){ var b=document.createElement('div'); b.className='pimpbanner ok'; b.textContent='Aggiunte '+r.nRes+' risoluzioni e '+r.nPr+' prezzi a «'+p.name+' ». Premi « Salva sul sito » per renderle attive per tutti.'; pl.insertBefore(b, pl.children[1]||null); b.scrollIntoView({behavior:"smooth",block:"nearest"}); }
+    }); }
     var clBtn=host.querySelector('[data-imp="close"]');
     if(clBtn){ clBtn.addEventListener('click', function(){ host.hidden=true; host.innerHTML=''; }); }
   }
