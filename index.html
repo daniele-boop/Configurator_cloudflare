@@ -452,6 +452,7 @@
   .offobj input{width:100%;padding:11px 13px;font-size:14px;font-family:var(--mono)}
   .odoostatus{font-family:var(--mono);font-size:11.5px;margin-top:9px;line-height:1.5}
   .stockleg{display:block;margin-top:6px;font-family:var(--mono);font-size:10.5px;color:var(--muted-2)}
+  .stockdot{color:#16a34a}
   /* ---- carrello multi-schermo (usa le variabili di tema esistenti) ---- */
   .cartadd{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
   .cartadd .fldc .lab{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-2);margin-bottom:5px}
@@ -634,7 +635,7 @@
         <label class="fld">
           <span class="lab"><span class="hint">Risoluzione (opzionale)</span></span>
           <select id="inPitch"><option value="0">— nessuna</option></select>
-          <span class="stockleg" id="stockLeg" hidden>🟢 = cabinet a magazzino (Odoo)</span>
+          <span class="stockleg" id="stockLeg" hidden><span class="stockdot">&#9679;</span> = cabinet a magazzino (Odoo)</span>
         </label>
       </section>
 
@@ -1918,45 +1919,67 @@
     if([...sel.options].some(o=>o.value===prev)) sel.value=prev;
     else sel.value = res.length ? res[0].id : "";   // predefinita: prima risoluzione del modello
   }
-  // ---- giacenza Odoo: pallino verde nella tendina risoluzioni ----
-  let STOCK={}, STOCK_PROD=null, STOCK_LOADING=false;
+  // ---- giacenza Odoo: pallino verde nelle tendine prodotto e risoluzione ----
+  let STOCK={}, STOCK_LOADED=false, STOCK_LOADING=false;
+  const STK_DOT="● ";              // pallino piccolo (● a dimensione testo, non emoji)
+  const STK_COL="#16a34a";             // verde "disponibile"
   function resInStock(p,r){
     let has=false, allok=true;
     (p.cabinets||[]).forEach(c=>{ const code=c.codes&&c.codes[r.id]; if(code && (code in STOCK)){ has=true; if(!(STOCK[code]>0)) allok=false; } });
     return has&&allok;
   }
+  function prodInStock(p){ return (p.resolutions||[]).some(r=>resInStock(p,r)); }
+  function updateStockLeg(){
+    const leg=$("stockLeg"); if(!leg) return;
+    const scan=id=>{ const s=$(id); return s ? [...s.options].some(o=>o.dataset.stk==="1") : false; };
+    leg.hidden = !(scan("inProduct")||scan("inPitch"));
+  }
   function decoratePitchStock(){
     const p=currentProduct(); const sel=$("inPitch"); if(!p||!sel) return;
-    let anyGreen=false;
     [...sel.options].forEach(o=>{
       if(!o.value){ return; }
       const r=(p.resolutions||[]).find(x=>x.id===o.value); if(!r) return;
       if(!o.dataset.base) o.dataset.base=o.textContent;
-      const ok=resInStock(p,r); if(ok) anyGreen=true;
-      o.textContent=(ok?"🟢 ":"")+o.dataset.base;
+      const ok=resInStock(p,r);
+      o.dataset.stk=ok?"1":"";
+      o.textContent=(ok?STK_DOT:"")+o.dataset.base;
+      o.style.color=ok?STK_COL:"";
       o.title=ok?"Cabinet a magazzino (Odoo)":"";
     });
-    const leg=$("stockLeg"); if(leg) leg.hidden=!anyGreen;
+    updateStockLeg();
   }
-  async function ensureStock(){
-    const p=currentProduct(); if(!p){ return; }
-    if(STOCK_PROD===p.id || STOCK_LOADING){ decoratePitchStock(); return; }
-    const codes=[]; (p.cabinets||[]).forEach(c=>Object.values(c.codes||{}).forEach(v=>{ if(v) codes.push(v); }));
+  function decorateProductStock(){
+    const sel=$("inProduct"); if(!sel) return;
+    [...sel.options].forEach(o=>{
+      const p=(DB.products||[]).find(x=>x.id===o.value); if(!p) return;
+      if(!o.dataset.base) o.dataset.base=o.textContent;
+      const ok=prodInStock(p);
+      o.dataset.stk=ok?"1":"";
+      o.textContent=(ok?STK_DOT:"")+o.dataset.base;
+      o.style.color=ok?STK_COL:"";
+      o.title=ok?"Ha risoluzioni a magazzino (Odoo)":"";
+    });
+    updateStockLeg();
+  }
+  async function ensureStockAll(){
+    if(STOCK_LOADED){ decorateProductStock(); decoratePitchStock(); return; }
+    if(STOCK_LOADING) return;
+    const codes=[]; (DB.products||[]).forEach(p=>(p.cabinets||[]).forEach(c=>Object.values(c.codes||{}).forEach(v=>{ if(v) codes.push(v); })));
     const uniq=[...new Set(codes)];
-    if(!uniq.length){ STOCK={}; STOCK_PROD=p.id; decoratePitchStock(); return; }
+    if(!uniq.length){ STOCK={}; STOCK_LOADED=true; decorateProductStock(); decoratePitchStock(); return; }
     STOCK_LOADING=true;
     try{
       const r=await fetch("/api/odoo-stock",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({codes:uniq})});
       const d=await r.json().catch(()=>({}));
-      STOCK=(d&&d.stock)?d.stock:{}; STOCK_PROD=p.id;
-    }catch(e){ STOCK={}; STOCK_PROD=p.id; }
+      STOCK=(d&&d.stock)?d.stock:{}; STOCK_LOADED=true;
+    }catch(e){ STOCK={}; STOCK_LOADED=true; }
     STOCK_LOADING=false;
-    decoratePitchStock();
+    decorateProductStock(); decoratePitchStock();
   }
   function updateCatLine(){
     const p=currentProduct();
     fillPitchSelect();
-    ensureStock();
+    ensureStockAll();
     if(!p||!p.cabinets.length){ $("catLine").textContent="Nessun cabinet definito per questo prodotto."; $("hintW").textContent="—"; $("hintH").textContent="—"; return; }
     let txt="Cabinet: "+p.cabinets.map(c=>c.w+"×"+c.h).join(" · ");
     if(p.modW>0&&p.modH>0) txt+="  ·  Modulo "+p.modW+"×"+p.modH+" mm";
